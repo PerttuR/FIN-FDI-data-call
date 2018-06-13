@@ -35,4 +35,4 @@ domain_landings_key =table_A %>% distinct(domain_landings)
 count(domain_discards_key)
 count(domain_landings_key)
 
-
+#testikommentti
