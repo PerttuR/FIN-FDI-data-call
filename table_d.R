@@ -1,3 +1,4 @@
+
 #-------------------------------------------------------------------------------
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE C
@@ -62,9 +63,4 @@ biological$domain_discards <- paste(country_code, quarter, subregion, gear_type,
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY country, year, domain_discards and species
-
-
-
-
-
 
