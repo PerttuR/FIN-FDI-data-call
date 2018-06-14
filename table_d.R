@@ -14,6 +14,11 @@
 # The following script is for preparing FDI data tables from Table A fron stat DEP (Pirkko)
 #-------------------------------------------------------------------------------
 
+
+# install.packages("RPostgreSQL")
+# install.packages("dplyr")
+
+
 #- Clear workspace
 rm(list=ls())
 
@@ -26,41 +31,54 @@ setwd("C:/2018/FDI/work/data/orig/")
 #-------------------------------------------------------------------------------
 # import table A
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+#-------------------------------------------------------------------------------
 
-
-# unique keys
-domain_discards_key = table_A %>% distinct(domain_discards)
-domain_landings_key = table_A %>% distinct(domain_landings)
+# sum totwghtlandg and unwanted_catch BY country, year, domain_discards and species from TABLE A
+test <- table_A %>% group_by(year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), unwanted_catch = sum(as.numeric(as.character(unwanted_catch))))
 
 #-------------------------------------------------------------------------------
 
 # import data from samples (Suomu), length classes
-biological <- read.csv2("pituusluokkatiedot.csv", sep = ";")
+setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
 
+source("db.R")
+
+spec <- read.dbTable("suomu","species")
+lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
+#-------------------------------------------------------------------------------
+# choose commercial DISCARD samples only, from years 2015-2017
+
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
 country_code <- "FIN"
-quarter <- biological$q
-subregion <- paste("27.3.D.", biological$ices_osa_alue, sep = "")
-gear_type <- biological$metiers_fk
+quarter <- unwanted$q
+subregion <- paste("27.3.D.", unwanted$ices_osa_alue, sep = "")
+gear_type <- unwanted$metiers_fk
 
 # codes for vessel length from appendix 2:
-biological$vessel_length_code[biological$laivan_pituus_cm < 1000] <- "VL0010"
-biological$vessel_length_code[biological$laivan_pituus_cm >= 1000 & biological$laivan_pituus_cm < 1200] <- "VL1012"
-biological$vessel_length_code[biological$laivan_pituus_cm >= 1200 & biological$laivan_pituus_cm < 1800] <- "VL1218"
-biological$vessel_length_code[biological$laivan_pituus_cm >= 1800 & biological$laivan_pituus_cm < 2400] <- "VL1824"
-biological$vessel_length_code[biological$laivan_pituus_cm >= 2400 & biological$laivan_pituus_cm < 4000] <- "VL2440"
-biological$vessel_length_code[biological$laivan_pituus_cm >= 4000] <- "VL40XX"
+unwanted$vessel_length_code[unwanted$laivan_pituus_cm < 1000] <- "VL0010"
+unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1000 & unwanted$laivan_pituus_cm < 1200] <- "VL1012"
+unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1200 & unwanted$laivan_pituus_cm < 1800] <- "VL1218"
+unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1800 & unwanted$laivan_pituus_cm < 2400] <- "VL1824"
+unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 2400 & unwanted$laivan_pituus_cm < 4000] <- "VL2440"
+unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 4000] <- "VL40XX"
 
-biological$vessel_length_code[is.na(biological$laivan_pituus_cm)] <- "NONE"
-vessel_length <- biological$vessel_length_code
+unwanted$vessel_length_code[is.na(unwanted$laivan_pituus_cm)] <- "NONE"
+vessel_length <- unwanted$vessel_length_code
   
-species <- biological$fao
+species <- unwanted$fao
 commercial_cat <- "NA"
 
-biological$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 #-------------------------------------------------------------------------------
 
-# sum totwghtlandg and unwanted_catch BY country, year, domain_discards and species
+
+
+
+
+
+
+
 
