@@ -33,7 +33,7 @@ setwd("C:/2018/FDI/work/data/orig/")
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
 #-------------------------------------------------------------------------------
 
-# sum totwghtlandg and unwanted_catch BY country, year, domain_discards and species from TABLE A
+# sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
 test <- table_A %>% group_by(year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), unwanted_catch = sum(as.numeric(as.character(unwanted_catch))))
 
 #-------------------------------------------------------------------------------
@@ -73,6 +73,57 @@ commercial_cat <- "NA"
 
 unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 #-------------------------------------------------------------------------------
+# sum  year, domain_discards and species from unwanted catch data
+# aggregated on DOMAIN level (by domain_discards) and year
+
+
+#number of samples (number of TRIPS) 
+d_7 <- unwanted %>% group_by(domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno)) #### not yet finished
+
+#number of length measurements 
+d_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_length_measurements_uc = sum(as.numeric(pituusluokan_kpl_maara)))
+
+# minimum and maximum lengths (notice! this is done by trip as well)
+d10_11 <- unwanted %>% group_by(vuosi, domain_discards, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+
+
+
+
+
+
+
+
+
+
+# säläääää
+
+
+
+
+
+
+
+
+
+
+t2 <- unwanted %>% group_by(vuosi, domain_discards, fao) %>% summarise(min_length = sum(min(pituusluokka)))
+
+
+
+h2 <- filter(unwanted, vuosi == 2015, domain_discards == "FIN_4_27.3.D.30_GNS_FWS_>0_0_0_VL0010_FPP_NA")
+
+
+
+
+t3 <- unwanted %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+
+
+t4 <- unwanted %>% mutate(min_length = min())
+
+
+
+
+
 
 
 
