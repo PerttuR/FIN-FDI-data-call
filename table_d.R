@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 #
-# Script to process FIN- commercial data for STECF FDI data call - TABLE C
+# Script to process FIN- commercial data for STECF FDI data call - TABLE D
 #
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
@@ -10,7 +10,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for preparing FDI data tables from Table A fron stat DEP (Pirkko)
+# The following script is for preparing FDI data tables from Table A from stat DEP (Pirkko)
 #-------------------------------------------------------------------------------
 
 #- Clear workspace
@@ -20,10 +20,10 @@ rm(list=ls())
 library(dplyr)
 
 # set working directory to read files from
-setwd("C:/2018/FDI/work/data/orig/")
+setwd("C:/perttu/eu-tike/STECF")
 
 # import table A
-table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("2018\\fin_data\\FIN_TABLE_A_CATCH.csv", sep = "," )
 
 
 # unique keys
@@ -33,7 +33,7 @@ domain_landings_key = table_A %>% distinct(domain_landings)
 
 
 # import data from samples (Suomu), length classes
-biological <- read.csv2("pituusluokkatiedot.csv", sep = ";")
+biological <- read.csv2("2018\\fin_data\\pituusluokkatiedot.csv", sep = ";")
 
 
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -58,5 +58,5 @@ commercial_cat <- "NA"
 
 biological$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
-
+biological$domain_discards
 

@@ -21,11 +21,10 @@ rm(list=ls())
 
 
 #WD juureen
-setwd("C:/perttu/eu-tike/STECF")
 
 # Luetaan Pirkon A-taulu sisään(Import Table A):
 
-table_A<-read.csv2("2018\\fin_data\\FIN_TABLE_A_CATCH.csv", sep="," )
+table_A<-read.csv2("FIN_TABLE_A_CATCH.csv", sep="," )
 
 library(dplyr)
 
@@ -35,4 +34,7 @@ domain_landings_key =table_A %>% distinct(domain_landings)
 count(domain_discards_key)
 count(domain_landings_key)
 
-#testikommentti
+source("db.R")
+
+spec <- read.dbTable("suomu","species")
+lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
