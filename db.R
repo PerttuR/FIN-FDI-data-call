@@ -5,10 +5,10 @@ read.dbTable <- function(schema, table) {
   if(length(c(table)) != 1 || length(c(schema)) != 1) {
     return(NULL);
   }
-  if(!grepl("^[[:digit:][:alpha:]]+$", table)) {
+  if(!grepl("^[-[:digit:][:alpha:]_]+$", table)) {
     return(NULL);
   }
-  if(!grepl("^[[:digit:][:alpha:]]+$", schema)) {
+  if(!grepl("^[-[:digit:][:alpha:]_]+$", schema)) {
     return (NULL);
   }
   #End validation
