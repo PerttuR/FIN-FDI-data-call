@@ -4,6 +4,10 @@ db_params.R
 # Data files
 *.csv
 
+# Excell files
+*.xlsx
+*.xls
+
 # History files
 .Rhistory
 .Rapp.history
