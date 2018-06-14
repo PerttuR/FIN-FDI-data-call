@@ -22,6 +22,7 @@ library(dplyr)
 # set working directory to read files from
 setwd("C:/2018/FDI/work/data/orig/")
 
+#-------------------------------------------------------------------------------
 # import table A
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
 
@@ -30,12 +31,13 @@ table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
 domain_discards_key = table_A %>% distinct(domain_discards)
 domain_landings_key = table_A %>% distinct(domain_landings)
 
-
+#-------------------------------------------------------------------------------
 
 # import data from samples (Suomu), length classes
 biological <- read.csv2("pituusluokkatiedot.csv", sep = ";")
 
 
+#-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
 country_code <- "FIN"
 quarter <- biological$q
@@ -57,3 +59,12 @@ species <- biological$fao
 commercial_cat <- "NA"
 
 biological$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+#-------------------------------------------------------------------------------
+
+# sum totwghtlandg and unwanted_catch BY country, year, domain_discards and species
+
+
+
+
+
+
