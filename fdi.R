@@ -36,11 +36,3 @@ count(domain_discards_key)
 count(domain_landings_key)
 
 #testikommentti
-
-#testikommentti2
-
-
-#testikommentti4
-
-#testikommentti3
-

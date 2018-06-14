@@ -1,5 +1,12 @@
+# DB params
+db_params.R
+
 # Data files
 *.csv
+
+# Excell files
+*.xlsx
+*.xls
 
 # History files
 .Rhistory
