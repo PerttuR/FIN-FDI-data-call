@@ -1,7 +1,7 @@
 
 #-------------------------------------------------------------------------------
 #
-# Script to process FIN- commercial data for STECF FDI data call - TABLE C
+# Script to process FIN- commercial data for STECF FDI data call - TABLE D
 #
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
@@ -29,13 +29,25 @@ library(dplyr)
 setwd("C:/2018/FDI/work/data/orig/")
 
 #-------------------------------------------------------------------------------
+#                       1. aggregate TABLE A for merging                       
+#-------------------------------------------------------------------------------
+
 # import table A
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
-test <- table_A %>% group_by(year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), unwanted_catch = sum(as.numeric(as.character(unwanted_catch))))
+table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), unwanted_catch = sum(as.numeric(as.character(unwanted_catch))))
 
+# rounding the number to three digits precision
+table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
+table_A_sum$unwanted_catch <- round(table_A_sum$unwanted_catch, digits = 3)
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+#                       2. aggregate SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
 
 # import data from samples (Suomu), length classes
@@ -52,6 +64,8 @@ unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(C
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
+
+# first make individually all the parts that form the key
 country_code <- "FIN"
 quarter <- unwanted$q
 subregion <- paste("27.3.D.", unwanted$ices_osa_alue, sep = "")
@@ -64,21 +78,20 @@ unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1200 & unwanted$laivan_
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1800 & unwanted$laivan_pituus_cm < 2400] <- "VL1824"
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 2400 & unwanted$laivan_pituus_cm < 4000] <- "VL2440"
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 4000] <- "VL40XX"
+unwanted$vessel_length_code[is.na(unwanted$laivan_pituus_cm)] <- "NK"
 
-unwanted$vessel_length_code[is.na(unwanted$laivan_pituus_cm)] <- "NONE"
 vessel_length <- unwanted$vessel_length_code
   
 species <- unwanted$fao
 commercial_cat <- "NA"
 
+# then combine them as a single key, identical to that from table A
 unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 #-------------------------------------------------------------------------------
-# sum  year, domain_discards and species from unwanted catch data
-# aggregated on DOMAIN level (by domain_discards) and year
-
+# aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples (number of TRIPS) 
-d_7 <- unwanted %>% group_by(domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno)) #### not yet finished
+d_7 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno)) 
 
 #number of length measurements 
 d_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_length_measurements_uc = sum(as.numeric(pituusluokan_kpl_maara)))
@@ -86,50 +99,51 @@ d_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_length_mea
 # minimum and maximum lengths (notice! this is done by trip as well)
 d10_11 <- unwanted %>% group_by(vuosi, domain_discards, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
+#-------------------------------------------------------------------------------
+# merge the aggregated datas (above) to unwanted catch data 
+
+unwanted2 <- merge(unwanted, d_7, by = c("vuosi", "domain_discards"))
+
+unwanted3 <- merge(unwanted2, d_8, by = c("vuosi", "domain_discards"))
+
+unwanted4 <- merge(unwanted3, d10_11, by = c("vuosi", "domain_discards", "nayteno"))
+
+# add length_unit and country variables
+unwanted4$length_unit <- "mm"
+unwanted4$country = "FIN"
+
+# this is just crude renaming
+unwanted4$length <- unwanted4$pituusluokka
+unwanted4$no_length_uc <- unwanted4$pituusluokan_kpl_maara
+unwanted4$year <- unwanted$vuosi
+
+# select only those variables important to merging with table A
+unwanted5 <- select(unwanted4, country, year, domain_discards, no_samples_uc, no_length_measurements_uc, min_length, max_length, length_unit, length, no_length_uc)
 
 
+#-------------------------------------------------------------------------------
+#                       3. Merge SAMPLED DATA with TABLE A                       
+#-------------------------------------------------------------------------------
+
+# merge unwanted catch data with TABLE A
+table_d_pre <- merge(unwanted5, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
+
+# some keys might not match, check how many there might be
+missing_domains <- table_d_pre[is.na(table_d_pre$totwghtlandg),]
+missing_domains2 = missing_domains %>% distinct(domain_discards, .keep_all = T)
+
+length(missing_domains2$domain_discards)
 
 
+# delete the missmatch values
+table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
+
+# arrange the variables in proper order and put them to upper case
+table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_length_measurements_uc, length_unit, min_length, max_length, length, no_length_uc) %>% rename_all(toupper)
 
 
-
-
-
-# säläääää
-
-
-
-
-
-
-
-
-
-
-t2 <- unwanted %>% group_by(vuosi, domain_discards, fao) %>% summarise(min_length = sum(min(pituusluokka)))
-
-
-
-h2 <- filter(unwanted, vuosi == 2015, domain_discards == "FIN_4_27.3.D.30_GNS_FWS_>0_0_0_VL0010_FPP_NA")
-
-
-
-
-t3 <- unwanted %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
-
-
-t4 <- unwanted %>% mutate(min_length = min())
-
-
-
-
-
-
-
-
-
-
-
-
-
+# set working directory to save table D and table of deleted observations
+setwd("C:/2018/FDI/work/data/der/")
+write.csv(table_D, "FIN_TABLE_D_UNWANTED_CATCH_AT_LENGTH.csv", row.names = F)
+write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
 
