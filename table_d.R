@@ -26,6 +26,9 @@ rm(list=ls())
 library(dplyr)
 
 # set working directory to read files from
+#perttu´s mac wd:
+# setwd("~/R/FIN-FDI-data-call")
+#mira´s wd:
 setwd("C:/2018/FDI/work/data/orig/")
 
 #-------------------------------------------------------------------------------
