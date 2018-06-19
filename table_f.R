@@ -139,7 +139,7 @@ salmon$pituusluokka[salmon$PITUUS >= 1100 & salmon$PITUUS < 1150] <- 1100
 salmon$pituusluokka[salmon$PITUUS >= 1150 & salmon$PITUUS < 1200] <- 1150
 salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
 
-salmon_length <- salmon %>% group_by(YEAR, domain_landings, DB_NAYTE_ID, pituusluokka) %>% summarise(pituusluokan_kpl_maara = n()) %>% rename(nayteno = DB_NAYTE_ID, vuosi = YEAR)
+salmon_length <- salmon %>% group_by(YEAR, domain_landings, DB_TRIP_ID, pituusluokka) %>% summarise(pituusluokan_kpl_maara = n()) %>% rename(nayteno = DB_TRIP_ID, vuosi = YEAR)
 
 
 # merge landing and salmon data
@@ -206,21 +206,3 @@ write.csv(table_F, "FIN_TABLE_F_LANDINGS_AT_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_F.csv", row.names = F)
 
 
-
-
-
-setwd("C:/2018/FDI/work/data/der/")
-missing_fao <- salmon[is.na(salmon$FAO),]
-
-missing_fao <- salmon[salmon$FAO == "",]
-write.csv(missing_fao, "missing_salmon_fao.csv", row.names = F)
-
-
-salmon_fao <- table_A[table_A$domain_discards %in% "FRO",]
-
-library(stringr)
-
-salmon_fao <- table_A %>% filter(str_detect(domain_discards, "FPO"))
-
-
-salmon_fao2222 <- table_A %>% filter(str_detect(domain_discards, "SAL"))
