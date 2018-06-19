@@ -99,7 +99,13 @@ unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, v
 d_7 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno)) 
 
 #number of length measurements 
-d_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_length_measurements_uc = sum(as.numeric(pituusluokan_kpl_maara)))
+d_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_age_measurements_uc = n())
+
+
+
+test <- filter(unwanted, vuosi ==2015, domain_discards == "FIN_1_27.3.D.32_GNS_FWS_>0_0_0_VL0010_FPP_NA")
+test2 <- filter(d_8, vuosi == 2015, domain_discards == "FIN_1_27.3.D.32_GNS_FWS_>0_0_0_VL0010_FPP_NA")
+
 
 # minimum and maximum lengths (notice! this is done by trip as well)
 d10_11 <- unwanted %>% group_by(vuosi, domain_discards, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
