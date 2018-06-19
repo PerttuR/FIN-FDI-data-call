@@ -15,7 +15,7 @@
 #-------------------------------------------------------------------------------
 
 
-# install.packages("RPostgreSQL")
+#install.packages("RPostgreSQL")
 # install.packages("dplyr")
 
 
@@ -24,10 +24,12 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
+library(RPostgreSQL)
 
 # set working directory to read files from
-#perttu´s mac wd:
+#perttu´s wd's:
 # setwd("~/R/FIN-FDI-data-call")
+#setwd("C:/perttu/eu-tike/STECF/FIN-FDI-data-call")
 #mira´s wd:
 setwd("C:/2018/FDI/work/data/orig/")
 
@@ -52,12 +54,12 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 #                       2. SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
 
-# import data from samples (Suomu), length classes
+# import data from samples (Suomu), length classes from national DCF database
 setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
+
 
 source("db.R")
 
-spec <- read.dbTable("suomu","species")
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
 
@@ -100,7 +102,7 @@ landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pi
 #--------------------------------------------------------------------------------------------
 
 # import data from salmon samples
-setwd("C:/2018/FDI/work/data/orig/")
+#setwd("C:/2018/FDI/work/data/orig/")
 salmon <- read.csv("stecf.csv", sep = ";", header = T)
 
 # make a key variable to match table A key (domain_discards or domain_landings)
