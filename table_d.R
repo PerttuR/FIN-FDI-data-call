@@ -26,8 +26,9 @@ rm(list=ls())
 library(dplyr)
 
 # set working directory to read files from
-#perttu´s mac wd:
+#perttu´s adderesses:
 # setwd("~/R/FIN-FDI-data-call")
+#setwd("C:/perttu/eu-tike/STECF/FIN-FDI-data-call")
 #mira´s wd:
 setwd("C:/2018/FDI/work/data/orig/")
 
@@ -54,11 +55,10 @@ table_A_sum$unwanted_catch <- round(table_A_sum$unwanted_catch, digits = 3)
 #-------------------------------------------------------------------------------
 
 # import data from samples (Suomu), length classes
-setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
+#setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
 
 source("db.R")
 
-spec <- read.dbTable("suomu","species")
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
@@ -146,7 +146,7 @@ table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totw
 
 
 # set working directory to save table D and table of deleted observations
-setwd("C:/2018/FDI/work/data/der/")
+#setwd("C:/2018/FDI/work/data/der/")
 write.csv(table_D, "FIN_TABLE_D_UNWANTED_CATCH_AT_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
 
