@@ -49,7 +49,7 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
 
 #-------------------------------------------------------------------------------
-#                       2. aggregate SAMPLED DATA for merging                       
+#                       2. SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
 
 # import data from samples (Suomu), length classes
@@ -59,12 +59,15 @@ source("db.R")
 
 spec <- read.dbTable("suomu","species")
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
+
+
 #-------------------------------------------------------------------------------
 # choose commercial LANDING samples only, from years 2015-2017
 
 landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017)
 
 #-------------------------------------------------------------------------------
+
 # make a key variable to match table A key (domain_discards or domain_landings)
 
 # first make individually all the parts that form the key
@@ -89,46 +92,99 @@ commercial_cat <- "NA"
 
 # then combine them as a single key, identical to that from table A
 landing$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+
+landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pituusluokan_kpl_maara)
+
+#--------------------------------------------------------------------------------------------
+#       3. aggregate SALMON data to length classes and merge it with LANDING data                       
+#--------------------------------------------------------------------------------------------
+
+# import data from salmon samples
+setwd("C:/2018/FDI/work/data/orig/")
+salmon <- read.csv("stecf.csv", sep = ";", header = T)
+
+# make a key variable to match table A key (domain_discards or domain_landings)
+
+# first make individually all the parts that form the key
+country_code <- "FIN"
+quarter <- salmon$QUARTER
+subregion <- paste("27.3.D.", salmon$iICES_OA, sep = "")
+gear_type <- salmon$METIER
+vessel_length <- "VL0010"
+species <- salmon$FAO
+commercial_cat <- "NA"
+
+# then combine them as a single key, identical to that from table A
+salmon$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+
+
+# aggregate data into length classes 
+salmon$pituusluokka[salmon$PITUUS >= 300 & salmon$PITUUS < 350] <- 300
+salmon$pituusluokka[salmon$PITUUS >= 350 & salmon$PITUUS < 400] <- 350
+salmon$pituusluokka[salmon$PITUUS >= 400 & salmon$PITUUS < 450] <- 400
+salmon$pituusluokka[salmon$PITUUS >= 450 & salmon$PITUUS < 500] <- 450
+salmon$pituusluokka[salmon$PITUUS >= 500 & salmon$PITUUS < 550] <- 500
+salmon$pituusluokka[salmon$PITUUS >= 550 & salmon$PITUUS < 600] <- 550
+salmon$pituusluokka[salmon$PITUUS >= 600 & salmon$PITUUS < 650] <- 600
+salmon$pituusluokka[salmon$PITUUS >= 650 & salmon$PITUUS < 700] <- 650
+salmon$pituusluokka[salmon$PITUUS >= 700 & salmon$PITUUS < 750] <- 700
+salmon$pituusluokka[salmon$PITUUS >= 750 & salmon$PITUUS < 800] <- 750
+salmon$pituusluokka[salmon$PITUUS >= 800 & salmon$PITUUS < 850] <- 800
+salmon$pituusluokka[salmon$PITUUS >= 850 & salmon$PITUUS < 900] <- 850
+salmon$pituusluokka[salmon$PITUUS >= 900 & salmon$PITUUS < 950] <- 900
+salmon$pituusluokka[salmon$PITUUS >= 950 & salmon$PITUUS < 1000] <- 950
+salmon$pituusluokka[salmon$PITUUS >= 1000 & salmon$PITUUS < 1050] <- 1000
+salmon$pituusluokka[salmon$PITUUS >= 1050 & salmon$PITUUS < 1100] <- 1050
+salmon$pituusluokka[salmon$PITUUS >= 1100 & salmon$PITUUS < 1150] <- 1100
+salmon$pituusluokka[salmon$PITUUS >= 1150 & salmon$PITUUS < 1200] <- 1150
+salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
+
+salmon_length <- salmon %>% group_by(YEAR, domain_landings, DB_NAYTE_ID, pituusluokka) %>% summarise(pituusluokan_kpl_maara = n()) %>% rename(nayteno = DB_NAYTE_ID, vuosi = YEAR)
+
+
+# merge landing and salmon data
+
+landing3 <- merge(landing2, salmon_length, all = T)
+
+
+#-----------------------------------------------------------------------------------
+#                       4. aggregate SAMPLED DATA for merging with TABLE A                       
+#-----------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples (number of TRIPS) 
-d_6 <- landing %>% group_by(vuosi, domain_landings) %>% summarise(no_samples_landg = n_distinct(nayteno)) 
+d_6 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples_landg = n_distinct(nayteno)) 
 
 #number of length measurements 
-d_7 <- landing %>% group_by(vuosi, domain_landings) %>% summarise(no_length_measurements_landg = sum(as.numeric(pituusluokan_kpl_maara)))
+d_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_length_measurements_landg = sum(as.numeric(pituusluokan_kpl_maara)))
 
 # minimum and maximum lengths (notice! this is done by trip as well)
-d9_10 <- landing %>% group_by(vuosi, domain_landings, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+d9_10 <- landing3 %>% group_by(vuosi, domain_landings, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to landing catch data 
 
-landing2 <- merge(landing, d_6, by = c("vuosi", "domain_landings"))
+landing4 <- merge(landing3, d_6, by = c("vuosi", "domain_landings"))
 
-landing3 <- merge(landing2, d_7, by = c("vuosi", "domain_landings"))
+landing5 <- merge(landing4, d_7, by = c("vuosi", "domain_landings"))
 
-landing4 <- merge(landing3, d9_10, by = c("vuosi", "domain_landings", "nayteno"))
+landing6 <- merge(landing5, d9_10, by = c("vuosi", "domain_landings", "nayteno"))
 
 # add length_unit and country variables
-landing4$length_unit <- "mm"
-landing4$country = "FIN"
+landing6$length_unit <- "mm"
+landing6$country = "FIN"
 
-# this is just crude renaming
-landing4$length <- landing4$pituusluokka
-landing4$no_length_landg <- landing4$pituusluokan_kpl_maara
-landing4$year <- landing$vuosi
-
-# select only those variables important to merging with table A
-landing5 <- select(landing4, country, year, domain_landings, no_samples_landg, no_length_measurements_landg, min_length, max_length, length_unit, length, no_length_landg)
+# rename
+landing7 <- landing6 %>% rename(length = pituusluokka, no_length_landg = pituusluokan_kpl_maara, year = vuosi)
 
 
 #-------------------------------------------------------------------------------
-#                       3. Merge SAMPLED DATA with TABLE A                       
+#                       5. Merge SAMPLED DATA with TABLE A                       
 #-------------------------------------------------------------------------------
 
 # merge landing catch data with TABLE A
-table_f_pre <- merge(landing5, table_A_sum, by = c("country", "year", "domain_landings"), all.x = T)
+table_f_pre <- merge(landing7, table_A_sum, by = c("country", "year", "domain_landings"), all.x = T)
 
 # some keys might not match, check how many there might be
 missing_domains <- table_f_pre[is.na(table_f_pre$totwghtlandg),]
@@ -149,3 +205,22 @@ setwd("C:/2018/FDI/work/data/der/")
 write.csv(table_F, "FIN_TABLE_F_LANDINGS_AT_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_F.csv", row.names = F)
 
+
+
+
+
+setwd("C:/2018/FDI/work/data/der/")
+missing_fao <- salmon[is.na(salmon$FAO),]
+
+missing_fao <- salmon[salmon$FAO == "",]
+write.csv(missing_fao, "missing_salmon_fao.csv", row.names = F)
+
+
+salmon_fao <- table_A[table_A$domain_discards %in% "FRO",]
+
+library(stringr)
+
+salmon_fao <- table_A %>% filter(str_detect(domain_discards, "FPO"))
+
+
+salmon_fao2222 <- table_A %>% filter(str_detect(domain_discards, "SAL"))
