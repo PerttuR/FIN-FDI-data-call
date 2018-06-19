@@ -29,8 +29,8 @@ library(dplyr)
 # setwd("~/R/FIN-FDI-data-call")
 setwd("C:/perttu/eu-tike/STECF/FIN-FDI-data-call")
 #mira´s wd:
-#setwd("C:/2018/FDI/work/data/orig/")
-setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
+setwd("C:/2018/FDI/work/data/orig/")
+#setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
 
 
 #-------------------------------------------------------------------------------
@@ -55,6 +55,7 @@ table_A_sum$unwanted_catch <- round(table_A_sum$unwanted_catch, digits = 3)
 #                       2. aggregate AGE DATA for merging                       
 #-------------------------------------------------------------------------------
 
+#setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
 source("db.R")
 
 agedata <- read.dbTable("suomu","report_individual")
