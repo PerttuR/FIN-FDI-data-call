@@ -1,4 +1,3 @@
-
 #-------------------------------------------------------------------------------
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE D
@@ -84,46 +83,40 @@ unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 4000] <- "VL40XX"
 unwanted$vessel_length_code[is.na(unwanted$laivan_pituus_cm)] <- "NK"
 
 vessel_length <- unwanted$vessel_length_code
-  
+
 species <- unwanted$fao
 commercial_cat <- "NA"
 
 # then combine them as a single key, identical to that from table A
 unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+
+# choose only the important variables
+unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, pituusluokan_kpl_maara)
+
 #-------------------------------------------------------------------------------
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
-#number of samples (number of TRIPS) 
-d_7 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno)) 
+#number of samples and length measurements 
+d7_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno), no_length_measurements_uc = sum(pituusluokan_kpl_maara)) 
 
-#number of length measurements 
-d_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_length_measurements_uc = sum(as.numeric(pituusluokan_kpl_maara)))
+# minimum and maximum lengths
+d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
-# minimum and maximum lengths (notice! this is done by trip as well)
-d10_11 <- unwanted %>% group_by(vuosi, domain_discards, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length_uc = sum(pituusluokan_kpl_maara))
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to unwanted catch data 
 
-unwanted2 <- merge(unwanted, d_7, by = c("vuosi", "domain_discards"))
+unwanted3 <- merge(d12_13, d10_11, by = c("vuosi", "domain_discards"))
 
-unwanted3 <- merge(unwanted2, d_8, by = c("vuosi", "domain_discards"))
-
-unwanted4 <- merge(unwanted3, d10_11, by = c("vuosi", "domain_discards", "nayteno"))
-
-
+unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 
 # add length_unit and country variables
 unwanted4$length_unit <- "mm"
 unwanted4$country = "FIN"
 
-# this is just crude renaming
-unwanted4$length <- unwanted4$pituusluokka
-unwanted4$no_length_uc <- unwanted4$pituusluokan_kpl_maara
-unwanted4$year <- unwanted$vuosi
-
 # select only those variables important to merging with table A
-unwanted5 <- select(unwanted4, country, year, domain_discards, no_samples_uc, no_length_measurements_uc, min_length, max_length, length_unit, length, no_length_uc)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples_uc, no_length_measurements_uc, min_length, max_length, length_unit, pituusluokka, no_length_uc) %>% rename(year = vuosi, length = pituusluokka)
 
 
 #-------------------------------------------------------------------------------
@@ -145,15 +138,6 @@ length(missing_domains2$domain_discards)
 table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
 
 
-
-# aggregate data on a level of YEAR, DOMAIN and LENGTH!
-
-#table_d_pre3 <- table_d_pre2 %>% group_by(year, domain_discards, length) %>% summarise(no_length_uc2 = sum(no_length_uc))
-
-
-
-
-
 # arrange the variables in proper order and put them to upper case
 table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_length_measurements_uc, length_unit, min_length, max_length, length, no_length_uc) %>% rename_all(toupper)
 
@@ -162,4 +146,20 @@ table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totw
 #setwd("C:/2018/FDI/work/data/der/")
 write.csv(table_D, "FIN_TABLE_D_UNWANTED_CATCH_AT_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
