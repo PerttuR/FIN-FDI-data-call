@@ -76,7 +76,7 @@ landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-ti
 country_code <- "FIN"
 quarter <- landing$q
 subregion <- paste("27.3.D.", landing$ices_osa_alue, sep = "")
-gear_type <- landing$metiers_fk
+gear_type <- landing$metier
 
 # codes for vessel length from appendix 2:
 landing$vessel_length_code[landing$laivan_pituus_cm < 1000] <- "VL0010"
