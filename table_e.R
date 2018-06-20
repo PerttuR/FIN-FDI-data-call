@@ -144,13 +144,14 @@ salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
 
 
 
-salmon$ika <- 1
 # select important variables and rename them to match landing2 data
-salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, ika, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA)
+salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
 
+# remove missing age values
+salmon3 <- filter(salmon2, !is.na(ika))
 # merge landing and salmon data
 
-landing3 <- merge(landing2, salmon2, all = T)
+landing3 <- merge(landing2, salmon3, all = T)
 landing3$dummy <- 1 # help variable to count observations (probably a better way in dplyr but no time for that...)
 
 
