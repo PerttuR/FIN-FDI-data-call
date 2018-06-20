@@ -1,4 +1,3 @@
-
 #-------------------------------------------------------------------------------
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE F
@@ -141,12 +140,15 @@ salmon$pituusluokka[salmon$PITUUS >= 1100 & salmon$PITUUS < 1150] <- 1100
 salmon$pituusluokka[salmon$PITUUS >= 1150 & salmon$PITUUS < 1200] <- 1150
 salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
 
+
+# aggregate data to the same level as landings data (by length CLASS)
 salmon_length <- salmon %>% group_by(YEAR, domain_landings, DB_TRIP_ID, pituusluokka) %>% summarise(pituusluokan_kpl_maara = n()) %>% rename(nayteno = DB_TRIP_ID, vuosi = YEAR)
 
 
 # merge landing and salmon data
 
 landing3 <- merge(landing2, salmon_length, all = T)
+
 
 
 #-----------------------------------------------------------------------------------
@@ -156,29 +158,30 @@ landing3 <- merge(landing2, salmon_length, all = T)
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples (number of TRIPS) 
-d_6 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples_landg = n_distinct(nayteno)) 
-
-#number of length measurements 
-d_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_length_measurements_landg = sum(as.numeric(pituusluokan_kpl_maara)))
+d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples_landg = n_distinct(nayteno), no_length_measurements_landg = sum(pituusluokan_kpl_maara)) 
 
 # minimum and maximum lengths (notice! this is done by trip as well)
-d9_10 <- landing3 %>% group_by(vuosi, domain_landings, nayteno) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+d9_10 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+
+#number of length measurements 
+d11_12 <- landing3 %>% group_by(vuosi, domain_landings, pituusluokka) %>% summarise(no_length_landg = sum(pituusluokan_kpl_maara))
+
+
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to landing catch data 
 
-landing4 <- merge(landing3, d_6, by = c("vuosi", "domain_landings"))
+landing4 <- merge(d11_12, d9_10, by = c("vuosi", "domain_landings"))
 
-landing5 <- merge(landing4, d_7, by = c("vuosi", "domain_landings"))
-
-landing6 <- merge(landing5, d9_10, by = c("vuosi", "domain_landings", "nayteno"))
+landing5 <- merge(landing4, d6_7, by = c("vuosi", "domain_landings"))
 
 # add length_unit and country variables
-landing6$length_unit <- "mm"
-landing6$country = "FIN"
+landing5$length_unit <- "mm"
+landing5$country = "FIN"
 
-# rename
-landing7 <- landing6 %>% rename(length = pituusluokka, no_length_landg = pituusluokan_kpl_maara, year = vuosi)
+# select only those variables important to merging with table A
+landing6 <- landing5 %>% select(country, vuosi, domain_landings, no_samples_landg, no_length_measurements_landg, min_length, max_length, length_unit, pituusluokka, no_length_landg) %>% rename(year = vuosi, length = pituusluokka)
+
 
 
 #-------------------------------------------------------------------------------
@@ -186,7 +189,7 @@ landing7 <- landing6 %>% rename(length = pituusluokka, no_length_landg = pituusl
 #-------------------------------------------------------------------------------
 
 # merge landing catch data with TABLE A
-table_f_pre <- merge(landing7, table_A_sum, by = c("country", "year", "domain_landings"), all.x = T)
+table_f_pre <- merge(landing6, table_A_sum, by = c("country", "year", "domain_landings"), all.x = T)
 
 # some keys might not match, check how many there might be
 missing_domains <- table_f_pre[is.na(table_f_pre$totwghtlandg),]
@@ -206,5 +209,6 @@ table_F <- table_f_pre2 %>% select(country, year, domain_landings, species, totw
 setwd("C:/2018/FDI/work/data/der/")
 write.csv(table_F, "FIN_TABLE_F_LANDINGS_AT_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_F.csv", row.names = F)
+
 
 
