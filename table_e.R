@@ -204,6 +204,5 @@ table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, tot
 
 # set working directory to save table D and table of deleted observations
 setwd("C:/2018/FDI/work/data/der/")
-write.csv(table_C, "FIN_C_UNWANTED_CATCH_AT_AGE.csv", row.names = F)
-write.csv(missing_domains2, "DELETED_TABLE_C.csv", row.names = F)
-
+write.csv(table_E, "FIN_TABLE_E_LANDINGS_AT_AGE.csv", row.names = F)
+write.csv(missing_domains2, "DELETED_TABLE_E.csv", row.names = F)
