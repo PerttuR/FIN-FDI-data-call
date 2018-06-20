@@ -26,16 +26,26 @@ rm(list=ls())
 library(dplyr)
 library(RPostgreSQL)
 
-# set working directory to read files from
-#perttu´s wd's:
-# setwd("~/R/FIN-FDI-data-call")
-#setwd("C:/perttu/eu-tike/STECF/FIN-FDI-data-call")
-#mira´s wd:
-setwd("C:/2018/FDI/work/data/orig/")
+
+#-------------------------------------------------------------------------------
+#                   0. set working directories to match folder paths                      
+#-------------------------------------------------------------------------------
+# Mira:
+path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
+path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
+path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
+
+# Perttu:
+path_tablea <- "" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "" # folder where the r project is (and the source file db.R!)
+path_salmon <- "" # folder where the salmon data is (stecf.csv)
+path_out <- "" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
+setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
@@ -54,7 +64,8 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 #                       2. aggregate AGE DATA for merging                       
 #-------------------------------------------------------------------------------
 
-#setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
+setwd(path_rproject)
+
 source("db.R")
 
 agedata <- read.dbTable("suomu","report_individual")
@@ -103,7 +114,7 @@ landing2 <- landing %>% select(vuosi, nayteno, paino, pituus, ika, domain_landin
 #--------------------------------------------------------------------------------------------
 
 # import data from salmon samples
-#setwd("C:/2018/FDI/work/data/orig/")
+setwd(path_salmon)
 salmon <- read.csv("stecf.csv", sep = ";", header = T)
 
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -204,6 +215,6 @@ table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, tot
 
 
 # set working directory to save table D and table of deleted observations
-setwd("C:/2018/FDI/work/data/der/")
+setwd(path_out)
 write.csv(table_E, "FIN_TABLE_E_LANDINGS_AT_AGE.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_E.csv", row.names = F)

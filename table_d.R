@@ -24,16 +24,23 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 
-# set working directory to read files from
-#perttu´s adderesses:
-# setwd("~/R/FIN-FDI-data-call")
-#setwd("C:/perttu/eu-tike/STECF/FIN-FDI-data-call")
-#mira´s wd:
-setwd("C:/2018/FDI/work/data/orig/")
+#-------------------------------------------------------------------------------
+#                   0. set working directories to match folder paths                      
+#-------------------------------------------------------------------------------
+# Mira:
+path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
+path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
+
+# Perttu:
+path_tablea <- "" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "" # folder where the r project is (and the source file db.R!)
+path_out <- "" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
+setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
@@ -54,7 +61,7 @@ table_A_sum$unwanted_catch <- round(table_A_sum$unwanted_catch, digits = 3)
 #-------------------------------------------------------------------------------
 
 # import data from samples (Suomu), length classes
-#setwd("C:/2018/FDI/work/prog/FIN-FDI-data-call/")
+setwd(path_rproject)
 
 source("db.R")
 
@@ -143,7 +150,7 @@ table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totw
 
 
 # set working directory to save table D and table of deleted observations
-#setwd("C:/2018/FDI/work/data/der/")
+setwd(path_out)
 write.csv(table_D, "FIN_TABLE_D_UNWANTED_CATCH_AT_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
 
