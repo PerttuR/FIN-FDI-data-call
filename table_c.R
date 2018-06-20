@@ -102,7 +102,7 @@ unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, ika, domain_discard
 unwanted2$dummy <- 1 # help variable to count observations (probably a better way in dplyr but no time for that...)
 
 # aggregate data
-d8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno), no_age_measurements_uc = sum(dummy))
+d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno), no_age_measurements_uc = sum(dummy))
 
 d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
@@ -114,7 +114,7 @@ d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summaris
 
 unwanted3 <- merge(d12_13_14_15, d10_11, by = c("vuosi", "domain_discards"))
 
-unwanted4 <- merge(unwanted3, d8, by = c("vuosi", "domain_discards"))
+unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 
 # add variables
 unwanted4$country <- "FIN"
