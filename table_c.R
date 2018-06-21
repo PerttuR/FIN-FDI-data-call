@@ -33,9 +33,9 @@ path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "" # folder where the r project is (and the source file db.R!)
-path_out <- "" # folder where the output is saved
+path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
