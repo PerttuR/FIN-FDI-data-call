@@ -37,10 +37,11 @@ path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "" # folder where the r project is (and the source file db.R!)
-path_salmon <- "" # folder where the salmon data is (stecf.csv)
-path_out <- "" # folder where the output is saved
+path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
+path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -187,7 +188,7 @@ landing4 <- merge(landing3, d6_7, by = c("vuosi", "domain_landings"))
 
 # add variables
 landing4$country <- "FIN"
-landing4$age_measurements_prop <- "NA"
+landing4$age_measurements_prop <- "NK"
 
 # select only those variables important to merging with table A
 landing5 <- landing4 %>% select(country, vuosi, domain_landings, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, ika, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename(year = vuosi, age = ika)
