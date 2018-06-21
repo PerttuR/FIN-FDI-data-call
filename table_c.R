@@ -73,7 +73,7 @@ agedata <- read.dbTable("suomu","report_individual")
 
 unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017, !is.na(ika))
 
-# age data covers only part of the individual data (individual data is gathered for other biological parametres as well)
+# age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
 unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017, is.na(ika))
 
 #-------------------------------------------------------------------------------
