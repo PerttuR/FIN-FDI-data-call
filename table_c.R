@@ -97,6 +97,7 @@ unwanted$vessel_length_code[is.na(unwanted$laivan_pituus_cm)] <- "NK"
 vessel_length <- unwanted$vessel_length_code
 
 species <- unwanted$fao
+#this variable (commercial_cat) should be in the sampling db.. check later!(should also match with statistical logbook data so perhaps NA only works??)
 commercial_cat <- "NA"
 
 # then combine them as a single key, identical to that from table A
@@ -124,7 +125,7 @@ unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 
 # add variables
 unwanted4$country <- "FIN"
-unwanted4$age_measurements_prop <- "NA"
+unwanted4$age_measurements_prop <- "NK"
 
 # select only those variables important to merging with table A
 unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, ika, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename(year = vuosi, age = ika)
