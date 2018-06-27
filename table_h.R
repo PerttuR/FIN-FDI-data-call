@@ -64,6 +64,10 @@ table_H <- table_H %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 
 
 names(table_H) %<>% toupper
+table_H$RECTANGLE_TYPE <- "05*1"
 
-#table_H <- table_H %>% select()
-# to be continued
+table_H <- table_H %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GEAR_TYPE,MESH_SIZE_RANGE,METIER,SUPRA_REGION,SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,TARGET_ASSEMBLAGE,DEEP,RECTANGLE_TYPE,RECTANGLE_LAT,RECTANGLE_LON,SPECIES,TOTWGHTLANDG,TOTVALLANDG,CONFIDENTIAL)
+
+# set working directory to save table H
+setwd(path_out)
+write.csv(table_H, "FIN_TABLE_H_LANDINGS.csv", row.names = F)
