@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 #
-# Script to process FIN- commercial data for STECF FDI data call - TABLE H
+# Script to process FIN- commercial data for STECF FDI data call - TABLE I
 #
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
@@ -40,32 +40,32 @@ path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the 
 path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
-#                       1. read table H to R                       
+#                       1. read table I to R                       
 #-------------------------------------------------------------------------------
 setwd(path_tablea)
 
-# import table H
-table_H <- read.csv2("FIN_TABLE_H_LANDINGS.csv", sep = "," )
+# import table I
+table_I <- read.csv2("FIN_TABLE_I_SPECIFIC_EFFORT.csv", sep = "," )
 #-------------------------------------------------------------------------------
+
 
 #-------------------------------------------------------------------------------
 #                       2. define coordinates                       
 #-------------------------------------------------------------------------------
-
 setwd(path_rproject)
 source("spatial.R")
 
 
-midpoints <- latlon(table_H$rectangle,midpoint=TRUE)
+midpoints <- latlon(table_I$rectangle,midpoint=TRUE)
 
 
-table_H <- tibble::rowid_to_column(table_H, "ID")
+table_I <- tibble::rowid_to_column(table_I, "ID")
 midpoints <- tibble::rowid_to_column(midpoints, "ID")
 
-table_H <- left_join(table_H, midpoints,copy = TRUE)
 
-table_H <- table_H %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
+table_I <- left_join(table_I, midpoints,copy = TRUE, by="ID")
 
+table_I <- table_I %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 
 
 #-------------------------------------------------------------------------------
@@ -73,11 +73,14 @@ table_H <- table_H %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 #-------------------------------------------------------------------------------
 
 
-names(table_H) %<>% toupper
-table_H$RECTANGLE_TYPE <- "05*1"
+names(table_I) %<>% toupper
+table_I$RECTANGLE_TYPE <- "05*1"
 
-table_H <- table_H %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GEAR_TYPE,MESH_SIZE_RANGE,METIER,SUPRA_REGION,SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,TARGET_ASSEMBLAGE,DEEP,RECTANGLE_TYPE,RECTANGLE_LAT,RECTANGLE_LON,SPECIES,TOTWGHTLANDG,TOTVALLANDG,CONFIDENTIAL)
+table_I <- table_I %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GEAR_TYPE,MESH_SIZE_RANGE,METIER,SUPRA_REGION,SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,TARGET_ASSEMBLAGE,DEEP,RECTANGLE_TYPE,RECTANGLE_LAT,RECTANGLE_LON,EFFECTIVE_EFFORT,CONFIDENTIAL)
+
+table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESSEL_LENGTH), "NK"))
 
 # set working directory to save table H
 setwd(path_out)
-write.csv(table_H, "FIN_TABLE_H_SPATIAL_LANDINGS.csv", row.names = F)
+write.csv(table_I, "FIN_TABLE_I_SPATIAL_EFFORT.csv", row.names = F)
+
