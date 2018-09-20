@@ -35,7 +35,7 @@ path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r
 path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
-# Perttu:
+# Perttu :
 path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
 path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
