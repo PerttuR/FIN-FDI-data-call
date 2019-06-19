@@ -33,9 +33,9 @@ path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "" # folder where the r project is (and the source file db.R!)
-path_out <- "" # folder where the output is saved
+path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -47,11 +47,11 @@ table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
-table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), unwanted_catch = sum(as.numeric(as.character(unwanted_catch))))
+table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), discards = sum(as.numeric(as.character(discards))))
 
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
-table_A_sum$unwanted_catch <- round(table_A_sum$unwanted_catch, digits = 3)
+table_A_sum$discards <- round(table_A_sum$discards, digits = 3)
 
 #-------------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017)
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -104,12 +104,12 @@ unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, 
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples and length measurements 
-d7_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno), no_length_measurements_uc = sum(pituusluokan_kpl_maara)) 
+d7_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
 
 # minimum and maximum lengths
 d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
-d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length_uc = sum(pituusluokan_kpl_maara))
+d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara))
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to unwanted catch data 
@@ -123,7 +123,7 @@ unwanted4$length_unit <- "mm"
 unwanted4$country = "FIN"
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples_uc, no_length_measurements_uc, min_length, max_length, length_unit, pituusluokka, no_length_uc) %>% rename(year = vuosi, length = pituusluokka)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length) %>% rename(year = vuosi, length = pituusluokka)
 
 
 #-------------------------------------------------------------------------------
@@ -146,12 +146,12 @@ table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
 
 
 # arrange the variables in proper order and put them to upper case
-table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_length_measurements_uc, length_unit, min_length, max_length, length, no_length_uc) %>% rename_all(toupper)
+table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totwghtlandg, discards, no_samples, no_length_measurements, length_unit, min_length, max_length, length, no_length) %>% rename_all(toupper)
 
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_D, "FIN_TABLE_D_UNWANTED_CATCH_AT_LENGTH.csv", row.names = F)
+write.csv(table_D, "FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
 
 

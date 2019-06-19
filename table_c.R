@@ -44,14 +44,15 @@ setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
-table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), unwanted_catch = sum(as.numeric(as.character(unwanted_catch))))
+table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), discards = sum(as.numeric(as.character(discards))))
 
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
-table_A_sum$unwanted_catch <- round(table_A_sum$unwanted_catch, digits = 3)
+table_A_sum$discards <- round(table_A_sum$discards, digits = 3)
 
 #-------------------------------------------------------------------------------
 
@@ -71,10 +72,10 @@ agedata <- read.dbTable("suomu","report_individual")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017, !is.na(ika))
+unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, !is.na(ika))
 
 # age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
-unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017, is.na(ika))
+unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, is.na(ika))
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -109,11 +110,11 @@ unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, ika, domain_discard
 unwanted2$dummy <- 1 # help variable to count observations (probably a better way in dplyr but no time for that...)
 
 # aggregate data
-d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples_uc = n_distinct(nayteno), no_age_measurements_uc = sum(dummy))
+d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = sum(dummy))
 
 d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
-d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age_uc = sum(dummy), mean_weight_uc = round(mean(paino), digits = 3), mean_length_uc = round(mean(pituus), digits = 1))
+d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age = sum(dummy), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
 
 
 #-------------------------------------------------------------------------------
@@ -128,7 +129,7 @@ unwanted4$country <- "FIN"
 unwanted4$age_measurements_prop <- "NK"
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, ika, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename(year = vuosi, age = ika)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
 
 
 #-------------------------------------------------------------------------------
@@ -149,12 +150,15 @@ length(missing_domains2$domain_discards)
 table_c_pre2 <- filter(table_c_pre, !is.na(totwghtlandg))
 
 # arrange the variables in proper order and put them to upper case
-table_C <- table_c_pre2  %>% select(country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
+table_C <- table_c_pre2  %>% select(country,	year,	domain_discards,	species,	totwghtlandg,	discards,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	mean_length) %>% rename_all(toupper)
+  
+#  country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
+
 
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_C, "FIN_TABLE_C_UNWANTED_CATCH_AT_AGE.csv", row.names = F)
+write.csv(table_C, "TABLE_C_NAO_OFR_DISCARDS_AGE.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_C.csv", row.names = F)
 
 

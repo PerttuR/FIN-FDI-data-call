@@ -51,6 +51,7 @@ setwd(path_rproject)
 source("db.R")
 
 metiers <- read.dbTable("suomu","metier")
+samples <- read.dbTable("suomu", "report_qa_trips")
 
 #-------------------------------------------------------------------------------
 # choose upper (WP&AR) hierarcy gears/metiers only (DEL national sub metiers)
@@ -59,23 +60,74 @@ wp_gears <- c("OTM", "PTM", "FYK", "GNS")
 metiers <- filter(metiers, gear_code %in% wp_gears) 
 
 
-years <- c(2015, 2016, 2017)
+years <- c(2015, 2016, 2017, 2018)
 
 table_b <- expand.grid(years,metiers$level6)
+table_b <- table_b %>% rename(year = Var1, level6=Var2)
 
+#select project and years
+samples <- samples %>% filter(project == "EU-tike(CS, kaupalliset näytteet)" & year %in% c(2015,2016,2017,2018))
+#merge national metiers to DCF
+samples <- samples %>% mutate(level6 = replace(level6, level6 == 'FPN_FWS_>0_0_0', 'FYK_FWS_>0_0_0'), level6 = replace(level6, level6 == 'FPN_SPF_>0_0_0', 'FYK_SPF_>0_0_0'))
+#summarise samples
+samples <- samples %>% group_by(year, level6) %>% summarise(trip_count = sum(trip_count))
 
-table_b <- table_b %>% rename(YEAR = Var1, SAMPLE_FRAME = Var2)
+# import data from salmon samples
+setwd(path_tablea)
+salmon <- read.csv("stecf.csv", sep = ";", header = T)
+salmon2 <- salmon %>% group_by(YEAR, METIER) %>% summarise(trip_count = n_distinct(DB_TRIP_ID))
+salmon2 <- salmon2 %>% rename(year = YEAR, level6=METIER)
+salmon2 <- salmon2 %>% filter(level6 == "FYK_ANA_0_0_0")
+salmon2$level6 <- 'FYK_ANA_>0_0_0'
+
+samples <- bind_rows(samples, salmon2)
+
+table_b <- left_join(table_b,samples,  by = c("year", "level6"))
+
+table_b <- table_b %>% rename(YEAR = year, SAMPLE_FRAME = level6, SUCCESFUL_SAMPLE = trip_count)
 table_b <- table_b[order(table_b$YEAR),]
+
+
 
 COUNTRY <- "FIN"
 REFUSAL_RATE <- "NK"
+COVERAGE_RATE <- "NK"
+NONRESPONSE_RATE <- "NK"
+VESSELS_FLEET <- "NK"
+TRIPS_FLEET <- "NK"
+TRIPS_SAMPLED_ONBOARD <- 0
+UNIQUE_VESSEL_SAMPLED <- "NK"
+VESSELS_CONTACTED <- "NK"
+NOT_AVAILABLE <- "NK"
+NO_CONTACT_DETAILS <- "NK"
+NO_ANSWER <- "NK"
+OBSERVER_DECLINED	<- "NK"
+INDUSTRY_DECLINED	<- "NK"
+#SUCCESFUL_SAMPLE <-"NK"
+TOT_SELECTIONS <- "NK"
+
 
 table_b$COUNTRY <- COUNTRY
 table_b$REFUSAL_RATE <- REFUSAL_RATE
+table_b$COVERAGE_RATE <- COVERAGE_RATE
+table_b$NONRESPONSE_RATE <- NONRESPONSE_RATE
+table_b$VESSELS_FLEET <- VESSELS_FLEET
+table_b$TRIPS_FLEET <- TRIPS_FLEET
+table_b$TRIPS_SAMPLED_ONBOARD <- TRIPS_SAMPLED_ONBOARD
+table_b$UNIQUE_VESSEL_SAMPLED <- UNIQUE_VESSEL_SAMPLED
+table_b$VESSELS_CONTACTED <- VESSELS_CONTACTED
+table_b$NOT_AVAILABLE <- NOT_AVAILABLE
+table_b$NO_CONTACT_DETAILS <- NO_CONTACT_DETAILS
+table_b$NO_ANSWER <- NO_ANSWER
+table_b$OBSERVER_DECLINED <- OBSERVER_DECLINED	
+table_b$INDUSTRY_DECLINED <- INDUSTRY_DECLINED	
+#table_b$SUCCESFUL_SAMPLE <- SUCCESFUL_SAMPLE	
+table_b$TOT_SELECTIONS <- TOT_SELECTIONS
 
-table_b <- table_b %>% select(COUNTRY, YEAR, SAMPLE_FRAME, REFUSAL_RATE)
+table_b <- table_b %>% select(COUNTRY,	YEAR,	SAMPLE_FRAME,	REFUSAL_RATE,	COVERAGE_RATE,	NONRESPONSE_RATE,	VESSELS_FLEET,	TRIPS_FLEET,	TRIPS_SAMPLED_ONBOARD,	UNIQUE_VESSEL_SAMPLED,	VESSELS_CONTACTED,	NOT_AVAILABLE,	NO_CONTACT_DETAILS,	NO_ANSWER,	OBSERVER_DECLINED,	INDUSTRY_DECLINED,	SUCCESFUL_SAMPLE,	TOT_SELECTIONS)
+
 
 # set working directory to save table B and table
 setwd(path_out)
-write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE.csv", row.names = F)
+write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE_2019.csv", row.names = F)
 
