@@ -67,7 +67,7 @@ source("db.R")
 
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD samples only, from years 2015-2017
+# choose commercial DISCARD samples only, from years 2015-2018 
 
 unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018)
 
@@ -98,13 +98,13 @@ commercial_cat <- "NA"
 unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
 # choose only the important variables
-unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, pituusluokan_kpl_maara)
+unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, pituusluokan_kpl_maara, saalislaji)
 
 #-------------------------------------------------------------------------------
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples and length measurements 
-d7_8 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
+d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
 
 # minimum and maximum lengths
 d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
@@ -123,7 +123,7 @@ unwanted4$length_unit <- "mm"
 unwanted4$country = "FIN"
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length) %>% rename(year = vuosi, length = pituusluokka)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards,saalislaji, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length) %>% rename(year = vuosi, length = pituusluokka)
 
 
 #-------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
 
 
 # arrange the variables in proper order and put them to upper case
-table_D <- table_d_pre2 %>% select(country, year, domain_discards, species, totwghtlandg, discards, no_samples, no_length_measurements, length_unit, min_length, max_length, length, no_length) %>% rename_all(toupper)
+table_D <- table_d_pre2 %>% select(country,	year,	domain_discards,	species,	totwghtlandg,	discards,	no_samples,	no_length_measurements,	length_unit,	min_length,	max_length,	length,	no_length) %>% rename_all(toupper)
 
 
 # set working directory to save table D and table of deleted observations

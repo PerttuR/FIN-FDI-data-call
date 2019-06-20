@@ -58,6 +58,8 @@ table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>%
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
+table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+
 #-------------------------------------------------------------------------------
 
 
@@ -74,10 +76,10 @@ agedata <- read.dbTable("suomu","report_individual")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017, !is.na(ika))
+landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, !is.na(ika))
 
 # a lot of ages are missing
-landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2017, is.na(ika))
+landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, is.na(ika))
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -116,18 +118,24 @@ landing2 <- landing %>% select(vuosi, nayteno, paino, pituus, ika, domain_landin
 
 # import data from salmon samples
 setwd(path_salmon)
-salmon <- read.csv("stecf.csv", sep = ";", header = T)
+salmon <- read.csv("stecf.csv", sep = ";", header = T, stringsAsFactors=FALSE)
+
+#rename metier to correct
+salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
+
 
 # make a key variable to match table A key (domain_discards or domain_landings)
 
 # first make individually all the parts that form the key
 country_code <- "FIN"
 quarter <- salmon$QUARTER
-subregion <- paste("27.3.D.", salmon$iICES_OA, sep = "")
+subregion <- paste("27.3.D.", salmon$ICES_OA, sep = "")
 gear_type <- salmon$METIER
 vessel_length <- "VL0010"
 species <- salmon$FAO
 commercial_cat <- "NA"
+
+
 
 # then combine them as a single key, identical to that from table A
 salmon$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
@@ -172,11 +180,11 @@ landing3$dummy <- 1 # help variable to count observations (probably a better way
 #-------------------------------------------------------------------------------
 
 # aggregate data
-d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples_landg = n_distinct(nayteno), no_age_measurements_landg = sum(dummy))
+d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = sum(dummy))
 
 d9_10 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
-d11_12_13_14 <- landing3 %>% group_by(vuosi, domain_landings, ika) %>% summarise(no_age_landg = sum(dummy), mean_weight_landg = round(mean(paino), digits = 3), mean_length_landg = round(mean(pituus), digits = 1))
+d11_12_13_14 <- landing3 %>% group_by(vuosi, domain_landings, ika) %>% summarise(no_age = sum(dummy), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
 
 
 #-------------------------------------------------------------------------------
@@ -191,7 +199,7 @@ landing4$country <- "FIN"
 landing4$age_measurements_prop <- "NK"
 
 # select only those variables important to merging with table A
-landing5 <- landing4 %>% select(country, vuosi, domain_landings, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, ika, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename(year = vuosi, age = ika)
+landing5 <- landing4 %>% select(country, vuosi, domain_landings, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
 
 
 #-------------------------------------------------------------------------------
@@ -212,10 +220,11 @@ length(missing_domains2$domain_landings)
 table_e_pre2 <- filter(table_e_pre, !is.na(totwghtlandg))
 
 # arrange the variables in proper order and put them to upper case
-table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
+#table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
+table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, species,	totwghtlandg,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	mean_length) %>% rename_all(toupper)
 
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_E, "FIN_TABLE_E_LANDINGS_AT_AGE.csv", row.names = F)
+write.csv(table_E, "FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_E.csv", row.names = F)

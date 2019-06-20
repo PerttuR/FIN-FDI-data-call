@@ -158,7 +158,7 @@ table_C <- table_c_pre2  %>% select(country,	year,	domain_discards,	species,	tot
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_C, "TABLE_C_NAO_OFR_DISCARDS_AGE.csv", row.names = F)
+write.csv(table_C, "FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.csv", row.names = F)
 write.csv(missing_domains2, "DELETED_TABLE_C.csv", row.names = F)
 
 

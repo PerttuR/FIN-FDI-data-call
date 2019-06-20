@@ -72,6 +72,8 @@ samples <- samples %>% mutate(level6 = replace(level6, level6 == 'FPN_FWS_>0_0_0
 #summarise samples
 samples <- samples %>% group_by(year, level6) %>% summarise(trip_count = sum(trip_count))
 
+
+
 # import data from salmon samples
 setwd(path_tablea)
 salmon <- read.csv("stecf.csv", sep = ";", header = T)
@@ -87,7 +89,7 @@ table_b <- left_join(table_b,samples,  by = c("year", "level6"))
 table_b <- table_b %>% rename(YEAR = year, SAMPLE_FRAME = level6, SUCCESFUL_SAMPLE = trip_count)
 table_b <- table_b[order(table_b$YEAR),]
 
-
+table_b <- table_b[-which(is.na(table_b$SUCCESFUL_SAMPLE)),]
 
 COUNTRY <- "FIN"
 REFUSAL_RATE <- "NK"
@@ -126,8 +128,12 @@ table_b$TOT_SELECTIONS <- TOT_SELECTIONS
 
 table_b <- table_b %>% select(COUNTRY,	YEAR,	SAMPLE_FRAME,	REFUSAL_RATE,	COVERAGE_RATE,	NONRESPONSE_RATE,	VESSELS_FLEET,	TRIPS_FLEET,	TRIPS_SAMPLED_ONBOARD,	UNIQUE_VESSEL_SAMPLED,	VESSELS_CONTACTED,	NOT_AVAILABLE,	NO_CONTACT_DETAILS,	NO_ANSWER,	OBSERVER_DECLINED,	INDUSTRY_DECLINED,	SUCCESFUL_SAMPLE,	TOT_SELECTIONS)
 
+#TO DO.....
+setwd(path_tablea)
+trips <- read.xlsx("Tripit ja alukset 2015-2018.xlsx", sheet="rk_pvk", header = T)
+?read.xlsx
 
 # set working directory to save table B and table
 setwd(path_out)
-write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE_2019.csv", row.names = F)
+write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE.csv", row.names = F)
 
