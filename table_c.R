@@ -5,6 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
+# Updated: JUL 2019 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -45,7 +46,8 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
 #-------------------------------------------------------------------------------
 
@@ -86,7 +88,10 @@ unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-t
 country_code <- "FIN"
 quarter <- unwanted$q
 subregion <- paste("27.3.D.", unwanted$ices_osa_alue, sep = "")
+#Stat dep uses FPO instead of FPN so change
+unwanted <- unwanted %>% mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
 gear_type <- unwanted$metier
+
 
 # codes for vessel length from appendix 2:
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm < 1000] <- "VL0010"
@@ -160,7 +165,7 @@ table_C <- table_c_pre2  %>% select(country,	year,	domain_discards,	species,	tot
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_C, "FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.csv", row.names = F)
+write.xlsx(table_C, "TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx", sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
 write.csv(missing_domains2, "DELETED_TABLE_C.csv", row.names = F)
 
 

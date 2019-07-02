@@ -5,12 +5,13 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
+# Updated: JUL 2019 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for preparing FDI data tables from Table A fron stat DEP (Pirkko)
+# The following script is for preparing FDI data tables from Table A from stat DEP (Pirkko)
 #-------------------------------------------------------------------------------
 
 
@@ -23,6 +24,7 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
+library(xlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -43,7 +45,9 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
@@ -78,7 +82,11 @@ unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(C
 country_code <- "FIN"
 quarter <- unwanted$q
 subregion <- paste("27.3.D.", unwanted$ices_osa_alue, sep = "")
+#Stat dep uses FPO instead of FPN so change
+unwanted <- unwanted %>% mutate(metiers_fk = replace(metiers_fk,metiers_fk=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
+unwanted <- unwanted %>% mutate(metiers_fk = replace(metiers_fk,metiers_fk=="FPN_SPF_>0_0_0","FPO_SPF_>0_0_0"))
 gear_type <- unwanted$metiers_fk
+unique(gear_type)
 
 # codes for vessel length from appendix 2:
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm < 1000] <- "VL0010"
@@ -151,7 +159,7 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards,	species,	totw
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_D, "FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.csv", row.names = F)
+write.xlsx(table_D, "TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx", sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
 write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
 
 

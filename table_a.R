@@ -35,7 +35,7 @@ path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
 path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
 
@@ -45,11 +45,26 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
 
 # rename columns to UPPER and save as .xlsx
 setwd(path_out)
 colnames(table_A)    <- c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "MESH_SIZE_RANGE", "METIER", "DOMAIN_DISCARDS", "DOMAIN_LANDINGS", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "SPECIES", "TOTWGHTLANDG", "TOTVALLANDG", "DISCARDS", "CONFIDENTIAL")
+
+# rounding the number to three digits precision
+
+table_A$TOTWGHTLANDG <- round(as.numeric(as.character(table_A$TOTWGHTLANDG)), digits = 3)
+table_A$TOTVALLANDG <- round(as.numeric(as.character(table_A$TOTVALLANDG)), digits = 3)
+table_A$DISCARDS <- round(as.numeric(as.character(table_A$DISCARDS)), digits = 3)
+
+#FDI database did not allow "=" in DOMAINS.. now fixed
+#library(stringr)
+#table_A <- table_A %>% filter(!str_detect(DOMAIN_DISCARDS, "=") )
+#table_A <- table_A %>% filter(!str_detect(DOMAIN_LANDINGS, "=") )
+
+#METIER set NK when TARGET_ASSEMBLAGE == NK
+#table_A <- table_A %>% mutate(METIER = replace(as.character(METIER), which(as.character(METIER)=="MIS_MIS_0_0_0" & as.character(TARGET_ASSEMBLAGE) == "NK") , "NK"))
+
 write.xlsx(table_A, "TABLE_A_CATCH.xlsx", sheetName = "TABLE_A", col.names = TRUE, row.names = FALSE)
 
 #-------------------------------------------------------------------------------
