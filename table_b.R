@@ -136,4 +136,8 @@ trips <- read.xlsx("Tripit ja alukset 2015-2018.xlsx", sheet="rk_pvk", header = 
 # set working directory to save table B and table
 setwd(path_out)
 write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE.csv", row.names = F)
+#install.packages('xlsx')
+library(xlsx)
+write.xlsx(table_b, "FIN_TABLE_B_REFUSAL_RATE.xlsx", sheetName="Sheet1", col.names=TRUE, row.names=FALSE,)
+
 
