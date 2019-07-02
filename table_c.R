@@ -16,6 +16,7 @@
 
 # install.packages("RPostgreSQL")
 # install.packages("dplyr")
+#install.packages("xlsx")
 
 
 #- Clear workspace
@@ -23,6 +24,7 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
+library(xlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
