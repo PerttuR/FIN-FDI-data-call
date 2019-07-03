@@ -5,6 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
+# Updated: JUL 2019 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -25,6 +26,7 @@ rm(list=ls())
 library(dplyr)
 library(vmstools)
 library(magrittr)
+library(xlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -45,7 +47,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table H
-table_H <- read.csv2("FIN_TABLE_H_LANDINGS.csv", sep = "," )
+table_H <- read.csv2("TABLE_H_LANDINGS.csv", sep = "," ,na.strings=""  )
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ setwd(path_rproject)
 source("spatial.R")
 
 
-midpoints <- latlon(table_H$rectangle,midpoint=TRUE)
+midpoints <- latlon(table_H$RECTANGLE,midpoint=TRUE)
 
 
 table_H <- tibble::rowid_to_column(table_H, "ID")
@@ -76,8 +78,10 @@ table_H <- table_H %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 names(table_H) %<>% toupper
 table_H$RECTANGLE_TYPE <- "05*1"
 
-table_H <- table_H %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GEAR_TYPE,MESH_SIZE_RANGE,METIER,SUPRA_REGION,SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,TARGET_ASSEMBLAGE,DEEP,RECTANGLE_TYPE,RECTANGLE_LAT,RECTANGLE_LON,SPECIES,TOTWGHTLANDG,TOTVALLANDG,CONFIDENTIAL)
+table_H$C_SQUARE <- "NA"
+
+table_H <- table_H %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, RECTANGLE_LAT, RECTANGLE_LON, C_SQUARE, SPECIES, TOTWGHTLANDG, TOTVALLANDG, CONFIDENTIAL)
 
 # set working directory to save table H
 setwd(path_out)
-write.csv(table_H, "FIN_TABLE_H_SPATIAL_LANDINGS.csv", row.names = F)
+write.xlsx(table_H, "TABLE_H_LANDINGS_BY_RECTANGLE.xlsx", sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
