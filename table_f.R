@@ -5,12 +5,13 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
+# Updated: JUL 2019 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for preparing FDI data tables from Table A fron stat DEP (Pirkko)
+# The following script is for preparing FDI data tables from Table A from stat DEP (Pirkko)
 #-------------------------------------------------------------------------------
 
 
@@ -24,6 +25,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(RPostgreSQL)
+library(xlsx)
 
 
 #-------------------------------------------------------------------------------
@@ -48,7 +50,9 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg BY year, domain_landings and species from TABLE A
@@ -85,6 +89,12 @@ landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS
 country_code <- "FIN"
 quarter <- landing$q
 subregion <- paste("27.3.D.", landing$ices_osa_alue, sep = "")
+#Stat dep uses FPO instead of FPN so change
+landing <- landing %>% mutate(metiers_fk = replace(metiers_fk,metiers_fk=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
+landing <- landing %>% mutate(metiers_fk = replace(metiers_fk,metiers_fk=="FPN_SPF_>0_0_0","FPO_SPF_>0_0_0"))
+gear_type <- landing$metiers_fk
+unique(gear_type)
+
 gear_type <- landing$metiers_fk
 
 # codes for vessel length from appendix 2:
@@ -219,7 +229,7 @@ table_F <- table_f_pre2 %>% select(country, year, domain_landings, species, totw
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_F, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.csv", row.names = F)
+write.xlsx(table_F, "TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx", sheetName = "TABLE_F", col.names = TRUE, row.names = FALSE)
 write.csv(missing_domains2, "DELETED_TABLE_F.csv", row.names = F)
 
 

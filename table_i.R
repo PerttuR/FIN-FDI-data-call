@@ -5,6 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
+# Updated: JUL 2019 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -25,6 +26,8 @@ rm(list=ls())
 library(dplyr)
 library(vmstools)
 library(magrittr)
+library(xlsx)
+
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -45,7 +48,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table I
-table_I <- read.csv2("FIN_TABLE_I_SPECIFIC_EFFORT.csv", sep = "," )
+table_I <- read.csv2("TABLE_I_SPECIFIC_EFFORT.csv", sep = ",",na.strings=""   )
 #-------------------------------------------------------------------------------
 
 
@@ -56,7 +59,7 @@ setwd(path_rproject)
 source("spatial.R")
 
 
-midpoints <- latlon(table_I$rectangle,midpoint=TRUE)
+midpoints <- latlon(table_I$RECTANGLE,midpoint=TRUE)
 
 
 table_I <- tibble::rowid_to_column(table_I, "ID")
@@ -75,12 +78,14 @@ table_I <- table_I %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 
 names(table_I) %<>% toupper
 table_I$RECTANGLE_TYPE <- "05*1"
+table_I$C_SQUARE <- "NA"
 
-table_I <- table_I %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GEAR_TYPE,MESH_SIZE_RANGE,METIER,SUPRA_REGION,SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,TARGET_ASSEMBLAGE,DEEP,RECTANGLE_TYPE,RECTANGLE_LAT,RECTANGLE_LON,EFFECTIVE_EFFORT,CONFIDENTIAL)
+table_I <- table_I %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, RECTANGLE_LAT, RECTANGLE_LON, C_SQUARE, TOTFISHDAYS, CONFIDENTIAL)
 
 table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESSEL_LENGTH), "NK"))
 
 # set working directory to save table H
 setwd(path_out)
-write.csv(table_I, "FIN_TABLE_I_SPATIAL_EFFORT.csv", row.names = F)
+write.xlsx(table_I, "TABLE_I_EFFORT_BY_RECTANGLE.xlsx", sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
+
 

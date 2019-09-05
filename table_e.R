@@ -6,12 +6,13 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
+# Updated: JUL 2019 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for preparing FDI data tables from Table A fron stat DEP (Pirkko)
+# The following script is for preparing FDI data tables from Table A from stat DEP (Pirkko)
 #-------------------------------------------------------------------------------
 
 
@@ -25,6 +26,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(RPostgreSQL)
+library(xlsx)
 
 
 #-------------------------------------------------------------------------------
@@ -49,7 +51,9 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("FIN_TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg BY year, domain_landings and species from TABLE A
@@ -90,7 +94,11 @@ landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-ti
 country_code <- "FIN"
 quarter <- landing$q
 subregion <- paste("27.3.D.", landing$ices_osa_alue, sep = "")
+#Stat dep uses FPO instead of FPN so change
+landing <- landing %>% mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
+landing <- landing %>% mutate(metier = replace(metier,metier=="FPN_SPF_>0_0_0","FPO_SPF_>0_0_0"))
 gear_type <- landing$metier
+unique(gear_type)
 
 # codes for vessel length from appendix 2:
 landing$vessel_length_code[landing$laivan_pituus_cm < 1000] <- "VL0010"
@@ -169,6 +177,8 @@ salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, dom
 
 # remove missing age values
 salmon3 <- filter(salmon2, !is.na(ika))
+salmon3 <- filter(salmon3, !is.na(paino))
+salmon3 <- filter(salmon3, !is.na(pituus))
 # merge landing and salmon data
 
 landing3 <- merge(landing2, salmon3, all = T)
@@ -226,5 +236,5 @@ table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, species,	tot
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.csv(table_E, "FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.csv", row.names = F)
+write.xlsx(table_E, "TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx", sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
 write.csv(missing_domains2, "DELETED_TABLE_E.csv", row.names = F)
