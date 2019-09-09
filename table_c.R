@@ -110,6 +110,13 @@ commercial_cat <- "NA"
 
 # then combine them as a single key, identical to that from table A
 unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+
+#unwanted weight from g -> to kg
+unwanted$paino <- unwanted$paino/1000
+
+#unwanted length from mm -> to cm
+unwanted$pituus <- unwanted$pituus/10
+
 #-------------------------------------------------------------------------------
 
 # select only important variables
