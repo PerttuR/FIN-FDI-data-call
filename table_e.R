@@ -120,6 +120,12 @@ landing$domain_landings <- paste(country_code, quarter, subregion, gear_type, ve
 # select only important variables
 landing2 <- landing %>% select(vuosi, nayteno, paino, pituus, ika, domain_landings)
 
+#landing2 weight from g -> to kg
+landing2$paino <- landing2$paino/1000
+
+#landing2 length from mm -> to cm
+landing2$pituus <- landing2$pituus/10
+
 #--------------------------------------------------------------------------------------------
 #       3. aggregate SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
@@ -174,6 +180,13 @@ salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
 
 # select important variables and rename them to match landing2 data
 salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
+
+#salmon2 weight from g -> to kg
+salmon2$paino <- salmon2$paino/1000
+
+#salmon2 length from mm -> to cm
+salmon2$pituus <- salmon2$pituus/10
+
 
 # remove missing age values
 salmon3 <- filter(salmon2, !is.na(ika))
