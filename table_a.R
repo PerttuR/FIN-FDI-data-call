@@ -45,17 +45,28 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
+#table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
+table_A <- read.csv2("A_table_2015_2019.csv", sep = "," , na.strings = "")
+#table_A$NEP_SUB_REGION <-"NA"
+
+
+setwd(path_out)
+#select order of columns
+table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
 # rename columns to UPPER and save as .xlsx
-setwd(path_out)
-colnames(table_A)    <- c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "MESH_SIZE_RANGE", "METIER", "DOMAIN_DISCARDS", "DOMAIN_LANDINGS", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "SPECIES", "TOTWGHTLANDG", "TOTVALLANDG", "DISCARDS", "CONFIDENTIAL")
+colnames(table_A)    <- c("COUNTRY",	"YEAR",	"QUARTER",	"VESSEL_LENGTH",	"FISHING_TECH",	"GEAR_TYPE",	"TARGET_ASSEMBLAGE",	"MESH_SIZE_RANGE",	"METIER",	"DOMAIN_DISCARDS",	"DOMAIN_LANDINGS",	"SUPRA_REGION",	"SUB_REGION",	"EEZ_INDICATOR",	"GEO_INDICATOR",	"NEP_SUB_REGION",	"SPECON_TECH",	"DEEP",	"SPECIES",	"TOTWGHTLANDG",	"TOTVALLANDG",	"DISCARDS",	"CONFIDENTIAL")
+
+
 
 # rounding the number to three digits precision
 
 table_A$TOTWGHTLANDG <- round(as.numeric(as.character(table_A$TOTWGHTLANDG)), digits = 3)
 table_A$TOTVALLANDG <- round(as.numeric(as.character(table_A$TOTVALLANDG)), digits = 3)
 table_A$DISCARDS <- round(as.numeric(as.character(table_A$DISCARDS)), digits = 3)
+
+#quartes to string
+table_A$QUARTER <- as.character(table_A$QUARTER)
 
 #FDI database did not allow "=" in DOMAINS.. now fixed
 #library(stringr)

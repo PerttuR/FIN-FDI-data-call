@@ -24,34 +24,48 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(RPostgreSQL)
+library(xlsx)
 
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 # Mira:
-path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
-path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
-path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
+#path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+#path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
+#path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
+#path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
-# Perttu :
-path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+# Perttu:
+#path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
+#path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
 path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
 
 
 #-------------------------------------------------------------------------------
-#                       1. add metiers from db                       
+#                       1. set TABLE B columns                       
 #-------------------------------------------------------------------------------
 
 setwd(path_rproject)
 
 source("db.R")
 
-metiers <- read.dbTable("suomu","metier")
-samples <- read.dbTable("suomu", "report_qa_trips")
+table_b <- read.dbTable("suomu","sampling_result")
+seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
+
+table_b
+
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+#                       2. set TABLE B columns                      
+#-------------------------------------------------------------------------------
+
+table_b$COUNTRY <-"FIN"
+table_b$YEAR <-"2019"
+table_b$SAMPLE_FRAME <- "B5(OTM_SPF&PTM_SPF) Q2SD30"
 
 #-------------------------------------------------------------------------------
 # choose upper (WP&AR) hierarcy gears/metiers only (DEL national sub metiers)
