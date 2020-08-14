@@ -46,7 +46,7 @@ setwd(path_tablea)
 
 # import table A
 #table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
-table_A <- read.csv2("A_table_2015_2019.csv", sep = "," , na.strings = "")
+table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
 #table_A$NEP_SUB_REGION <-"NA"
 
 

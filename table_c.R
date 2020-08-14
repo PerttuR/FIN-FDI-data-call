@@ -47,7 +47,12 @@ setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
-colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+#select order of columns
+table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+table_A <- table_A %>% rename_all(tolower)
+
+#colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
 #-------------------------------------------------------------------------------
 
@@ -74,12 +79,12 @@ agedata <- read.dbTable("suomu","report_individual")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD samples only, from years 2015-2017
+# choose commercial DISCARD samples only, from years 2015-2019
 
-unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, !is.na(ika))
+unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, !is.na(ika))
 
 # age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
-unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, is.na(ika))
+unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, is.na(ika))
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -141,9 +146,10 @@ unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 # add variables
 unwanted4$country <- "FIN"
 unwanted4$age_measurements_prop <- "NK"
+unwanted4$nep_sub_region <-"NA"
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_region, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
 
 
 #-------------------------------------------------------------------------------
@@ -163,8 +169,18 @@ length(missing_domains2$domain_discards)
 # delete the missmatch values
 table_c_pre2 <- filter(table_c_pre, !is.na(totwghtlandg))
 
+#units
+table_c_pre2$weight_unit <- "kg"
+table_c_pre2$length_unit <- "cm"
+
+#2020 testi: ikäkohtaisten mittauslukumäärä domainkohtaisen lukumäärä tilalle..
+table_c_pre2$no_age_measurements <- table_c_pre2$no_age
+#2020 testi: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
+table_c_pre2$no_age <- "NK"
+
+
 # arrange the variables in proper order and put them to upper case
-table_C <- table_c_pre2  %>% select(country,	year,	domain_discards,	species,	totwghtlandg,	discards,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	mean_length) %>% rename_all(toupper)
+table_C <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
   
 #  country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
 

@@ -46,7 +46,12 @@ setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
-colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+#select order of columns
+table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+table_A <- table_A %>% rename_all(tolower)
+
+#colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
 #-------------------------------------------------------------------------------
 
@@ -73,7 +78,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2018 
 
-unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018)
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -106,13 +111,15 @@ commercial_cat <- "NA"
 unwanted$domain_discards <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
 # choose only the important variables
-unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, pituusluokan_kpl_maara, saalislaji)
+unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, pituusluokan_kpl_maara, pituusluokan_kokpaino, saalislaji)
 
 #-------------------------------------------------------------------------------
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples and length measurements 
-d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
+d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino, na.rm = TRUE)) 
+
+d7_8$mean_weight_at_length <- round(d7_8$mean_weight_at_length, digits = 0)
 
 # minimum and maximum lengths
 d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
@@ -131,7 +138,12 @@ unwanted4$length_unit <- "mm"
 unwanted4$country = "FIN"
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards,saalislaji, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length) %>% rename(year = vuosi, length = pituusluokka)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards,saalislaji, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length, mean_weight_at_length) %>% rename(year = vuosi, length = pituusluokka)
+
+#2020 changes definition of length measurements Count
+unwanted5$no_length_measurements <- unwanted5$no_length
+unwanted5$no_length <- "NK"
+
 
 
 #-------------------------------------------------------------------------------
@@ -152,9 +164,14 @@ length(missing_domains2$domain_discards)
 # delete the missmatch values
 table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
 
+#add new variables:
+table_d_pre2$nep_sub_region <-"NA"
+#table_d_pre2$mean_weight_at_length <-"NK"
+table_d_pre2$weight_unit <-"g"
+
 
 # arrange the variables in proper order and put them to upper case
-table_D <- table_d_pre2 %>% select(country,	year,	domain_discards,	species,	totwghtlandg,	discards,	no_samples,	no_length_measurements,	length_unit,	min_length,	max_length,	length,	no_length) %>% rename_all(toupper)
+table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_length_measurements,	length_unit,	min_length,	max_length,	length,	no_length, mean_weight_at_length, weight_unit) %>% rename_all(toupper)
 
 
 # set working directory to save table D and table of deleted observations
