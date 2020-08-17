@@ -52,7 +52,12 @@ setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
-colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+#select order of columns
+table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+table_A <- table_A %>% rename_all(tolower)
+
+#colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
 #-------------------------------------------------------------------------------
 
@@ -80,10 +85,10 @@ agedata <- read.dbTable("suomu","report_individual")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, !is.na(ika))
+landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, !is.na(ika))
 
 # a lot of ages are missing
-landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018, is.na(ika))
+landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, is.na(ika))
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -130,6 +135,8 @@ landing2$pituus <- landing2$pituus/10
 #       3. aggregate SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
 
+# download salmon data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
+# and save it to workflow orig folder
 # import data from salmon samples
 setwd(path_salmon)
 salmon <- read.csv("stecf.csv", sep = ";", header = T, stringsAsFactors=FALSE)
