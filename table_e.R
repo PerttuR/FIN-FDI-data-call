@@ -90,6 +90,7 @@ landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupa
 # a lot of ages are missing
 landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, is.na(ika))
 
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
@@ -249,12 +250,22 @@ length(missing_domains2$domain_landings)
 # delete the missmatch values
 table_e_pre2 <- filter(table_e_pre, !is.na(totwghtlandg))
 
+table_e_pre2$nep_sub_region <-"NA"
+#units
+table_e_pre2$weight_unit <- "kg"
+table_e_pre2$length_unit <- "cm"
+
+#2020 testi: ikäkohtaisten mittauslukumäärä domainkohtaisen lukumäärä tilalle..
+table_e_pre2$no_age_measurements <- table_e_pre2$no_age
+#2020 testi: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
+table_e_pre2$no_age <- "NK"
+
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
-table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, species,	totwghtlandg,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	mean_length) %>% rename_all(toupper)
+table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_region, species,	totwghtlandg,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight, weight_unit,	mean_length, length_unit) %>% rename_all(toupper)
 
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
-write.xlsx(table_E, "TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx", sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_E, "TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
 write.csv(missing_domains2, "DELETED_TABLE_E.csv", row.names = F)
