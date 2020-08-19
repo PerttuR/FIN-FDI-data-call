@@ -117,14 +117,13 @@ unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, 
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
 #number of samples and length measurements 
-d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino, na.rm = TRUE)) 
-
-d7_8$mean_weight_at_length <- round(d7_8$mean_weight_at_length, digits = 0)
+d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
 
 # minimum and maximum lengths
 d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
-d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara))
+d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino/pituusluokan_kpl_maara, na.rm = TRUE))
+d12_13$mean_weight_at_length <- round(d12_13$mean_weight_at_length, digits = 0)
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to unwanted catch data 
