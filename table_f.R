@@ -51,7 +51,12 @@ setwd(path_tablea)
 
 # import table A
 table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
-colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+#select order of columns
+table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+table_A <- table_A %>% rename_all(tolower)
+
+#colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
 #-------------------------------------------------------------------------------
 
@@ -77,9 +82,9 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial LANDING samples only, from years 2015-2017
+# choose commercial LANDING samples only, from years 2015-2019
 
-landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2018)
+landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019)
 
 #-------------------------------------------------------------------------------
 
@@ -114,7 +119,7 @@ commercial_cat <- "NA"
 # then combine them as a single key, identical to that from table A
 landing$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
-landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pituusluokan_kpl_maara)
+landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pituusluokan_kpl_maara, pituusluokan_kokpaino)
 
 #--------------------------------------------------------------------------------------------
 #       3. aggregate SALMON data to length classes and merge it with LANDING data                       
@@ -165,7 +170,7 @@ salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
 
 
 # aggregate data to the same level as landings data (by length CLASS)
-salmon_length <- salmon %>% group_by(YEAR, domain_landings, DB_TRIP_ID, pituusluokka) %>% summarise(pituusluokan_kpl_maara = n()) %>% rename(nayteno = DB_TRIP_ID, vuosi = YEAR)
+salmon_length <- salmon %>% group_by(YEAR, domain_landings, DB_TRIP_ID, pituusluokka) %>% summarise(pituusluokan_kpl_maara = n(), pituusluokan_kokpaino = sum(PAINO_GRAMMOINA)) %>% rename(nayteno = DB_TRIP_ID, vuosi = YEAR)
 
 
 # merge landing and salmon data
@@ -180,18 +185,18 @@ landing3 <- merge(landing2, salmon_length, all = T)
 #-------------------------------------------------------------------------------
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
-#number of samples (number of TRIPS) 
+#number of samples (number of TRIPS) + sum class bumber + mean weight at length
 d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
 
 # minimum and maximum lengths (notice! this is done by trip as well)
 d9_10 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
 #number of length measurements 
-d11_12 <- landing3 %>% group_by(vuosi, domain_landings, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara))
+d11_12 <- landing3 %>% group_by(vuosi, domain_landings, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino/pituusluokan_kpl_maara, na.rm = TRUE))
+d11_12$mean_weight_at_length <- round(d11_12$mean_weight_at_length, digits = 0)
 
 
 
-#-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to landing catch data 
 
 landing4 <- merge(d11_12, d9_10, by = c("vuosi", "domain_landings"))
@@ -202,8 +207,16 @@ landing5 <- merge(landing4, d6_7, by = c("vuosi", "domain_landings"))
 landing5$length_unit <- "mm"
 landing5$country = "FIN"
 
+#-------------------------------------------------------------------------------
+#2020 changes definition of length measurements Count
+landing5$no_length_measurements <- landing5$no_length
+landing5$no_length <- "NK"
+landing5$weight_unit <-"g"
+landing5$nep_sub_region <-"NA"
+
+
 # select only those variables important to merging with table A
-landing6 <- landing5 %>% select(country, vuosi, domain_landings, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length) %>% rename(year = vuosi, length = pituusluokka)
+landing6 <- landing5 %>% select(country, vuosi, domain_landings, nep_sub_region, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length, mean_weight_at_length, weight_unit) %>% rename(year = vuosi, length = pituusluokka)
 
 
 #-------------------------------------------------------------------------------
@@ -222,15 +235,16 @@ length(missing_domains2$domain_landings)
 
 # delete the missmatch values
 table_f_pre2 <- filter(table_f_pre, !is.na(totwghtlandg))
+suomu_deleted_for_no_catch <- filter(table_f_pre, is.na(totwghtlandg))
 
 # arrange the variables in proper order and put them to upper case
 #table_F <- table_f_pre2 %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_length_measurements_landg, length_unit, min_length, max_length, length, no_length_landg) %>% rename_all(toupper)
-table_F <- table_f_pre2 %>% select(country, year, domain_landings, species, totwghtlandg, no_samples, no_length_measurements, length_unit, min_length, max_length, length, no_length) %>% rename_all(toupper)
+table_F <- table_f_pre2 %>% select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, no_samples, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) %>% rename_all(toupper)
 
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
 write.xlsx(table_F, "TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx", sheetName = "TABLE_F", col.names = TRUE, row.names = FALSE)
 write.csv(missing_domains2, "DELETED_TABLE_F.csv", row.names = F)
-
+write.csv(suomu_deleted_for_no_catch, "DELETED_from_sampling_cause_no_catch.csv", row.names = F)
 
 
