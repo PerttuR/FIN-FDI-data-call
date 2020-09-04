@@ -51,10 +51,35 @@ setwd(path_rproject)
 
 source("db.R")
 
-table_b <- read.dbTable("suomu","sampling_result")
-seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
+lottery_results <- read.dbTable("suomu","sampling_result")
+lottery_raw <- read.dbTable("suomu","sampling_source")
+lottery_weights <- read.dbTable("suomu","sampling_source_weight")
+species <- read.dbTable("suomu","species")
 
-table_b
+seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
+tracking_metier <- read.dbTable("suomu","tracking_metier")
+metier <- read.dbTable("suomu","metier")
+
+design_metiers <- seurantataulukot %>% filter(sampling_target == TRUE)
+design_metiers2 <- design_metiers %>% left_join(tracking_metier, by = c("id" = "tracking_metier_name_fk"))
+design_metiers3 <- design_metiers2 %>% left_join(metier, by = c("metier_fk" = "id"))
+
+
+lottery_raw$real_year <- lottery_raw$year + 1
+lottery_raw2 <- lottery_raw %>% left_join(lottery_results, by = c("id" = "sample_source_fk"))
+
+lottery_raw3 <- lottery_raw2 %>% group_by(real_year, quarter, area, tracking_metier_name_fk) %>% summarise(REFUSAL = length(as.numeric(as.character(status))))
+
+
+tracking_metier2 <- tracking_metier %>% left_join(design_metiers)
+
+
+design_metiers$metier_fk <-  design_metiers$id
+design_metiers <- design_metiers %>% select(metier_fk)
+
+
+
+table_b <- table_b %>% select(COUNTRY, YEAR, SAMPLE_FRAME, REFUSAL_RATE, COVERAGE_RATE, NONRESPONSE_RATE, VESSELS_FLEET, TRIPS_FLEET, TRIPS_SAMPLED_ONBOARD, UNIQUE_VESSELS_SAMPLED, UNIQUE_VESSELS_CONTACTED, NOT_AVAILABLE, NO_CONTACT_DETAILS, NO_ANSWER, OBSERVER_DECLINED, INDUSTRY_DECLINED, SUCCESS_RATE, TOT_SELECTIONS)
 
 #-------------------------------------------------------------------------------
 
