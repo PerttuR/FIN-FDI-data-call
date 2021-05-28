@@ -2,7 +2,7 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE B
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Marta Suska
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
 #
