@@ -40,7 +40,7 @@ library(xlsx)
 #path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
 #path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
 
 
 #-------------------------------------------------------------------------------
@@ -51,9 +51,9 @@ setwd(path_rproject)
 
 source("db.R")
 
-lottery_results <- read.dbTable("suomu","sampling_result")
-lottery_raw <- read.dbTable("suomu","sampling_source")
-lottery_weights <- read.dbTable("suomu","sampling_source_weight")
+sampling_result <- read.dbTable("suomu","sampling_result")
+sampling_source <- read.dbTable("suomu","sampling_source")
+sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
 species <- read.dbTable("suomu","species")
 
 seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
