@@ -10,7 +10,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for preparing FDI data tables from Table A fron stat DEP (Pirkko)
+# Table B data is from Finish eu-dcf sampling database Suomu
 #-------------------------------------------------------------------------------
 
 
