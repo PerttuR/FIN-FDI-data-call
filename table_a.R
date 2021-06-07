@@ -37,7 +37,7 @@ path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 # Perttu:
 path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. import TABLE A and save it as .xlsx                       
@@ -45,10 +45,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-#table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
-table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," , na.strings = "")
-#table_A$NEP_SUB_REGION <-"NA"
-
+table_A <- read.csv2("A_table_2014_2020.csv", sep = "," , na.strings = "")
 
 setwd(path_out)
 #select order of columns
