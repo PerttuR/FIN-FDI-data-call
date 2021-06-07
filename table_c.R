@@ -5,7 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
-# Updated: JUL 2019 by Perttu
+# Updated: JUN 2021 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 # Perttu:
 path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -46,7 +46,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -79,12 +79,12 @@ agedata <- read.dbTable("suomu","report_individual")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD samples only, from years 2015-2019
+# choose commercial DISCARD INDIV samples only, from years 2014 and 2020
 
-unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, !is.na(ika))
+unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, !is.na(ika))
 
-# age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
-unwanted_missing_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, is.na(ika))
+# CHECK: age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
+unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, is.na(ika))
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -145,7 +145,7 @@ unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 
 # add variables
 unwanted4$country <- "FIN"
-unwanted4$age_measurements_prop <- "NK"
+unwanted4$age_measurements_prop <- "NA"
 unwanted4$nep_sub_region <-"NA"
 
 # select only those variables important to merging with table A
@@ -165,17 +165,17 @@ missing_domains2 = missing_domains %>% distinct(domain_discards, .keep_all = T)
 
 length(missing_domains2$domain_discards)
 
-
 # delete the missmatch values
 table_c_pre2 <- filter(table_c_pre, !is.na(totwghtlandg))
+
 
 #units
 table_c_pre2$weight_unit <- "kg"
 table_c_pre2$length_unit <- "cm"
 
-#2020 testi: ikäkohtaisten mittauslukumäärä domainkohtaisen lukumäärä tilalle..
+#2020 DATACALL MUUTOS: ikäkohtaisten mittauslukumäärä domainkohtaisen lukumäärä tilalle..
 table_c_pre2$no_age_measurements <- table_c_pre2$no_age
-#2020 testi: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
+#2020 DATACALL MUUTOS: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
 table_c_pre2$no_age <- "NK"
 
 
@@ -189,7 +189,8 @@ table_C <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_regi
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
 write.xlsx(table_C, "TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx", sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
-write.csv(missing_domains2, "DELETED_TABLE_C.csv", row.names = F)
+write.xlsx(table_c_pre, "TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx", sheetName = "TABLE_C_all_merged", col.names = TRUE, row.names = FALSE)
+write.xlsx(missing_domains2, "DELETED_DOMAINS_TABLE_C.xlsx", sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", col.names = TRUE, row.names = FALSE)
 
 
 
