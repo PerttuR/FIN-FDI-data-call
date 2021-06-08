@@ -4,13 +4,15 @@
 #
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
-# Date: JUN-2021
+# Creation Date: JUL-2019
+# Updated: JUN 2021 (Perttu)
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
 # Table B data is from Finish eu-dcf sampling database Suomu
+# sampling frame data from FIN sample lottery machine system
 #-------------------------------------------------------------------------------
 
 
@@ -55,14 +57,25 @@ sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
 sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
 species <- read.dbTable("suomu","species")
+gear <- read.dbTable("suomu","gear")
 
 seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
 tracking_metier <- read.dbTable("suomu","tracking_metier")
 metier <- read.dbTable("suomu","metier")
 
-design_metiers <- seurantataulukot %>% filter(sampling_target == TRUE)
-design_metiers2 <- design_metiers %>% left_join(tracking_metier, by = c("id" = "tracking_metier_name_fk"))
-design_metiers3 <- design_metiers2 %>% left_join(metier, by = c("metier_fk" = "id"))
+sampling_selection <- sampling_source %>% left_join(sampling_result, by = c("id" = "sample_source_fk"))
+sampling_selection2 <- sampling_selection %>% left_join(gear, by = c("kake_gear_id" = "id"))
+
+sampling_selection3 <- sampling_selection2
+
+
+metier_vessel <- metier %>% filter(gear_code == 'OTM' | gear_code == 'PTM')
+sampling_selection3 <- sampling_selection2 %>% left_join(metier_vessel, by = c("fishframe" = "gear_code"))
+
+
+#design_metiers <- seurantataulukot %>% filter(sampling_target == TRUE)
+#design_metiers2 <- design_metiers %>% left_join(tracking_metier, by = c("id" = "tracking_metier_name_fk"))
+#design_metiers3 <- design_metiers2 %>% left_join(metier, by = c("metier_fk" = "id"))
 
 
 lottery_raw$real_year <- lottery_raw$year + 1
