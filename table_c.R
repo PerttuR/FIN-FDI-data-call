@@ -12,6 +12,7 @@
 
 #--------------------READ ME----------------------------------------------------
 # The following script is for preparing FDI data tables from Table A from statistical DEP (Pirkko)
+# Table C:includes EU-DCF samples from Suomu DB. No samples from LohiDB, since discards do not exist there
 #-------------------------------------------------------------------------------
 
 
