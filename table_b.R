@@ -63,10 +63,27 @@ seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
 tracking_metier <- read.dbTable("suomu","tracking_metier")
 metier <- read.dbTable("suomu","metier")
 
+trip <- read.dbTable("suomu", "trip")
+haul <- read.dbTable("suomu", "haul")
+
+trip_selected <- trip %>% filter(!is.na(target_species_fk) & year >= 2018)
+trip_haul <- trip_selected %>% left_join(haul, by=c("id" = "trip_fk"))
+
+trip_haul_metier <- trip_haul %>% left_join(metier, by=c("metier_fk" = "id"))
+species_gear_code <- trip_haul_metier %>% select(target_species_fk, level5)
+
+species_gear_code_tally <- species_gear_code %>% group_by(target_species_fk, level5) %>% tally()
+
+species_gear_code_tally2 <- species_gear_code_tally %>% top_n(1, n)
+
+species_gear_code_tally3 <- species_gear_code_tally2 %>% mutate(frame = case_when(
+  (target_species_fk == 22 | target_species_fk == 45) & (level5 == "OTM_SPF" | level5 == "PTM_SPF") ~ "Pelagic trawl(OTM/PTM)",
+  target_species_fk == 1 & (level5 == "OTM_FWS" | level5 == "PTM_FWS") ~ "Freshwater trawl(Vendace)",
+  TRUE ~ ""))
+  
 sampling_selection <- sampling_source %>% left_join(sampling_result, by = c("id" = "sample_source_fk"))
 sampling_selection2 <- sampling_selection %>% left_join(gear, by = c("kake_gear_id" = "id"))
 
-sampling_selection3 <- sampling_selection2
 
 
 metier_vessel <- metier %>% filter(gear_code == 'OTM' | gear_code == 'PTM')
