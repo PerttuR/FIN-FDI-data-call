@@ -37,7 +37,7 @@ path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 # Perttu:
 path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -45,7 +45,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -78,7 +78,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2018 
 
-unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019)
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -162,6 +162,7 @@ length(missing_domains2$domain_discards)
 
 # delete the missmatch values
 table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
+missing_Discard_kilos_table_d_pre2 <- filter(table_d_pre, is.na(totwghtlandg))
 
 #add new variables:
 table_d_pre2$nep_sub_region <-"NA"
@@ -176,7 +177,8 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_regio
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
 write.xlsx(table_D, "TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx", sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
-write.csv(missing_domains2, "DELETED_TABLE_D.csv", row.names = F)
+write.csv(missing_domains2, "DELETED_TABLE_D_no_DOMAIN.csv", row.names = F)
+write.csv(missing_Discard_kilos_table_d_pre2, "DELETED_TABLE_D_no_kilos.csv", row.names = F)
 
 
 
