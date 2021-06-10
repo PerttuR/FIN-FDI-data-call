@@ -56,8 +56,14 @@ source("db.R")
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
 sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
-sampling_result_source <- sampling_result %>% left_join(sampling_source, by=c("sample_source_fk"="id"))
+
+sampling_result_status_map <- data.frame(key=seq(from=0,to=7),value=c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"))
+sampling_result_source <- sampling_result %>% left_join(sampling_source, by=c("sample_source_fk"="id")) %>%
+  left_join(sampling_result_status_map, by=c("status" = "key")) %>% mutate(status = value)
+
 sampling_result_source_fixed_year <- sampling_result_source %>% mutate(year = year+1)
+
+
 
 species <- read.dbTable("suomu","species")
 gear <- read.dbTable("suomu","gear")
@@ -140,6 +146,8 @@ sampling_result_frame <- sampling_result_source_filtered %>%
   left_join(species_metier_map, by=c("species_fk"= "target_species_fk"))
 
 sampling_result_frame_quarter_sd <- sampling_result_frame %>% mutate(frame = paste0(frame, ' Q', quarter, ' SD', area))
+sampling_result_frame_quarter_sd$year <- as.factor(sampling_result_frame_quarter_sd$year)
+sampling_result_frame_quarter_sd$frame <- as.factor(sampling_result_frame_quarter_sd$frame)
 
 sampling_result_frame_quarter_sd$COUNTRY <- "FIN";
 
@@ -147,9 +155,6 @@ table_b <- sampling_result_frame_quarter_sd %>% select(COUNTRY, YEAR=year, SAMPL
   arrange(YEAR, SAMPLE_FRAME)
 
 table_b$REFUSAL_RATE <- 0
-
-
-
 table_b$COVERAGE_RATE <- "NK"
 table_b$NONRESPONSE_RATE <- "NK"
 table_b$VESSELS_FLEET <- "NK"
@@ -163,6 +168,15 @@ table_b$NO_ANSWER <- "NK"
 table_b$OBSERVER_DECLINED <- 0
 table_b$INDUSTRY_DECLINED <- 0
 table_b$TOT_SELECTIONS <- 0
+
+sampling_result_grouped <- sampling_result_frame_quarter_sd %>% mutate(year_frame = paste0(year, frame))
+sampling_result_grouped$year_frame <- as.factor(sampling_result_grouped$year_frame)
+sampling_result_grouped <- sampling_result_grouped %>% group_by(year_frame, .drop = FALSE) %>% arrange(year_frame)
+#TODO: call count
+tally_rejection <- sampling_result_grouped %>% filter(status == "rejected") %>% tally()
+tally_all <- sampling_result_grouped %>% summarise(sum=sum(if_else(call_count == 0,1,as.double(call_count))))
+
+table_b$TOT_SELECTIONS <- tally_all$sum
 
 write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE.csv", row.names = F)
 
