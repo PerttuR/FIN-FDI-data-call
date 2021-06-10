@@ -139,12 +139,24 @@ sampling_result_frame <- sampling_result_source_filtered %>%
   left_join(tracking_species, by="tracking_metier_name_fk") %>%
   left_join(species_metier_map, by=c("species_fk"= "target_species_fk"))
 
-table_b <- sampling_result_frame %>% select(year, frame) %>% distinct()
+sampling_result_frame_quarter_sd <- sampling_result_frame %>% mutate(frame = paste0(frame, ' Q', quarter, ' SD', area))
 
-table_b <- expand.grid(years,metiers$level6)
-table_b <- table_b %>% rename(year = Var1, level6=Var2)
+sampling_result_frame_quarter_sd$COUNTRY <- "FIN";
+
+table_b <- sampling_result_frame_quarter_sd %>% select(COUNTRY, YEAR=year, SAMPLE_FRAME=frame) %>% distinct() %>%
+  arrange(YEAR, SAMPLE_FRAME)
+
+table_b$REFUSAL_RATE <- 0
 
 
+
+table_b$COVERAGE_RATE <- "NK"
+table_b$NONRESPONSE_RATE <- "NK"
+table_b$VESSELS_FLEET <- "NK"
+table_b$TRIPS_FLEET <- "NK"
+table_b$TRIPS_SAMPLED_ONBOARD <- 0
+table_b$UNIQUE_VESSELS_SAMPLED <- 0
+table_b$UNIQUE_VESSELS_CONTACTED <- 0
 
 
 
