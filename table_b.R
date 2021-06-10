@@ -40,27 +40,31 @@ library(xlsx)
 
 # Perttu:
 #path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
+#path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
 #path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
+#path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
 
 
 #-------------------------------------------------------------------------------
 #                       1. set TABLE B columns                       
 #-------------------------------------------------------------------------------
 
-setwd(path_rproject)
+#setwd(path_rproject)
 
 source("db.R")
 
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
 sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
+sampling_result_source <- sampling_result %>% left_join(sampling_source, by=c("sample_source_fk"="id"))
+sampling_result_source_fixed_year <- sampling_result_source %>% mutate(year = year+1)
+
 species <- read.dbTable("suomu","species")
 gear <- read.dbTable("suomu","gear")
 
 seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
 tracking_metier <- read.dbTable("suomu","tracking_metier")
+tracking_species <- read.dbTable("suomu", "tracking_species");
 metier <- read.dbTable("suomu","metier")
 
 trip <- read.dbTable("suomu", "trip")
@@ -80,36 +84,36 @@ species_gear_code_tally3 <- species_gear_code_tally2 %>% mutate(frame = case_whe
   (target_species_fk == 22 | target_species_fk == 45) & (level5 == "OTM_SPF" | level5 == "PTM_SPF") ~ "Pelagic trawl(OTM/PTM)",
   target_species_fk == 1 & (level5 == "OTM_FWS" | level5 == "PTM_FWS") ~ "Freshwater trawl(Vendace)",
   TRUE ~ ""))
-  
-sampling_selection <- sampling_source %>% left_join(sampling_result, by = c("id" = "sample_source_fk"))
-sampling_selection2 <- sampling_selection %>% left_join(gear, by = c("kake_gear_id" = "id"))
 
+species_metier_map <- species_gear_code_tally3
 
-
-metier_vessel <- metier %>% filter(gear_code == 'OTM' | gear_code == 'PTM')
-sampling_selection3 <- sampling_selection2 %>% left_join(metier_vessel, by = c("fishframe" = "gear_code"))
-
-
-#design_metiers <- seurantataulukot %>% filter(sampling_target == TRUE)
-#design_metiers2 <- design_metiers %>% left_join(tracking_metier, by = c("id" = "tracking_metier_name_fk"))
-#design_metiers3 <- design_metiers2 %>% left_join(metier, by = c("metier_fk" = "id"))
-
-
-lottery_raw$real_year <- lottery_raw$year + 1
-lottery_raw2 <- lottery_raw %>% left_join(lottery_results, by = c("id" = "sample_source_fk"))
-
-lottery_raw3 <- lottery_raw2 %>% group_by(real_year, quarter, area, tracking_metier_name_fk) %>% summarise(REFUSAL = length(as.numeric(as.character(status))))
-
-
-tracking_metier2 <- tracking_metier %>% left_join(design_metiers)
-
-
-design_metiers$metier_fk <-  design_metiers$id
-design_metiers <- design_metiers %>% select(metier_fk)
-
-
-
-table_b <- table_b %>% select(COUNTRY, YEAR, SAMPLE_FRAME, REFUSAL_RATE, COVERAGE_RATE, NONRESPONSE_RATE, VESSELS_FLEET, TRIPS_FLEET, TRIPS_SAMPLED_ONBOARD, UNIQUE_VESSELS_SAMPLED, UNIQUE_VESSELS_CONTACTED, NOT_AVAILABLE, NO_CONTACT_DETAILS, NO_ANSWER, OBSERVER_DECLINED, INDUSTRY_DECLINED, SUCCESS_RATE, TOT_SELECTIONS)
+#sampling_selection <- sampling_source %>% left_join(sampling_result, by = c("id" = "sample_source_fk"))
+#sampling_selection2 <- sampling_selection %>% left_join(gear, by = c("kake_gear_id" = "id"))
+#
+#
+#
+#metier_vessel <- metier %>% filter(gear_code == 'OTM' | gear_code == 'PTM')
+#sampling_selection3 <- sampling_selection2 %>% left_join(metier_vessel, by = c("fishframe" = "gear_code"))
+#
+#
+##design_metiers <- seurantataulukot %>% filter(sampling_target == TRUE)
+##design_metiers2 <- design_metiers %>% left_join(tracking_metier, by = c("id" = "tracking_metier_name_fk"))
+##design_metiers3 <- design_metiers2 %>% left_join(metier, by = c("metier_fk" = "id"))
+#
+#
+#lottery_raw$real_year <- lottery_raw$year + 1
+#lottery_raw2 <- lottery_raw %>% left_join(lottery_results, by = c("id" = "sample_source_fk"))
+#
+#lottery_raw3 <- lottery_raw2 %>% group_by(real_year, quarter, area, tracking_metier_name_fk) %>% summarise(REFUSAL = length(as.numeric(as.character(status))))
+#
+#
+#tracking_metier2 <- tracking_metier %>% left_join(design_metiers)
+#
+#
+#design_metiers$metier_fk <-  design_metiers$id
+#design_metiers <- design_metiers %>% select(metier_fk)
+#
+#table_b <- table_b %>% select(COUNTRY, YEAR, SAMPLE_FRAME, REFUSAL_RATE, COVERAGE_RATE, NONRESPONSE_RATE, VESSELS_FLEET, TRIPS_FLEET, TRIPS_SAMPLED_ONBOARD, UNIQUE_VESSELS_SAMPLED, UNIQUE_VESSELS_CONTACTED, NOT_AVAILABLE, NO_CONTACT_DETAILS, NO_ANSWER, OBSERVER_DECLINED, INDUSTRY_DECLINED, SUCCESS_RATE, TOT_SELECTIONS)
 
 #-------------------------------------------------------------------------------
 
@@ -118,24 +122,35 @@ table_b <- table_b %>% select(COUNTRY, YEAR, SAMPLE_FRAME, REFUSAL_RATE, COVERAG
 #                       2. set TABLE B columns                      
 #-------------------------------------------------------------------------------
 
-table_b$COUNTRY <-"FIN"
-table_b$YEAR <-"2019"
-table_b$SAMPLE_FRAME <- "B5(OTM_SPF&PTM_SPF) Q2SD30"
+#table_b$COUNTRY <-"FIN"
+#table_b$YEAR <-"2019"
+#table_b$SAMPLE_FRAME <- "B5(OTM_SPF&PTM_SPF) Q2SD30"
 
 #-------------------------------------------------------------------------------
 # choose upper (WP&AR) hierarcy gears/metiers only (DEL national sub metiers)
 
 wp_gears <- c("OTM", "PTM", "FYK", "GNS")
-metiers <- filter(metiers, gear_code %in% wp_gears) 
+metiers <- filter(metier, gear_code %in% wp_gears) 
+years <- seq(from=2014, to=2020)
 
+sampling_result_source_filtered <- sampling_result_source_fixed_year %>% filter(year %in% years)
 
-years <- c(2015, 2016, 2017, 2018)
+sampling_result_frame <- sampling_result_source_filtered %>%
+  left_join(tracking_species, by="tracking_metier_name_fk") %>%
+  left_join(species_metier_map, by=c("species_fk"= "target_species_fk"))
+
+table_b <- sampling_result_frame %>% select(year, frame) %>% distinct()
 
 table_b <- expand.grid(years,metiers$level6)
 table_b <- table_b %>% rename(year = Var1, level6=Var2)
 
+
+
+
+
+
 #select project and years
-samples <- samples %>% filter(project == "EU-tike(CS, kaupalliset n√§ytteet)" & year %in% c(2015,2016,2017,2018))
+samples <- samples %>% filter(project == "EU-tike(CS, kaupalliset n‰ytteet)" & year %in% years)
 #merge national metiers to DCF
 samples <- samples %>% mutate(level6 = replace(level6, level6 == 'FPN_FWS_>0_0_0', 'FYK_FWS_>0_0_0'), level6 = replace(level6, level6 == 'FPN_SPF_>0_0_0', 'FYK_SPF_>0_0_0'))
 #summarise samples
