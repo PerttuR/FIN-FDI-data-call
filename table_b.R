@@ -5,7 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Creation Date: JUL-2019
-# Updated: JUN 2021 (Perttu)
+# Updated: JUN 2021 (Petri and Perttu)
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
