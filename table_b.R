@@ -166,6 +166,6 @@ tally_all <- sampling_result_grouped %>% summarise(sum=sum(if_else(call_count ==
 
 table_b$TOT_SELECTIONS <- tally_all$sum
 
-write.xlsx(table_b, paste0(path_out,"/","FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
+write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
 
 
