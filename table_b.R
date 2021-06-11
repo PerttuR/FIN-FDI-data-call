@@ -44,6 +44,7 @@ path_rproject <- getwd() # folder where the r project is (and the source file db
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
 
+# create directories if missing, but ignore warnings in case they already exist
 dir.create(path_tablea, showWarnings = FALSE)
 dir.create(path_out, showWarnings = FALSE)
 
