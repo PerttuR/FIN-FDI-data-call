@@ -38,11 +38,10 @@ library(xlsx)
 #path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
 #path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
-# Perttu:
-#path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-#path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-#path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
-#path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
+# Perttu and Petri:
+path_tablea <- paste0(getwd(), "/orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- paste0(getwd(),"") # folder where the r project is (and the source file db.R!)
+path_out <- paste0(getwd(), "/results/2021") # folder where the output is saved
 
 
 #-------------------------------------------------------------------------------
@@ -183,7 +182,7 @@ write.csv(table_b, "FIN_TABLE_B_REFUSAL_RATE.csv", row.names = F)
 
 
 #select project and years
-samples <- samples %>% filter(project == "EU-tike(CS, kaupalliset näytteet)" & year %in% years)
+samples <- samples %>% filter(project == "EU-tike(CS, kaupalliset n?ytteet)" & year %in% years)
 #merge national metiers to DCF
 samples <- samples %>% mutate(level6 = replace(level6, level6 == 'FPN_FWS_>0_0_0', 'FYK_FWS_>0_0_0'), level6 = replace(level6, level6 == 'FPN_SPF_>0_0_0', 'FYK_SPF_>0_0_0'))
 #summarise samples
