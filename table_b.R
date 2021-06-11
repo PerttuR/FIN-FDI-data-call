@@ -121,6 +121,10 @@ species_metier_map <- species_gear_code_tally3
 #FDI data call years:
 years <- seq(from=2014, to=2020)
 
+super_round <- function(a) {
+  round(as.numeric(as.character(a)), digits = 2)
+}
+
 sampling_result_source_filtered <- sampling_result_source_fixed_year %>% filter(year %in% years)
 
 #manipulate sampling result table data:
@@ -147,7 +151,7 @@ table_b$TRIPS_SAMPLED_ONBOARD <- 0
 table_b$UNIQUE_VESSELS_SAMPLED <- 0
 table_b$UNIQUE_VESSELS_CONTACTED <- 0
 table_b$NOT_AVAILABLE <- "NK"
-table_b$NO_CONTACT_DETAILS <- "NK"
+table_b$NO_CONTACT_DETAILS <- 0
 table_b$NO_ANSWER <- "NK"
 table_b$OBSERVER_DECLINED <- 0
 table_b$INDUSTRY_DECLINED <- 0
@@ -182,6 +186,8 @@ sampling_diamond_reversal <- sampling_diamond_reversal %>%
   filter(!is.na(year_frame)) %>%
   filter(year_frame %in% actual_frames$year_frame_character)
 
+unique_vessels_sampled_tally <- sampling_result_grouped %>% select(sample_source_fk) %>% distinct() %>% tally()
+
 sampling_diamond_reversal$year_frame <- as.factor(sampling_diamond_reversal$year_frame)
 sampling_diamond_reversal_tally <- sampling_diamond_reversal %>%
   group_by(year_frame) %>%
@@ -190,8 +196,8 @@ sampling_diamond_reversal_tally <- sampling_diamond_reversal %>%
 table_b$VESSELS_FLEET <- sampling_diamond_reversal_tally$n
 table_b$TOT_SELECTIONS <- tally_all$sum
 table_b$REFUSAL_RATE <- tally_rejection$n
-table_b <- table_b %>% mutate(REFUSAL_RATE = REFUSAL_RATE/TOT_SELECTIONS)
-
+table_b <- table_b %>% mutate(REFUSAL_RATE = super_round(REFUSAL_RATE/TOT_SELECTIONS))
+table_b$UNIQUE_VESSELS_SAMPLED <- unique_vessels_sampled_tally$n
 
 write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
 
