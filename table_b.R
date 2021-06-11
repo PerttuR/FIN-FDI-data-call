@@ -39,10 +39,13 @@ library(xlsx)
 #path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu and Petri:
-path_tablea <- paste0(getwd(), "/orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- paste0(getwd(),"") # folder where the r project is (and the source file db.R!)
-path_out <- paste0(getwd(), "/results/2021") # folder where the output is saved
+path_tablea <- paste0(getwd(), .Platform$file.sep, "orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+# folder where the output is saved
+path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
 
+dir.create(path_tablea, showWarnings = FALSE)
+dir.create(path_out, showWarnings = FALSE)
 
 #-------------------------------------------------------------------------------
 #                       1. set TABLE B columns                       
@@ -163,7 +166,6 @@ tally_all <- sampling_result_grouped %>% summarise(sum=sum(if_else(call_count ==
 
 table_b$TOT_SELECTIONS <- tally_all$sum
 
-setwd(path_out)
-write.xlsx(table_b, "FIN_TABLE_B_REFUSAL_RATE.xlsx", sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
+write.xlsx(table_b, paste0(path_out,"/","FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
 
 
