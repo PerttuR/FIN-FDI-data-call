@@ -58,15 +58,16 @@ source("db.R")
 
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
+#set reference year PSU counts to sampling year
+sampling_source_fixed_year <- sampling_source %>% mutate(year = year+1)
 sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
 
 #fetch lottery status levels
 sampling_result_status_map <- data.frame(key=seq(from=0,to=7),value=c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"))
 #join status to sampling PSU source data
-sampling_result_source <- sampling_result %>% left_join(sampling_source, by=c("sample_source_fk"="id")) %>%
+sampling_result_source_fixed_year <- sampling_result %>%
+  left_join(sampling_source_fixed_year, by=c("sample_source_fk"="id")) %>%
   left_join(sampling_result_status_map, by=c("status" = "key")) %>% mutate(status = value)
-#set reference year PSU counts to sampling year
-sampling_result_source_fixed_year <- sampling_result_source %>% mutate(year = year+1)
 
 
 species <- read.dbTable("suomu","species")
@@ -153,7 +154,7 @@ table_b$INDUSTRY_DECLINED <- 0
 table_b$TOT_SELECTIONS <- 0
 
 #Aggragate table B to sampling frame level:
-sampling_result_grouped <- sampling_result_frame_quarter_sd %>% mutate(year_frame = paste0(year, frame))
+sampling_result_grouped <- sampling_result_frame_quarter_sd %>% mutate(year_frame = paste0(year," ",frame))
 sampling_result_grouped$year_frame <- as.factor(sampling_result_grouped$year_frame)
 sampling_result_grouped <- sampling_result_grouped %>% group_by(year_frame, .drop = FALSE) %>% arrange(year_frame)
 
@@ -165,7 +166,32 @@ tally_rejection <- sampling_result_grouped %>% filter(status == "rejected") %>% 
 #count contacts
 tally_all <- sampling_result_grouped %>% summarise(sum=sum(if_else(call_count == 0,1,as.double(call_count))))
 
+#Traverse the sampling_source diamond in the reverse direction
+sampling_diamond_reversal <- sampling_source_fixed_year %>%
+  left_join(sampling_source_weight, by=c("id" = "sampling_source_fk")) %>%
+  left_join(species_metier_map, by=c("species_fk"="target_species_fk"))
+
+sampling_diamond_reversal <- sampling_diamond_reversal %>%
+  mutate(year_frame = paste0(year," ",frame," Q",quarter," SD",area))
+
+sampling_result_grouped$year_frame_character <- as.character(sampling_result_grouped$year_frame)
+
+actual_frames <- sampling_result_grouped %>% select(year_frame_character) %>% distinct()
+
+sampling_diamond_reversal <- sampling_diamond_reversal %>%
+  filter(!is.na(year_frame)) %>%
+  filter(year_frame %in% actual_frames$year_frame_character)
+
+sampling_diamond_reversal$year_frame <- as.factor(sampling_diamond_reversal$year_frame)
+sampling_diamond_reversal_tally <- sampling_diamond_reversal %>%
+  group_by(year_frame) %>%
+  tally()
+  
+table_b$VESSELS_FLEET <- sampling_diamond_reversal_tally$n
 table_b$TOT_SELECTIONS <- tally_all$sum
+table_b$REFUSAL_RATE <- tally_rejection$n
+table_b <- table_b %>% mutate(REFUSAL_RATE = REFUSAL_RATE/TOT_SELECTIONS)
+
 
 write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
 
