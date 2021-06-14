@@ -39,9 +39,9 @@ path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
-path_salmon <- paste0(getwd(), .Platform$file.sep, "orig") # folder where salmon data lies (salmon.csv)
+path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
 
@@ -55,7 +55,7 @@ dir.create(path_out, showWarnings = FALSE)
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -89,10 +89,10 @@ agedata <- read.dbTable("suomu","report_individual")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, !is.na(ika))
+landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, !is.na(ika))
 
 # a lot of ages are missing
-landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019, is.na(ika))
+landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, is.na(ika))
 
 
 #-------------------------------------------------------------------------------
@@ -145,6 +145,9 @@ landing2$pituus <- landing2$pituus/10
 # import data from salmon samples
 setwd(path_salmon)
 salmon <- read.csv("salmon.csv", sep = ";", header = T, stringsAsFactors=FALSE)
+
+#2021 data call filter 2014 and 2021
+salmon <- salmon %>% filter( YEAR == 2014 | YEAR == 2020)
 
 #rename metier to correct
 salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
