@@ -39,11 +39,15 @@ path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_tablea <- paste0(getwd(), .Platform$file.sep, "orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+path_salmon <- paste0(getwd(), .Platform$file.sep, "orig") # folder where salmon data lies (salmon.csv)
+# folder where the output is saved
+path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
 
+# create directories if missing, but ignore warnings in case they already exist
+dir.create(path_tablea, showWarnings = FALSE)
+dir.create(path_out, showWarnings = FALSE)
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
