@@ -203,7 +203,7 @@ table_b$TOT_SELECTIONS <- tally_all$sum
 table_b$REFUSAL_RATE <- tally_rejection$n
 table_b <- table_b %>% mutate(REFUSAL_RATE = super_round(REFUSAL_RATE/TOT_SELECTIONS))
 table_b$UNIQUE_VESSELS_SAMPLED <- unique_vessels_sampled_tally$n
-s
+
 #TODO: use trips
 #table_b <- table_b %>% mutate(COVERAGE_RATE = super_round(UNIQUE_VESSELS_SAMPLED / VESSELS_FLEET))
 
