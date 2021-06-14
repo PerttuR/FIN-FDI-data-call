@@ -144,7 +144,7 @@ landing2$pituus <- landing2$pituus/10
 # and save it to workflow orig folder
 # import data from salmon samples
 setwd(path_salmon)
-salmon <- read.csv("stecf.csv", sep = ";", header = T, stringsAsFactors=FALSE)
+salmon <- read.csv("salmon.csv", sep = ";", header = T, stringsAsFactors=FALSE)
 
 #rename metier to correct
 salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
