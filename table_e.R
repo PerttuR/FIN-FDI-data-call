@@ -84,7 +84,7 @@ setwd(path_rproject)
 
 source("db.R")
 
-agedata <- read.dbTable("suomu","report_individual")
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi IN(2014, 2020)"))
 
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
@@ -234,7 +234,7 @@ landing4 <- merge(landing3, d6_7, by = c("vuosi", "domain_landings"))
 
 # add variables
 landing4$country <- "FIN"
-landing4$age_measurements_prop <- "NK"
+landing4$age_measurements_prop <- "NA"
 
 # select only those variables important to merging with table A
 landing5 <- landing4 %>% select(country, vuosi, domain_landings, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
@@ -275,4 +275,4 @@ table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_regi
 # set working directory to save table D and table of deleted observations
 setwd(path_out)
 write.xlsx(table_E, "TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
-write.csv(missing_domains2, "DELETED_TABLE_E.csv", row.names = F)
+write.xlsx(missing_domains2, "DELETED_TABLE_E.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
