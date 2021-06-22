@@ -5,7 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
-# Updated: JUL 2019 by Perttu
+# Updated: JUN 2021 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -38,10 +38,15 @@ path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_salmon <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where the salmon data is (stecf.csv)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
+# folder where the output is saved
+path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
+
+# create directories if missing, but ignore warnings in case they already exist
+dir.create(path_tablea, showWarnings = FALSE)
+dir.create(path_out, showWarnings = FALSE)
 
 
 #-------------------------------------------------------------------------------
@@ -50,7 +55,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("TABLE_A_CATCH.csv", sep = "," )
+table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -84,7 +89,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial LANDING samples only, from years 2015-2019
 
-landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2015 & vuosi <= 2019)
+landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020)
 
 #-------------------------------------------------------------------------------
 
@@ -127,10 +132,13 @@ landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pi
 
 # import data from salmon samples
 setwd(path_salmon)
-salmon <- read.csv("stecf.csv", sep = ";", header = T, stringsAsFactors=FALSE)
+salmon <- read.csv("salmon.csv", sep = ";", header = T, stringsAsFactors=FALSE)
 
 #rename metier to correct
 salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
+
+#2021 data call filter 2014 and 2020
+salmon <- salmon %>% filter( YEAR == 2014 | YEAR == 2020)
 
 # make a key variable to match table A key (domain_discards or domain_landings)
 
@@ -241,10 +249,9 @@ suomu_deleted_for_no_catch <- filter(table_f_pre, is.na(totwghtlandg))
 #table_F <- table_f_pre2 %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_length_measurements_landg, length_unit, min_length, max_length, length, no_length_landg) %>% rename_all(toupper)
 table_F <- table_f_pre2 %>% select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, no_samples, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) %>% rename_all(toupper)
 
-# set working directory to save table D and table of deleted observations
+# set working directory to save table F and table of deleted observations
 setwd(path_out)
 write.xlsx(table_F, "TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx", sheetName = "TABLE_F", col.names = TRUE, row.names = FALSE)
-write.csv(missing_domains2, "DELETED_TABLE_F.csv", row.names = F)
-write.csv(suomu_deleted_for_no_catch, "DELETED_from_sampling_cause_no_catch.csv", row.names = F)
-
+write.xlsx(missing_domains2, "TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_TABLE_F.xlsx", sheetName = "TABLE_F", col.names = TRUE, row.names = FALSE)
+write.xlsx(suomu_deleted_for_no_catch, "TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_from_sampling_cause_no_catch.xlsx", sheetName = "TABLE_F", col.names = TRUE, row.names = FALSE)
 

@@ -146,7 +146,7 @@ landing2$pituus <- landing2$pituus/10
 setwd(path_salmon)
 salmon <- read.csv("salmon.csv", sep = ";", header = T, stringsAsFactors=FALSE)
 
-#2021 data call filter 2014 and 2021
+#2021 data call filter 2014 and 2020
 salmon <- salmon %>% filter( YEAR == 2014 | YEAR == 2020)
 
 #rename metier to correct
@@ -272,7 +272,7 @@ table_e_pre2$no_age <- "NK"
 table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_region, species,	totwghtlandg,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight, weight_unit,	mean_length, length_unit) %>% rename_all(toupper)
 
 
-# set working directory to save table D and table of deleted observations
+# set working directory to save table E and table of deleted observations
 setwd(path_out)
 write.xlsx(table_E, "TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
 write.xlsx(missing_domains2, "DELETED_TABLE_E.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)

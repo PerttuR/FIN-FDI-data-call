@@ -37,9 +37,15 @@ path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
-path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where the output is saved
+path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
+# folder where the output is saved
+path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
+
+# create directories if missing, but ignore warnings in case they already exist
+dir.create(path_tablea, showWarnings = FALSE)
+dir.create(path_out, showWarnings = FALSE)
 
 #-------------------------------------------------------------------------------
 #                       1. read table H to R                       
@@ -47,7 +53,7 @@ path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results" # folder where t
 setwd(path_tablea)
 
 # import table H
-table_H <- read.csv2("TABLE_H_LANDINGS.csv", sep = "," ,na.strings=""  )
+table_H <- read.csv2("H_table.csv", sep = "," ,na.strings=""  )
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
