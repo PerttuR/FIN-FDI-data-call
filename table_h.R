@@ -5,7 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
 # Date: JUN-2018
-# Updated: JUL 2019 by Perttu
+# Updated: JUN 2021 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -37,6 +37,7 @@ path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Perttu:
+
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
@@ -53,7 +54,7 @@ dir.create(path_out, showWarnings = FALSE)
 setwd(path_tablea)
 
 # import table H
-table_H <- read.csv2("H_table.csv", sep = "," ,na.strings=""  )
+table_H <- read.csv2("H_table_2014_and_2020.csv", sep = "," ,na.strings=""  )
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
