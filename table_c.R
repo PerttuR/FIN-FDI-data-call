@@ -4,8 +4,8 @@
 #
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
-# Date: JUN-2018
-# Updated: JUN 2021 by Perttu
+# Create Date: JUN-2018
+# Updated: APR 2022 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -36,18 +36,19 @@ path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABL
 path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
 path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
-# Perttu:
-path_tablea <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/orig" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call" # folder where the r project is (and the source file db.R!)
-path_out <- "C:/perttu/eu-tike/STECF/FIN-FDI-data-call/results/2021" # folder where the output is saved
+# Common paths & 2022 folder:
+path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+# folder where the output is saved
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
-setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -71,7 +72,6 @@ table_A_sum$discards <- round(table_A_sum$discards, digits = 3)
 #                       2. aggregate AGE DATA for merging                       
 #-------------------------------------------------------------------------------
 
-setwd(path_rproject)
 
 source("db.R")
 
@@ -188,10 +188,10 @@ table_C <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_regi
 
 
 # set working directory to save table D and table of deleted observations
-setwd(path_out)
-write.xlsx(table_C, "TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx", sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
-write.xlsx(table_c_pre, "TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx", sheetName = "TABLE_C_all_merged", col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_domains2, "DELETED_DOMAINS_TABLE_C.xlsx", sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", col.names = TRUE, row.names = FALSE)
+
+write.xlsx(table_C,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_c_pre,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx"), sheetName = "TABLE_C_all_merged", col.names = TRUE, row.names = FALSE)
+write.xlsx(missing_domains2,paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", col.names = TRUE, row.names = FALSE)
 
 
 
