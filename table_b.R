@@ -32,13 +32,8 @@ library(xlsx)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Mira:
-#path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-#path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
-#path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
-#path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
-# Perttu and Petri:
+# Paths:
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
@@ -52,36 +47,35 @@ dir.create(path_out, showWarnings = FALSE)
 #                       1. set TABLE B columns                       
 #-------------------------------------------------------------------------------
 
-setwd(path_rproject)
 
 source("db.R")
 
+#Fetch sampling lottery tables from SUOMU sampling database
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
-#set reference year PSU counts to sampling year
-sampling_source_fixed_year <- sampling_source %>% mutate(year = year+1)
 sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
+species <- read.dbTable("suomu","species")
+gear <- read.dbTable("suomu","gear")
+#follow up tables from database
+seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
+tracking_metier <- read.dbTable("suomu","tracking_metier")
+tracking_species <- read.dbTable("suomu", "tracking_species");
+metier <- read.dbTable("suomu","metier")
+#get trip and haul data from database
+trip <- read.dbTable("suomu", "trip")
+haul <- read.dbTable("suomu", "haul")
 
-#fetch lottery status levels
+#set reference year PSU counts to sampling year. 
+sampling_source_fixed_year <- sampling_source %>% mutate(year = year+1)
+
+#lottery status levels map table:
 sampling_result_status_map <- data.frame(key=seq(from=0,to=7),value=c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"))
+
 #join status to sampling PSU source data
 sampling_result_source_fixed_year <- sampling_result %>%
   left_join(sampling_source_fixed_year, by=c("sample_source_fk"="id")) %>%
   left_join(sampling_result_status_map, by=c("status" = "key")) %>% mutate(status = value)
 
-
-species <- read.dbTable("suomu","species")
-gear <- read.dbTable("suomu","gear")
-
-#get follow up tables
-seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
-tracking_metier <- read.dbTable("suomu","tracking_metier")
-tracking_species <- read.dbTable("suomu", "tracking_species");
-metier <- read.dbTable("suomu","metier")
-
-#get trip and haul data
-trip <- read.dbTable("suomu", "trip")
-haul <- read.dbTable("suomu", "haul")
 
 #lottery machine was operational since 2018 Q4
 trip_selected <- trip %>% filter(!is.na(target_species_fk) & year >= 2018)
@@ -127,7 +121,7 @@ super_round <- function(a) {
 
 sampling_result_source_filtered <- sampling_result_source_fixed_year %>% filter(year %in% years)
 
-#manipulate sampling result table data:
+#join species and metier texts to sampling result table data:
 sampling_result_frame <- sampling_result_source_filtered %>%
   left_join(tracking_species, by="tracking_metier_name_fk") %>%
   left_join(species_metier_map, by=c("species_fk"= "target_species_fk"))
