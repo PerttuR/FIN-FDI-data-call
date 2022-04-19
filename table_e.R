@@ -32,18 +32,13 @@ library(xlsx)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Mira:
-path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
-path_salmon <- "C:/2018/FDI/work/data/orig/" # folder where the salmon data is (stecf.csv)
-path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
-
-# Perttu:
+# Common paths & 2022 folder:
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2021")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+
 
 # create directories if missing, but ignore warnings in case they already exist
 dir.create(path_tablea, showWarnings = FALSE)
