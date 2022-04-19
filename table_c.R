@@ -31,10 +31,6 @@ library(xlsx)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Mira:
-path_tablea <- "C:/2018/FDI/work/data/orig/" # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_rproject <- "C:/2018/FDI/work/prog/FIN-FDI-data-call/" # folder where the r project is (and the source file db.R!)
-path_out <- "C:/2018/FDI/work/data/der/" # folder where the output is saved
 
 # Common paths & 2022 folder:
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
@@ -181,15 +177,15 @@ table_c_pre2$no_age <- "NK"
 
 
 # arrange the variables in proper order and put them to upper case
-table_C <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
+table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
   
 #  country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
 
 
 
-# set working directory to save table D and table of deleted observations
+# save table C and table of deleted observations
 
-write.xlsx(table_C,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_c,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
 write.xlsx(table_c_pre,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx"), sheetName = "TABLE_C_all_merged", col.names = TRUE, row.names = FALSE)
 write.xlsx(missing_domains2,paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", col.names = TRUE, row.names = FALSE)
 
