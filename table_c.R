@@ -69,6 +69,11 @@ table_A_sum$discards <- round(table_A_sum$discards, digits = 3)
 #-------------------------------------------------------------------------------
 
 
+## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
+## CHANGES 2022: in 2022 for tables C and D additional columns were added; TOTAL_TRIPS, DISCARD_CV, DISCARD_CI_UPPER,
+##                  DISCARD_CI_LOWER to add information on the coverage rate of discard estimates.
+
+
 source("db.R")
 
 agedata <- read.dbTable("suomu","report_individual")
@@ -123,15 +128,13 @@ unwanted$pituus <- unwanted$pituus/10
 
 # select only important variables
 unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, ika, domain_discards)
-unwanted2$dummy <- 1 # help variable to count observations (probably a better way in dplyr but no time for that...)
 
-# aggregate data
-d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = sum(dummy))
+# AKY: aggregate data
+d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = n())
 
 d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
-d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age = sum(dummy), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
-
+d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to unwanted catch data 
@@ -153,12 +156,13 @@ unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_regio
 #                       3. Merge SAMPLED DATA with TABLE A                       
 #-------------------------------------------------------------------------------
 
+
 # merge unwanted catch data with TABLE A
 table_c_pre <- merge(unwanted5, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
 
 # some keys might not match, check how many there might be
 missing_domains <- table_c_pre[is.na(table_c_pre$totwghtlandg),]
-missing_domains2 = missing_domains %>% distinct(domain_discards, .keep_all = T)
+missing_domains2 <- missing_domains %>% distinct(domain_discards, .keep_all = T)
 
 length(missing_domains2$domain_discards)
 
