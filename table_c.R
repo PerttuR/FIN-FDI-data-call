@@ -2,10 +2,10 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE C
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Anna-Kaisa Ylitalo
 #
 # Create Date: JUN-2018
-# Updated: APR 2022 by Perttu
+# Updated: APR 2022 by Team
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
