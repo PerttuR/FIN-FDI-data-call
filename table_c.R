@@ -81,26 +81,26 @@ agedata <- read.dbTable("suomu","report_individual")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD INDIV samples only, from years 2014 and 2020
+# choose commercial DISCARD INDIV samples only, from years 2013 to 2021
 
-unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, !is.na(ika))
+unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021, !is.na(ika))
 
-# CHECK: age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
-unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, is.na(ika))
+# CHECK missing age data numbers: age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
+unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021, is.na(ika))
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
 
-# first make individually all the parts that form the key
+# first make individually all the parts that form the "DOMAIN_DISCARDS" key 
 country_code <- "FIN"
 quarter <- unwanted$q
 subregion <- paste("27.3.D.", unwanted$ices_osa_alue, sep = "")
-#Stat dep uses FPO instead of FPN so change
+#Stat dep in A TAble uses different gear code -> FPO instead of FPN so change the metier accordingly
 unwanted <- unwanted %>% mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
 gear_type <- unwanted$metier
 
 
-# codes for vessel length from appendix 2:
+# codes for vessel length from appendix 2 as defined in 2022 datacall annex:
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm < 1000] <- "VL0010"
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1000 & unwanted$laivan_pituus_cm < 1200] <- "VL1012"
 unwanted$vessel_length_code[unwanted$laivan_pituus_cm >= 1200 & unwanted$laivan_pituus_cm < 1800] <- "VL1218"
@@ -130,7 +130,7 @@ unwanted$pituus <- unwanted$pituus/10
 unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, ika, domain_discards)
 
 # AKY: aggregate data
-d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = n())
+d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n())
 
 d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
@@ -148,8 +148,13 @@ unwanted4$country <- "FIN"
 unwanted4$age_measurements_prop <- "NA"
 unwanted4$nep_sub_region <-"NA"
 
+# add variables included 2022
+unwanted4$discard_cv <-"NK"
+unwanted4$discard_ci_upper <-"NK"
+unwanted4$discard_ci_lower <-"NK"
+
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_region, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
+unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_region, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length, discard_cv, discard_ci_upper, discard_ci_lower) %>% rename(year = vuosi, age = ika)
 
 
 #-------------------------------------------------------------------------------
@@ -157,7 +162,7 @@ unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_regio
 #-------------------------------------------------------------------------------
 
 
-# merge unwanted catch data with TABLE A
+# merge unwanted catch data with TABLE A. All biological data is included (all.x = T)
 table_c_pre <- merge(unwanted5, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
 
 # some keys might not match, check how many there might be
@@ -179,9 +184,12 @@ table_c_pre2$no_age_measurements <- table_c_pre2$no_age
 #2020 DATACALL MUUTOS: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
 table_c_pre2$no_age <- "NK"
 
+#2022 TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used:
+table_c_pre2$total_trips <- "NK"
+
 
 # arrange the variables in proper order and put them to upper case
-table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
+table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, discard_cv, discard_ci_upper, discard_ci_lower,	total_trips, total_sampled_trips,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
   
 #  country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
 
