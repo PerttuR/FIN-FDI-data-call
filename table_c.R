@@ -43,7 +43,12 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+table_A_2014_2021 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+table_A_2013 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013.csv"), sep = "," , na.strings = "")
+table_A_2015_2020 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2015_2019.csv"), sep = "," , na.strings = "")
+
+new_matrix <- rbind(table_A_2014_2021, table_A_2013)
+table_A <- rbind(new_matrix, table_A_2015_2020)
 
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
@@ -158,7 +163,7 @@ unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_regio
 
 
 #-------------------------------------------------------------------------------
-#                       3. Merge SAMPLED DATA with TABLE A                       
+#                       3. Merge SAMPLE DATA with TABLE A                       
 #-------------------------------------------------------------------------------
 
 
@@ -187,12 +192,16 @@ table_c_pre2$no_age <- "NK"
 #2022 TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used:
 table_c_pre2$total_trips <- "NK"
 
+#test, delete when fdi db ready:
+table_c_pre2$no_samples <- table_c_pre2$total_trips
 
-# arrange the variables in proper order and put them to upper case
-table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, discard_cv, discard_ci_upper, discard_ci_lower,	total_trips, total_sampled_trips,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
+# arrange the variables in proper order and put them to upper case 2021 version:
+table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
+
+#2022 select:
+#table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, discard_cv, discard_ci_upper, discard_ci_lower,	total_trips, total_sampled_trips,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
   
 #  country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
-
 
 
 # save table C and table of deleted observations
