@@ -2,10 +2,10 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE D
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Anna-Kaisa Ylitalo
 #
 # Date: JUN-2018
-# Updated: JUL 2021 by Perttu
+# Updated: MAY-2022
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -39,10 +39,9 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
-setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -66,8 +65,13 @@ table_A_sum$discards <- round(table_A_sum$discards, digits = 3)
 #                       2. aggregate SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
 
+
+
+## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
+## CHANGES 2022: in 2022 for tables C and D additional columns were added; TOTAL_TRIPS, DISCARD_CV, DISCARD_CI_UPPER,
+##                  DISCARD_CI_LOWER to add information on the coverage rate of discard estimates.
+
 # import data from samples (Suomu), length classes
-setwd(path_rproject)
 
 source("db.R")
 
@@ -171,11 +175,10 @@ table_d_pre2$weight_unit <-"g"
 table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_length_measurements,	length_unit,	min_length,	max_length,	length,	no_length, mean_weight_at_length, weight_unit) %>% rename_all(toupper)
 
 
-# set working directory to save table D and table of deleted observations
-setwd(path_out)
-write.xlsx(table_D, "TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx", sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
-write.csv(missing_domains2, "DELETED_TABLE_D_no_DOMAIN.csv", row.names = F)
-write.csv(missing_Discard_kilos_table_d_pre2, "DELETED_TABLE_D_no_kilos.csv", row.names = F)
+# save table D and table of deleted observations
+write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
+write.csv(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_DOMAIN.csv"), row.names = F)
+write.csv(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_kilos.csv"), row.names = F)
 
 
 
