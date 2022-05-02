@@ -3,10 +3,10 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE E
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Anna-Kaisa Ylitalo
 #
 # Date: JUN-2018
-# Updated: JUN 2021 by Perttu
+# Updated: MAY-2022
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -33,6 +33,7 @@ library(xlsx)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 # Common paths & 2022 folder:
+
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
@@ -47,10 +48,9 @@ dir.create(path_out, showWarnings = FALSE)
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
-setwd(path_tablea)
 
 # import table A
-table_A <- read.csv2("A_table_2014_2020.csv", sep = "," )
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -75,7 +75,8 @@ table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
 #                       2. aggregate AGE DATA for merging                       
 #-------------------------------------------------------------------------------
 
-setwd(path_rproject)
+
+## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
 
 source("db.R")
 
@@ -138,8 +139,8 @@ landing2$pituus <- landing2$pituus/10
 # download salmon data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
 # and save it to workflow orig folder
 # import data from salmon samples
-setwd(path_salmon)
-salmon <- read.csv("salmon.csv", sep = ";", header = T, stringsAsFactors=FALSE)
+
+salmon <- read.csv(paste0(path_salmon, "salmon.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
 
 #2021 data call filter 2014 and 2020
 salmon <- salmon %>% filter( YEAR == 2014 | YEAR == 2020)
@@ -164,29 +165,10 @@ commercial_cat <- "NA"
 # then combine them as a single key, identical to that from table A
 salmon$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
-
-# aggregate data into length classes 
-salmon$pituusluokka[salmon$PITUUS >= 300 & salmon$PITUUS < 350] <- 300
-salmon$pituusluokka[salmon$PITUUS >= 350 & salmon$PITUUS < 400] <- 350
-salmon$pituusluokka[salmon$PITUUS >= 400 & salmon$PITUUS < 450] <- 400
-salmon$pituusluokka[salmon$PITUUS >= 450 & salmon$PITUUS < 500] <- 450
-salmon$pituusluokka[salmon$PITUUS >= 500 & salmon$PITUUS < 550] <- 500
-salmon$pituusluokka[salmon$PITUUS >= 550 & salmon$PITUUS < 600] <- 550
-salmon$pituusluokka[salmon$PITUUS >= 600 & salmon$PITUUS < 650] <- 600
-salmon$pituusluokka[salmon$PITUUS >= 650 & salmon$PITUUS < 700] <- 650
-salmon$pituusluokka[salmon$PITUUS >= 700 & salmon$PITUUS < 750] <- 700
-salmon$pituusluokka[salmon$PITUUS >= 750 & salmon$PITUUS < 800] <- 750
-salmon$pituusluokka[salmon$PITUUS >= 800 & salmon$PITUUS < 850] <- 800
-salmon$pituusluokka[salmon$PITUUS >= 850 & salmon$PITUUS < 900] <- 850
-salmon$pituusluokka[salmon$PITUUS >= 900 & salmon$PITUUS < 950] <- 900
-salmon$pituusluokka[salmon$PITUUS >= 950 & salmon$PITUUS < 1000] <- 950
-salmon$pituusluokka[salmon$PITUUS >= 1000 & salmon$PITUUS < 1050] <- 1000
-salmon$pituusluokka[salmon$PITUUS >= 1050 & salmon$PITUUS < 1100] <- 1050
-salmon$pituusluokka[salmon$PITUUS >= 1100 & salmon$PITUUS < 1150] <- 1100
-salmon$pituusluokka[salmon$PITUUS >= 1150 & salmon$PITUUS < 1200] <- 1150
-salmon$pituusluokka[salmon$PITUUS >= 1200 & salmon$PITUUS < 1250] <- 1200
-
-
+## aggregate data into length classes (assuming there are no fish under 300 or over 1250)
+## OBS! This information is not used - WHY?
+pit_bins <- seq(300,1250, by=50)
+salmon$pituusluokka <- pit_bins[findInterval(salmon$PITUUS, pit_bins)]
 
 # select important variables and rename them to match landing2 data
 salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
@@ -197,27 +179,24 @@ salmon2$paino <- salmon2$paino/1000
 #salmon2 length from mm -> to cm
 salmon2$pituus <- salmon2$pituus/10
 
-
 # remove missing age values
-salmon3 <- filter(salmon2, !is.na(ika))
-salmon3 <- filter(salmon3, !is.na(paino))
-salmon3 <- filter(salmon3, !is.na(pituus))
+salmon3 <- filter(salmon2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
+
+
 # merge landing and salmon data
 
 landing3 <- merge(landing2, salmon3, all = T)
-landing3$dummy <- 1 # help variable to count observations (probably a better way in dplyr but no time for that...)
-
 
 #-------------------------------------------------------------------------------
 #                   4. aggregate AGE DATA for merging with TABLE A                     
 #-------------------------------------------------------------------------------
 
 # aggregate data
-d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = sum(dummy))
+d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = n())
 
 d9_10 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
-d11_12_13_14 <- landing3 %>% group_by(vuosi, domain_landings, ika) %>% summarise(no_age = sum(dummy), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
+d11_12_13_14 <- landing3 %>% group_by(vuosi, domain_landings, ika) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
 
 
 #-------------------------------------------------------------------------------
@@ -268,6 +247,5 @@ table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_regi
 
 
 # set working directory to save table E and table of deleted observations
-setwd(path_out)
-write.xlsx(table_E, "TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_domains2, "DELETED_TABLE_E.xlsx", sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
+write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
