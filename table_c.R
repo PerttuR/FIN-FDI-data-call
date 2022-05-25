@@ -5,7 +5,7 @@
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Anna-Kaisa Ylitalo
 #
 # Create Date: JUN-2018
-# Updated: APR 2022 by Team
+# Updated: MAY 2022 by Team
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -42,13 +42,15 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
 
-# import table A
-table_A_2014_2021 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
-table_A_2013 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013.csv"), sep = "," , na.strings = "")
-table_A_2015_2020 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2015_2019.csv"), sep = "," , na.strings = "")
+# # import table A
+# table_A_2014_2021 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+# table_A_2013 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013.csv"), sep = "," , na.strings = "")
+# table_A_2015_2020 <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2015_2019.csv"), sep = "," , na.strings = "")
+# 
+# new_matrix <- rbind(table_A_2014_2021, table_A_2013)
+# table_A <- rbind(new_matrix, table_A_2015_2020)
 
-new_matrix <- rbind(table_A_2014_2021, table_A_2013)
-table_A <- rbind(new_matrix, table_A_2015_2020)
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
 
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
@@ -60,7 +62,9 @@ table_A <- table_A %>% rename_all(tolower)
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
-table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), discards = sum(as.numeric(as.character(discards))))
+table_A_sum <- table_A %>% 
+  group_by(country, year, domain_discards, species) %>% 
+  summarise(totwghtlandg = sum(as.numeric(totwghtlandg)), discards = sum(as.numeric(discards)))
 
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
@@ -100,7 +104,7 @@ unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-t
 country_code <- "FIN"
 quarter <- unwanted$q
 subregion <- paste("27.3.D.", unwanted$ices_osa_alue, sep = "")
-#Stat dep in A TAble uses different gear code -> FPO instead of FPN so change the metier accordingly
+#Stat dep in A Table uses different gear code -> FPO instead of FPN so change the metier accordingly
 unwanted <- unwanted %>% mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
 gear_type <- unwanted$metier
 
@@ -134,32 +138,48 @@ unwanted$pituus <- unwanted$pituus/10
 # select only important variables
 unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, ika, domain_discards)
 
-# AKY: aggregate data
-d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n())
 
-d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
+# aggregate data 
+# d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n())
+# 
+# d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
-d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
+
+# aggregate data for calculation of number of samples (2022: total_sampled_trips), no_age_measurements, min_age, max_age
+d12_13_15_16 <- unwanted2 %>% 
+  group_by(vuosi, domain_discards) %>%
+  summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n(),min_age = min(ika), max_age = max(ika))
+
+#d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
+
+## aggregate data for calculation of no_age, mean_weight, mean_length
+d18_19_21 <- unwanted2 %>% 
+  group_by(vuosi, domain_discards, ika) %>% 
+  summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
+
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to unwanted catch data 
 
-unwanted3 <- merge(d12_13_14_15, d10_11, by = c("vuosi", "domain_discards"))
+# unwanted3 <- merge(d12_13_15_16, d10_11, by = c("vuosi", "domain_discards"))
+# unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 
-unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
+unwanted3 <- merge(d18_19_21, d12_13_15_16, by = c("vuosi", "domain_discards"))
 
 # add variables
-unwanted4$country <- "FIN"
-unwanted4$age_measurements_prop <- "NA"
-unwanted4$nep_sub_region <-"NA"
+unwanted3$country <- "FIN"
+unwanted3$age_measurements_prop <- "NA"
+unwanted3$nep_sub_region <-"NA"
 
 # add variables included 2022
-unwanted4$discard_cv <-"NK"
-unwanted4$discard_ci_upper <-"NK"
-unwanted4$discard_ci_lower <-"NK"
+unwanted3$discard_cv <-"NK"
+unwanted3$discard_ci_upper <-"NK"
+unwanted3$discard_ci_lower <-"NK"
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_region, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length, discard_cv, discard_ci_upper, discard_ci_lower) %>% rename(year = vuosi, age = ika)
+unwanted4 <- unwanted3 %>% 
+  select(country, vuosi, domain_discards, nep_sub_region, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length, discard_cv, discard_ci_upper, discard_ci_lower) %>% 
+  rename(year = vuosi, age = ika)
 
 
 #-------------------------------------------------------------------------------
@@ -168,7 +188,7 @@ unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards, nep_sub_regio
 
 
 # merge unwanted catch data with TABLE A. All biological data is included (all.x = T)
-table_c_pre <- merge(unwanted5, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
+table_c_pre <- merge(unwanted4, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
 
 # some keys might not match, check how many there might be
 missing_domains <- table_c_pre[is.na(table_c_pre$totwghtlandg),]
@@ -193,13 +213,13 @@ table_c_pre2$no_age <- "NK"
 table_c_pre2$total_trips <- "NK"
 
 #test, delete when fdi db ready:
-table_c_pre2$no_samples <- table_c_pre2$total_trips
+#table_c_pre2$no_samples <- table_c_pre2$total_trips
 
 # arrange the variables in proper order and put them to upper case 2021 version:
-table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
+#table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
 
 #2022 select:
-#table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, discard_cv, discard_ci_upper, discard_ci_lower,	total_trips, total_sampled_trips,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
+table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards, discard_cv, discard_ci_upper, discard_ci_lower,	total_trips, total_sampled_trips,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight,	weight_unit, mean_length, length_unit) %>% rename_all(toupper)
   
 #  country, year, domain_discards, species, totwghtlandg, unwanted_catch, no_samples_uc, no_age_measurements_uc, age_measurements_prop, min_age, max_age, age, no_age_uc, mean_weight_uc, mean_length_uc) %>% rename_all(toupper)
 
