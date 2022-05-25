@@ -23,7 +23,7 @@
 #- Clear workspace
 rm(list=ls())
 
-# needed libraries
+# needed libraries test
 library(dplyr)
 library(RPostgreSQL)
 library(xlsx)
