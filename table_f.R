@@ -6,6 +6,7 @@
 #
 # Date: JUN-2018
 # Updated: JUN 2021 by Perttu
+# Updated: JUN 2022 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -46,7 +47,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = ","  , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -61,6 +62,9 @@ table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>%
 
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
+
+#Just to check: table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 
 #-------------------------------------------------------------------------------
 
@@ -81,9 +85,9 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial LANDING samples only, from years 2015-2019
+# choose commercial LANDING samples only, from years 2013-2021
 
-landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020)
+landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021)
 
 #-------------------------------------------------------------------------------
 
@@ -124,8 +128,11 @@ landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pi
 #       3. aggregate SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
 
+# download anadromous species sampling data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
+# and save it to workflow orig folder
 # import data from salmon samples
-salmon <- read.csv(paste0(path_salmon, "salmon.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
+
+ana <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
 
 #rename metier to correct
 salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()

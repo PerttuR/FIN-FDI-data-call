@@ -66,7 +66,7 @@ table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>%
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
-table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+#Just to check: table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
 table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 
 #-------------------------------------------------------------------------------
