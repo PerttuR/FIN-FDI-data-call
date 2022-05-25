@@ -137,18 +137,11 @@ landing2$pituus <- landing2$pituus/10
 #       3. aggregate SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
 
-# download salmon data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
+# download anadromous species sampling data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
 # and save it to workflow orig folder
 # import data from salmon samples
 
-salmon <- read.csv(paste0(path_salmon, "salmon.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
-
-#2021 data call filter 2014 and 2020
-salmon <- salmon %>% filter( YEAR == 2014 | YEAR == 2020)
-
-#rename metier to correct
-salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
-
+ana <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
 
 # make a key variable to match table A key (domain_discards or domain_landings)
 
