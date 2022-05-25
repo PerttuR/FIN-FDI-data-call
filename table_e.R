@@ -50,7 +50,7 @@ dir.create(path_out, showWarnings = FALSE)
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -67,6 +67,7 @@ table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>%
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
 table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 
 #-------------------------------------------------------------------------------
 
@@ -80,15 +81,15 @@ table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
 
 source("db.R")
 
-agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi IN(2014, 2020)"))
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2021"))
 
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, !is.na(ika))
+landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", !is.na(ika))
 
 # a lot of ages are missing
-landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, is.na(ika))
+landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", is.na(ika))
 
 
 #-------------------------------------------------------------------------------
