@@ -41,7 +41,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -52,7 +52,9 @@ table_A <- table_A %>% rename_all(tolower)
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
-table_A_sum <- table_A %>% group_by(country, year, domain_discards, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))), discards = sum(as.numeric(as.character(discards))))
+table_A_sum <- table_A %>%
+  group_by(country, year, domain_discards, species) %>% 
+  summarise(totwghtlandg = sum(as.numeric(totwghtlandg)), discards = sum(as.numeric(discards)))
 
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
@@ -77,9 +79,9 @@ source("db.R")
 
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD samples only, from years 2015-2018 
+# choose commercial DISCARD samples only, from years 2013-2021 
 
-unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020)
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2013 | vuosi == 2021)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -117,32 +119,57 @@ unwanted2 <- unwanted %>% select(vuosi, domain_discards, nayteno, pituusluokka, 
 #-------------------------------------------------------------------------------
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
-#number of samples and length measurements 
-d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
+# #number of samples and length measurements 
+# d7_8 <- unwanted %>% group_by(vuosi, domain_discards, saalislaji) %>% summarise(no_samples = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
+# 
+# # minimum and maximum lengths
+# d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+# 
+# d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino/pituusluokan_kpl_maara, na.rm = TRUE))
+# d12_13$mean_weight_at_length <- round(d12_13$mean_weight_at_length, digits = 0)
 
-# minimum and maximum lengths
-d10_11 <- unwanted %>% group_by(vuosi, domain_discards) %>% summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
 
-d12_13 <- unwanted2 %>% group_by(vuosi, domain_discards, pituusluokka) %>% summarise(no_length = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino/pituusluokan_kpl_maara, na.rm = TRUE))
-d12_13$mean_weight_at_length <- round(d12_13$mean_weight_at_length, digits = 0)
+# number of samples (2022: total_sampled_trips), no_length_measurements, min_lenght, max_length
+d12_13_15_16 <- unwanted %>% 
+  group_by(vuosi, domain_discards, saalislaji) %>% 
+  summarise(total_sampled_trips = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara), min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka))) 
+
+# no_length, mean_weight_at_length
+d18_19 <- unwanted2 %>% 
+  group_by(vuosi, domain_discards, pituusluokka) %>% 
+  summarise(no_length = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino/pituusluokan_kpl_maara, na.rm = TRUE))
+
+d18_19$mean_weight_at_length <- round(d18_19$mean_weight_at_length, digits = 0)
+
 
 #-------------------------------------------------------------------------------
 # merge the aggregated datas (above) to unwanted catch data 
 
-unwanted3 <- merge(d12_13, d10_11, by = c("vuosi", "domain_discards"))
+# unwanted3 <- merge(d12_13, d10_11, by = c("vuosi", "domain_discards"))
+# 
+# unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
 
-unwanted4 <- merge(unwanted3, d7_8, by = c("vuosi", "domain_discards"))
+unwanted3 <- merge(d18_19, d12_13_15_16, by = c("vuosi", "domain_discards"))
+
 
 # add length_unit and country variables
-unwanted4$length_unit <- "mm"
-unwanted4$country = "FIN"
+unwanted3$length_unit <- "mm"
+unwanted3$country = "FIN"
+
+# add variables included 2022
+unwanted3$discard_cv <-"NK"
+unwanted3$discard_ci_upper <-"NK"
+unwanted3$discard_ci_lower <-"NK"
+
 
 # select only those variables important to merging with table A
-unwanted5 <- unwanted4 %>% select(country, vuosi, domain_discards,saalislaji, no_samples, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length, mean_weight_at_length) %>% rename(year = vuosi, length = pituusluokka)
+unwanted4 <- unwanted3 %>% 
+  select(country, vuosi, domain_discards,saalislaji, total_sampled_trips, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length, mean_weight_at_length, discard_cv, discard_ci_upper, discard_ci_lower) %>% 
+  rename(year = vuosi, length = pituusluokka)
 
 #2020 changes definition of length measurements Count
-unwanted5$no_length_measurements <- unwanted5$no_length
-unwanted5$no_length <- "NK"
+unwanted4$no_length_measurements <- unwanted4$no_length
+unwanted4$no_length <- "NK"
 
 
 
@@ -151,8 +178,7 @@ unwanted5$no_length <- "NK"
 #-------------------------------------------------------------------------------
 
 # merge unwanted catch data with TABLE A
-table_d_pre <- merge(unwanted5, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
-
+table_d_pre <- merge(unwanted4, table_A_sum, by = c("country", "year", "domain_discards"), all.x = T)
 
 # some keys might not match, check how many there might be
 missing_domains <- table_d_pre[is.na(table_d_pre$totwghtlandg),]
@@ -170,9 +196,13 @@ table_d_pre2$nep_sub_region <-"NA"
 #table_d_pre2$mean_weight_at_length <-"NK"
 table_d_pre2$weight_unit <-"g"
 
+#2022 TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used:
+table_d_pre2$total_trips <- "NK"
+
 
 # arrange the variables in proper order and put them to upper case
-table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_region,	species,	totwghtlandg,	discards,	no_samples,	no_length_measurements,	length_unit,	min_length,	max_length,	length,	no_length, mean_weight_at_length, weight_unit) %>% rename_all(toupper)
+table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_region, species,	totwghtlandg,	discards,	discard_cv, discard_ci_upper, discard_ci_lower, total_trips, total_sampled_trips,	no_length_measurements,	length_unit,	min_length,	max_length,	length,	no_length, mean_weight_at_length, weight_unit) %>%
+  rename_all(toupper)
 
 
 # save table D and table of deleted observations
