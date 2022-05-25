@@ -147,39 +147,41 @@ ana <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = "
 
 # first make individually all the parts that form the key
 country_code <- "FIN"
-quarter <- salmon$QUARTER
-subregion <- paste("27.3.D.", salmon$ICES_OA, sep = "")
-gear_type <- salmon$METIER
+quarter <- ana$QUARTER
+subregion <- paste("27.3.D.", ana$ICES_OA, sep = "")
+gear_type <- ana$METIER
 vessel_length <- "VL0010"
-species <- salmon$FAO
+species <- ana$FAO
 commercial_cat <- "NA"
 
 
 
 # then combine them as a single key, identical to that from table A
-salmon$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+ana$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
 ## aggregate data into length classes (assuming there are no fish under 300 or over 1250)
 ## OBS! This information is not used - WHY?
 pit_bins <- seq(300,1250, by=50)
-salmon$pituusluokka <- pit_bins[findInterval(salmon$PITUUS, pit_bins)]
+ana$pituusluokka <- pit_bins[findInterval(ana$PITUUS, pit_bins)]
 
 # select important variables and rename them to match landing2 data
-salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
+ana2 <- ana %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
 
 #salmon2 weight from g -> to kg
-salmon2$paino <- salmon2$paino/1000
+ana2$paino <- ana2$paino/1000
 
 #salmon2 length from mm -> to cm
-salmon2$pituus <- salmon2$pituus/10
+ana2$pituus <- ana2$pituus/10
 
 # remove missing age values
-salmon3 <- filter(salmon2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
+ana3 <- filter(ana2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
 
+# check missing
+ana3_missing_feno_data <- filter(ana2, is.na(ika) & is.na(paino) & is.na(pituus))
 
 # merge landing and salmon data
 
-landing3 <- merge(landing2, salmon3, all = T)
+landing3 <- merge(landing2, ana3, all = T)
 
 #-------------------------------------------------------------------------------
 #                   4. aggregate AGE DATA for merging with TABLE A                     
