@@ -50,7 +50,7 @@ dir.create(path_out, showWarnings = FALSE)
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2014_2020.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -66,7 +66,8 @@ table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>%
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
-table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+#Just to check: table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 
 #-------------------------------------------------------------------------------
 
@@ -80,15 +81,15 @@ table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
 
 source("db.R")
 
-agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi IN(2014, 2020)"))
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2021"))
 
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2015-2017
 
-landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, !is.na(ika))
+landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", !is.na(ika))
 
 # a lot of ages are missing
-landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2014 | vuosi == 2020, is.na(ika))
+landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", is.na(ika))
 
 
 #-------------------------------------------------------------------------------
@@ -136,56 +137,51 @@ landing2$pituus <- landing2$pituus/10
 #       3. aggregate SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
 
-# download salmon data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
+# download anadromous species sampling data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
 # and save it to workflow orig folder
 # import data from salmon samples
 
-salmon <- read.csv(paste0(path_salmon, "salmon.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
-
-#2021 data call filter 2014 and 2020
-salmon <- salmon %>% filter( YEAR == 2014 | YEAR == 2020)
-
-#rename metier to correct
-salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
-
+ana <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
 
 # make a key variable to match table A key (domain_discards or domain_landings)
 
 # first make individually all the parts that form the key
 country_code <- "FIN"
-quarter <- salmon$QUARTER
-subregion <- paste("27.3.D.", salmon$ICES_OA, sep = "")
-gear_type <- salmon$METIER
+quarter <- ana$QUARTER
+subregion <- paste("27.3.D.", ana$ICES_OA, sep = "")
+gear_type <- ana$METIER
 vessel_length <- "VL0010"
-species <- salmon$FAO
+species <- ana$FAO
 commercial_cat <- "NA"
 
 
 
 # then combine them as a single key, identical to that from table A
-salmon$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
+ana$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
 ## aggregate data into length classes (assuming there are no fish under 300 or over 1250)
 ## OBS! This information is not used - WHY?
 pit_bins <- seq(300,1250, by=50)
-salmon$pituusluokka <- pit_bins[findInterval(salmon$PITUUS, pit_bins)]
+ana$pituusluokka <- pit_bins[findInterval(ana$PITUUS, pit_bins)]
 
 # select important variables and rename them to match landing2 data
-salmon2 <- salmon %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
+ana2 <- ana %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
 
 #salmon2 weight from g -> to kg
-salmon2$paino <- salmon2$paino/1000
+ana2$paino <- ana2$paino/1000
 
 #salmon2 length from mm -> to cm
-salmon2$pituus <- salmon2$pituus/10
+ana2$pituus <- ana2$pituus/10
 
 # remove missing age values
-salmon3 <- filter(salmon2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
+ana3 <- filter(ana2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
 
+# check missing
+ana3_missing_feno_data <- filter(ana2, is.na(ika) & is.na(paino) & is.na(pituus))
 
 # merge landing and salmon data
 
-landing3 <- merge(landing2, salmon3, all = T)
+landing3 <- merge(landing2, ana3, all = T)
 
 #-------------------------------------------------------------------------------
 #                   4. aggregate AGE DATA for merging with TABLE A                     
