@@ -207,7 +207,7 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_regio
 
 # save table D and table of deleted observations
 write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_DOMAIN.xlsx"), col.names = TRUE, row.names = FALSE)
+write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_D.xlsx"), col.names = TRUE, row.names = FALSE)
 write.xlsx(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_kilos.xlsx"), col.names = TRUE, row.names = FALSE)
 
 
