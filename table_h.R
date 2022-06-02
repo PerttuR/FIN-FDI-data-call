@@ -2,10 +2,11 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE H
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Anna-Kaisa Ylitalo
 #
 # Date: JUN-2018
 # Updated: JUN 2021 by Perttu
+#          JUN-2022 by Team
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -39,26 +40,22 @@ path_rproject <- getwd() # folder where the r project is (and the source file db
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
 
-
 #-------------------------------------------------------------------------------
 #                       1. read table H to R                       
 #-------------------------------------------------------------------------------
-setwd(path_tablea)
 
 # import table H
-table_H <- read.csv2("H_table_2014_and_2020.csv", sep = "," ,na.strings=""  )
+table_H <- read.csv2(paste0(path_tablea,"H_table_2013_2021.csv"), sep = "," ,na.strings="")
+
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 #                       2. define coordinates                       
 #-------------------------------------------------------------------------------
 
-setwd(path_rproject)
 source("spatial.R")
 
-
 midpoints <- latlon(table_H$RECTANGLE,midpoint=TRUE)
-
 
 table_H <- tibble::rowid_to_column(table_H, "ID")
 midpoints <- tibble::rowid_to_column(midpoints, "ID")
@@ -83,6 +80,5 @@ table_H$QUARTER <- as.character(table_H$QUARTER)
 
 table_H <- table_H %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, RECTANGLE_LAT, RECTANGLE_LON, C_SQUARE, SPECIES, TOTWGHTLANDG, TOTVALLANDG, CONFIDENTIAL)
 
-# set working directory to save table H
-setwd(path_out)
-write.xlsx(table_H, "TABLE_H_LANDINGS_BY_RECTANGLE.xlsx", sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
+# save table H
+write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
