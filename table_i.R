@@ -2,10 +2,11 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE I
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Anna-Kaisa Ylitalo
 #
 # Date: JUN-2018
 # Updated: JUN 2021 by Perttu
+#          JUN-2022 by Team
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -24,7 +25,7 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
-library(vmstools)
+# library(vmstools) not available for R 4.1.2
 library(magrittr)
 library(xlsx)
 
@@ -43,17 +44,17 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 #                       1. read table I to R                       
 #-------------------------------------------------------------------------------
-setwd(path_tablea)
 
 # import table I
-table_I <- read.csv2("I_table_2014_and_2020.csv", sep = ",",na.strings=""   )
+table_I <- read.csv2(paste0(path_tablea,"I_table_2013_2021.csv"), sep = "," ,na.strings="")
+
 #-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
 #                       2. define coordinates                       
 #-------------------------------------------------------------------------------
-setwd(path_rproject)
+
 source("spatial.R")
 
 
@@ -86,8 +87,8 @@ table_I <- table_I %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TEC
 
 table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESSEL_LENGTH), "NK"))
 
-# set working directory to save table H
-setwd(path_out)
-write.xlsx(table_I, "TABLE_I_EFFORT_BY_RECTANGLE.xlsx", sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
+# save table I
+
+write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
 
 
