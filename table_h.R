@@ -82,3 +82,7 @@ table_H <- table_H %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TEC
 
 # save table H
 write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
+
+## AKY: the line above did not work for me (some java related memory issue)
+library(openxlsx)
+openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
