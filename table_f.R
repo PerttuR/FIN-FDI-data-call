@@ -134,6 +134,11 @@ landing2 <- landing %>% select(vuosi, domain_landings, nayteno, pituusluokka, pi
 
 ana <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
 
+
+
+
+
+
 #rename metier to correct
 salmon <- salmon %>% mutate(METIER=replace(METIER, METIER=="FYK_ANA_0_0_0", "FYK_ANA_>0_0_0")) %>% as.data.frame()
 

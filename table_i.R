@@ -6,7 +6,7 @@
 #
 # Date: JUN-2018
 # Updated: JUN 2021 by Perttu
-#          JUN-2022 by Team
+#          JUN-2022 by Anna-Kaisa, Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -34,9 +34,7 @@ library(xlsx)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 # Common paths & 2022 folder:
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
-path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+path_tableI <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
@@ -46,7 +44,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table I
-table_I <- read.csv2(paste0(path_tablea,"I_table_2013_2021.csv"), sep = "," ,na.strings="")
+table_I <- read.csv2(paste0(path_tableI,"I_table_2013_2021.csv"), sep = "," ,na.strings="")
 
 #-------------------------------------------------------------------------------
 
@@ -89,6 +87,6 @@ table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESS
 
 # save table I
 
-write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
+xlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
 
 

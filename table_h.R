@@ -6,7 +6,7 @@
 #
 # Date: JUN-2018
 # Updated: JUN 2021 by Perttu
-#          JUN-2022 by Team
+#          JUN-2022 by Anna-Kaisa and Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
