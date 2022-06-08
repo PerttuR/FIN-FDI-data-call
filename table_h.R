@@ -25,7 +25,6 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
-# library(vmstools) not available for R 4.1.2
 library(magrittr)
 library(xlsx)
 
@@ -33,10 +32,8 @@ library(xlsx)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 # Common paths & 2022 folder:
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
-path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
-# folder where the output is saved
+path_tableh <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE H is
+# Output folder
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
 
@@ -45,7 +42,8 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table H
-table_H <- read.csv2(paste0(path_tablea,"H_table_2013_2021.csv"), sep = "," ,na.strings="")
+
+table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2021.csv"), sep = "," ,na.strings="")
 
 #-------------------------------------------------------------------------------
 
