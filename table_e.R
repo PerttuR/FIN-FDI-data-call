@@ -36,7 +36,6 @@ library(xlsx)
 
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
-path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
@@ -188,7 +187,7 @@ landing3 <- merge(landing2, ana3, all = T)
 #-------------------------------------------------------------------------------
 
 # aggregate data
-d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(no_samples = n_distinct(nayteno), no_age_measurements = n())
+d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(TOTAL_SAMPLED_TRIPS = n_distinct(nayteno), no_age_measurements = n())
 
 d9_10 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(min_age = min(ika), max_age = max(ika)) 
 
@@ -207,7 +206,7 @@ landing4$country <- "FIN"
 landing4$age_measurements_prop <- "NA"
 
 # select only those variables important to merging with table A
-landing5 <- landing4 %>% select(country, vuosi, domain_landings, no_samples, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
+landing5 <- landing4 %>% select(country, vuosi, domain_landings, TOTAL_SAMPLED_TRIPS, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = ika)
 
 
 #-------------------------------------------------------------------------------
@@ -239,7 +238,7 @@ table_e_pre2$no_age <- "NK"
 
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
-table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_region, species,	totwghtlandg,	no_samples,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight, weight_unit,	mean_length, length_unit) %>% rename_all(toupper)
+table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_region, species,	totwghtlandg,	TOTAL_SAMPLED_TRIPS,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight, weight_unit,	mean_length, length_unit) %>% rename_all(toupper)
 
 
 # set working directory to save table E and table of deleted observations
