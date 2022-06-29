@@ -24,7 +24,7 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
-library(xlsx)
+library(openxlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -81,7 +81,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2013-2021 
 
-unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi == 2013 | vuosi == 2021)
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -182,7 +182,7 @@ table_d_pre <- merge(unwanted4, table_A_sum, by = c("country", "year", "domain_d
 
 # some keys might not match, check how many there might be
 missing_domains <- table_d_pre[is.na(table_d_pre$totwghtlandg),]
-missing_domains2 = missing_domains %>% distinct(domain_discards, .keep_all = T)
+missing_domains2 <- missing_domains %>% distinct(domain_discards, .keep_all = T)
 
 length(missing_domains2$domain_discards)
 
@@ -206,9 +206,10 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_regio
 
 
 # save table D and table of deleted observations
-write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_D.xlsx"), col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_kilos.xlsx"), col.names = TRUE, row.names = FALSE)
+
+openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_D.xlsx"), colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_kilos.xlsx"), colNames = TRUE, rowNames = FALSE)
 
 
 
