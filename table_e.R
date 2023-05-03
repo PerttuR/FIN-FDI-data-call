@@ -37,7 +37,7 @@ library(openxlsx)
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 
 # create directories if missing, but ignore warnings in case they already exist
@@ -80,10 +80,10 @@ table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = L
 
 source("db.R")
 
-agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2021"))
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2022"))
 
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD samples only, from years 2015-2017
+# choose commercial LANDINGS samples only, from years 2013-2022
 
 landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", !is.na(ika))
 
