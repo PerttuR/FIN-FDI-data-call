@@ -26,7 +26,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(RPostgreSQL)
-library(xlsx)
+library(openxlsx)
 
 
 #-------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ ana3 <- filter(ana2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
 # check missing
 ana3_missing_feno_data <- filter(ana2, is.na(ika) & is.na(paino) & is.na(pituus))
 
-# merge landing and salmon data
+# Merge SUOMU DB landings data and anadromous sampling data to one dataframe
 
 landing3 <- merge(landing2, ana3, all = T)
 
@@ -242,5 +242,5 @@ table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_regi
 
 
 # set working directory to save table E and table of deleted observations
-write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", col.names = TRUE, row.names = FALSE)
+openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
