@@ -37,7 +37,7 @@ library(xlsx)
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2022")
+path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2023")
 
 # create directories if missing, but ignore warnings in case they already exist
 dir.create(path_tablea, showWarnings = FALSE)
@@ -113,7 +113,7 @@ species_metier_map <- species_gear_code_tally3
 #metiers <- filter(metier, gear_code %in% wp_gears) 
 
 #FDI data call years:
-years <- seq(from=2013, to=2021)
+years <- seq(from=2013, to=2022)
 
 super_round <- function(a) {
   round(as.numeric(as.character(a)), digits = 2)
