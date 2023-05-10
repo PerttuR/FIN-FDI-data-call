@@ -6,6 +6,7 @@
 #
 # Date: JUN-2018
 # Updated: JUN-2022 by Team
+# Updated: MAY 2023 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -34,7 +35,7 @@ library(openxlsx)
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -81,7 +82,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD samples only, from years 2013-2021 
 
-unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021)
+unwanted <- filter(lengthdata, saalisluokka == "DISCARD", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022)
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)

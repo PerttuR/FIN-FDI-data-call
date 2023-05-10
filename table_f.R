@@ -7,6 +7,7 @@
 # Date: JUN-2018
 # Updated: JUN 2021 by Perttu
 # Updated: JUN 2022 by Perttu
+# Updated: MAY 2023 by Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -37,7 +38,7 @@ library(openxlsx)
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 
 
@@ -84,9 +85,9 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial LANDING samples only, from years 2013-2021
+# choose commercial LANDING samples only, from years 2013-2022
 
-landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021)
+landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2023)
 
 #-------------------------------------------------------------------------------
 
