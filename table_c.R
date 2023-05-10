@@ -26,7 +26,7 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
-library(xlsx)
+library(openxlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -36,7 +36,7 @@ library(xlsx)
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -61,6 +61,7 @@ table_A <- table_A %>% rename_all(tolower)
 
 #-------------------------------------------------------------------------------
 
+# correct aggrecation of catch and discard 
 # sum totwghtlandg and unwanted_catch BY year, domain_discards and species from TABLE A
 table_A_sum <- table_A %>% 
   group_by(country, year, domain_discards, species) %>% 
@@ -82,20 +83,21 @@ table_A_sum$discards <- round(table_A_sum$discards, digits = 3)
 ## CHANGES 2022: in 2022 for tables C and D additional columns were added; TOTAL_TRIPS, DISCARD_CV, DISCARD_CI_UPPER,
 ##                  DISCARD_CI_LOWER to add information on the coverage rate of discard estimates.
 
-
+#source database parameters
 source("db.R")
 
+#read individual data from Suomu2 DB to dataframe;
 agedata <- read.dbTable("suomu","report_individual")
 
 
 
 #-------------------------------------------------------------------------------
-# choose commercial DISCARD INDIV samples only, from years 2013 to 2021
+# choose commercial DISCARD INDIV samples only, from years 2013 to 2022 where agedata exists
 
-unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021, !is.na(ika))
+unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022, !is.na(ika))
 
 # CHECK missing age data numbers: age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
-unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2021, is.na(ika))
+unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022, is.na(ika))
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -195,8 +197,9 @@ missing_domains <- table_c_pre[is.na(table_c_pre$totwghtlandg),]
 missing_domains2 <- missing_domains %>% distinct(domain_discards, .keep_all = T)
 
 length(missing_domains2$domain_discards)
+table(missing_domains2$domain_discards)
 
-# delete the missmatch values
+# delete the domains with no age
 table_c_pre2 <- filter(table_c_pre, !is.na(totwghtlandg))
 
 
@@ -226,9 +229,9 @@ table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_regi
 
 # save table C and table of deleted observations
 
-write.xlsx(table_c,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", col.names = TRUE, row.names = FALSE)
-write.xlsx(table_c_pre,paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx"), sheetName = "TABLE_C_all_merged", col.names = TRUE, row.names = FALSE)
-write.xlsx(missing_domains2,paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", col.names = TRUE, row.names = FALSE)
-
+# set working directory to save table E and table of deleted observations
+openxlsx::write.xlsx(table_c, paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(table_c_pre, paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx"), sheetName = "TABLE_C_all_merged", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", colNames = TRUE, rowNames = FALSE)
 
 
