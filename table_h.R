@@ -38,19 +38,24 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 
 
 #-------------------------------------------------------------------------------
-#                       1. read table H to R                       
+#                       1. Import table H                    
 #-------------------------------------------------------------------------------
 
 # import table H
 
-table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2021.csv"), sep = "," ,na.strings="")
+table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2022.csv"), sep = "," ,na.strings="")
+
 
 #-------------------------------------------------------------------------------
 
+
+
 #-------------------------------------------------------------------------------
-#                       2. define coordinates                       
+#                       2. Modify table H                     
 #-------------------------------------------------------------------------------
 
+
+# .. define coordinates 
 source("spatial.R")
 
 midpoints <- latlon(table_H$RECTANGLE,midpoint=TRUE)
@@ -62,25 +67,42 @@ table_H <- left_join(table_H, midpoints,copy = TRUE)
 
 table_H <- table_H %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 
+# .. add empty col for new metier
+table_H$METIER_7 <- NA
+
 
 
 #-------------------------------------------------------------------------------
-#                       3. prepare file for upload and save to path                       
+#                       3. Validate table H                       
 #-------------------------------------------------------------------------------
 
 
-names(table_H) %<>% toupper
+#                               @TODO  
+
+
+#-------------------------------------------------------------------------------
+#                       4. Write table H                       
+#-------------------------------------------------------------------------------
+
+# ... preparation for writing 
+colnames(table_H) <- toupper(colnames(table_H))
+
 table_H$RECTANGLE_TYPE <- "05*1"
 
 table_H$C_SQUARE <- "NA"
-#quartes to string
+
+# ... convert quarters to char
 table_H$QUARTER <- as.character(table_H$QUARTER)
 
-table_H <- table_H %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, RECTANGLE_LAT, RECTANGLE_LON, C_SQUARE, SPECIES, TOTWGHTLANDG, TOTVALLANDG, CONFIDENTIAL)
+# ... select & order cols 
+table_H <- table_H %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
+                              TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, 
+                              EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, RECTANGLE_LAT, 
+                              RECTANGLE_LON, C_SQUARE, SPECIES, TOTWGHTLANDG, TOTVALLANDG, CONFIDENTIAL)
 
 # save table H
 write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
 
 ## AKY: the line above did not work for me (some java related memory issue)
-library(openxlsx)
-openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
+#library(openxlsx)
+#openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
