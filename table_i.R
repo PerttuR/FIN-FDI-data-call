@@ -12,7 +12,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for futher prepare FDI data table H from partial Table H from statistical DEP (Pirkko)
+# The following script is for futher prepare FDI data table I from partial Table H from statistical DEP (Pirkko)
 #-------------------------------------------------------------------------------
 
 
@@ -34,42 +34,51 @@ library(xlsx)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 # Common paths & 2022 folder:
-path_tableI <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_tablei <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE I is 
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
 
 #-------------------------------------------------------------------------------
-#                       1. read table I to R                       
+#                       1. Import table I                        
 #-------------------------------------------------------------------------------
 
-# import table I
-table_I <- read.csv2(paste0(path_tableI,"I_table_2013_2021.csv"), sep = "," ,na.strings="")
+# .. import table I
+table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022.csv"), sep = "," ,na.strings="")
+
+View(table_I)
 
 #-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
-#                       2. define coordinates                       
+#                       2. Modify table I                  
 #-------------------------------------------------------------------------------
 
+
+# .. add empty col for new metier 
+table_I$METIER_7 <- NA
+
+# ... def coordinates 
 source("spatial.R")
 
-
 midpoints <- latlon(table_I$RECTANGLE,midpoint=TRUE)
-
 
 table_I <- tibble::rowid_to_column(table_I, "ID")
 midpoints <- tibble::rowid_to_column(midpoints, "ID")
 
-
 table_I <- left_join(table_I, midpoints,copy = TRUE, by="ID")
-
 table_I <- table_I %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 
 
 #-------------------------------------------------------------------------------
-#                       3. prepare file for upload and save to path                       
+#                       3. Validate table I                       
+#-------------------------------------------------------------------------------
+
+#                             @TODO 
+
+#-------------------------------------------------------------------------------
+#                       4. Write table I                       
 #-------------------------------------------------------------------------------
 
 
@@ -77,7 +86,7 @@ names(table_I) %<>% toupper
 table_I$RECTANGLE_TYPE <- "05*1"
 table_I$C_SQUARE <- "NA"
 
-#quartes to string
+# .. quarters to string
 table_I$QUARTER <- as.character(table_I$QUARTER)
 
 
@@ -85,8 +94,7 @@ table_I <- table_I %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TEC
 
 table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESSEL_LENGTH), "NK"))
 
-# save table I
-
+# .. save table I
 xlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
 
 
