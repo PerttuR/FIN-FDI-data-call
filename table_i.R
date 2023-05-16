@@ -46,8 +46,6 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 # .. import table I
 table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022.csv"), sep = "," ,na.strings="")
 
-View(table_I)
-
 #-------------------------------------------------------------------------------
 
 
@@ -74,6 +72,13 @@ table_I <- table_I %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
 #-------------------------------------------------------------------------------
 #                       3. Validate table I                       
 #-------------------------------------------------------------------------------
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_I, Metier6FishingActivity)
+
 
 #                             @TODO 
 

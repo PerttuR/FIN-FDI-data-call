@@ -2,11 +2,12 @@
 #
 # Script to process FIN- commercial data for STECF FDI data call - TABLE A
 #
-# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
+# Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa, Antti Sykkö
 #
 # Creation Date: JUL-2019
 # Updated: JUN 2021 (Perttu)
 # Updated: JUN 2022 (Perttu)
+# Updated: MAY 2023 (Antti)
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -75,6 +76,13 @@ table_A$QUARTER <- as.character(table_A$QUARTER)
 #-------------------------------------------------------------------------------
 #                       3. Validate table A                      
 #-------------------------------------------------------------------------------
+
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_A, Metier6FishingActivity)
 
 #FDI database did not allow "=" in DOMAINS.. now fixed
 #library(stringr)

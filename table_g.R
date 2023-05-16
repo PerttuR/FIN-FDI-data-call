@@ -19,9 +19,10 @@
 #- Clear workspace
 rm(list=ls())
 
-# needed libraries
+# libraries
 library(dplyr)
 library(xlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -65,6 +66,13 @@ table_G <- table_G[, c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_T
 #-------------------------------------------------------------------------------
 #                   3. Validate table G                       
 #-------------------------------------------------------------------------------
+
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_G, Metier6FishingActivity)
 
 
 #                           @TODO

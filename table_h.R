@@ -76,6 +76,12 @@ table_H$METIER_7 <- NA
 #                       3. Validate table H                       
 #-------------------------------------------------------------------------------
 
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_H, Metier6FishingActivity)
 
 #                               @TODO  
 
