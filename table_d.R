@@ -206,7 +206,7 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_regio
   rename_all(toupper)
 
 
-# save table D and table of deleted observations
+# save table D and table of deleted observations  test
 
 openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
 openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_D.xlsx"), colNames = TRUE, rowNames = FALSE)
