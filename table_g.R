@@ -19,9 +19,10 @@
 #- Clear workspace
 rm(list=ls())
 
-# needed libraries
+# libraries
 library(dplyr)
 library(xlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -30,18 +31,56 @@ library(xlsx)
 
 # Common paths & 2022 folder:
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_tablea
+
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
 
+
+#-------------------------------------------------------------------------------
+#                   1. Import table G                       
+#-------------------------------------------------------------------------------
+
 # import table G
-table_G <- read.csv2(paste0(path_tablea,.Platform$file.sep,"G_table_2013_2021.csv"), sep = "," , na.strings = "")
+table_G <- read.csv2(paste0(path_tablea,.Platform$file.sep,"G_table_2013_2022.csv"), sep = "," , na.strings = "")
 
-#select order of columns
-table_G <- table_G %>% select("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "MESH_SIZE_RANGE", "METIER", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "TOTSEADAYS", "TOTKWDAYSATSEA", "TOTGTDAYSATSEA", "TOTFISHDAYS", "TOTKWFISHDAYS", "TOTGTFISHDAYS", "HRSEA", "KWHRSEA", "GTHRSEA", "TOTVES", "CONFIDENTIAL")
+# .. add empty col for new metier 
+table_G$METIER_7 <- NA
 
-# rename columns to UPPER and save as .xlsx
-colnames(table_A)    <- c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "MESH_SIZE_RANGE", "METIER", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "TOTSEADAYS", "TOTKWDAYSATSEA", "TOTGTDAYSATSEA", "TOTFISHDAYS", "TOTKWFISHDAYS", "TOTGTFISHDAYS", "HRSEA", "KWHRSEA", "GTHRSEA", "TOTVES", "CONFIDENTIAL")
+# ... order cols 
+table_G <- table_G[, c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", 
+                              "GEAR_TYPE", "TARGET_ASSEMBLAGE", "MESH_SIZE_RANGE", "METIER", "METIER_7" ,"SUPRA_REGION", 
+                              "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "TOTSEADAYS", 
+                              "TOTKWDAYSATSEA", "TOTGTDAYSATSEA", "TOTFISHDAYS", "TOTKWFISHDAYS", "TOTGTFISHDAYS", 
+                              "HRSEA", "KWHRSEA", "GTHRSEA", "TOTVES", "CONFIDENTIAL")]
+ 
 
-write.xlsx(table_A,paste0(path_out,.Platform$file.sep,"TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
+
+#-------------------------------------------------------------------------------
+#                   2. Modify table G                       
+#-------------------------------------------------------------------------------
+
+#                           @TODO
+
+#-------------------------------------------------------------------------------
+#                   3. Validate table G                       
+#-------------------------------------------------------------------------------
+
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_G, Metier6FishingActivity)
+
+
+#                           @TODO
+
+
+#-------------------------------------------------------------------------------
+#                   X. Write table G                       
+#-------------------------------------------------------------------------------
+
+#write.xlsx(table_A,paste0(path_out,.Platform$file.sep,"TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
 
