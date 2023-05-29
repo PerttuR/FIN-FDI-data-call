@@ -58,7 +58,6 @@ table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022.csv"), sep = "," ,na.
 
 #                         @TODO if needed 
 
-View(table_J)
 
 
 #-------------------------------------------------------------------------------
