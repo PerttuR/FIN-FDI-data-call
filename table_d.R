@@ -42,7 +42,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -157,7 +157,7 @@ unwanted3 <- merge(d18_19, d12_13_15_16, by = c("vuosi", "domain_discards"))
 unwanted3$length_unit <- "mm"
 unwanted3$country = "FIN"
 
-# add variables included 2022
+# add variables included in 2022 datacall
 unwanted3$discard_cv <-"NK"
 unwanted3$discard_ci_upper <-"NK"
 unwanted3$discard_ci_lower <-"NK"
@@ -188,7 +188,7 @@ missing_domains2 <- missing_domains %>% distinct(domain_discards, .keep_all = T)
 length(missing_domains2$domain_discards)
 
 
-# delete the missmatch values
+# delete the missmatch values if results are satisfactory
 table_d_pre2 <- filter(table_d_pre, !is.na(totwghtlandg))
 missing_Discard_kilos_table_d_pre2 <- filter(table_d_pre, is.na(totwghtlandg))
 
@@ -206,11 +206,11 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_regio
   rename_all(toupper)
 
 
-# save table D and table of deleted observations
+# save table D and table of deleted observations  test
 
 openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
 openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_D.xlsx"), colNames = TRUE, rowNames = FALSE)
-openxlsx::write.xlsx(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_D_no_kilos.xlsx"), colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"UNMERGING_and_DELETED_TABLE_D.xlsx"), sheetName = "UNMERGING_and_DELETED_TABLE_D", colNames = TRUE, rowNames = FALSE)
 
 
 

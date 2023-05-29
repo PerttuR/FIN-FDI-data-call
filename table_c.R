@@ -51,7 +51,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 # new_matrix <- rbind(table_A_2014_2021, table_A_2013)
 # table_A <- rbind(new_matrix, table_A_2015_2020)
 
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
 
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
@@ -233,6 +233,6 @@ table_c <- table_c_pre2  %>% select(country,	year,	domain_discards, nep_sub_regi
 # set working directory to save table E and table of deleted observations
 openxlsx::write.xlsx(table_c, paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
 openxlsx::write.xlsx(table_c_pre, paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE_RAW_MERGED.xlsx"), sheetName = "TABLE_C_all_merged", colNames = TRUE, rowNames = FALSE)
-openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_puuttuvat_poisheitto_domainit", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"UNMERGING_and_DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_missing_discard_domains", colNames = TRUE, rowNames = FALSE)
 
 
