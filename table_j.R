@@ -25,9 +25,9 @@
 rm(list=ls())
 
 # needed libraries
-#library(dplyr)
+library(dplyr)
 #library(magrittr)
-#library(xlsx)
+library(xlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -35,7 +35,7 @@ rm(list=ls())
 # Common paths & 2022 folder:
 path_tablej <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE J is
 # Output folder
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 
 #-------------------------------------------------------------------------------
@@ -65,7 +65,11 @@ table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022.csv"), sep = "," ,na.
 #-------------------------------------------------------------------------------
 
 
-#                               @TODO  
+# .. check that correct cols exist & order 
+table_J <- table_J[, c("COUNTRY","YEAR","VESSEL_LENGTH","FISHING_TECH",
+                       "SUPRA_REGION","GEO_INDICATOR","PRINCIPAL_SUB_REGION",
+                       "TOTTRIPS","TOTKW","TOTGT","TOTVES",
+                       "AVGAGE","AVGLOA","MAXSEADAYS")]
 
 
 #-------------------------------------------------------------------------------
@@ -76,6 +80,6 @@ table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022.csv"), sep = "," ,na.
 colnames(table_J) <- toupper(colnames(table_J))
 
 # save table H
-write.xlsx(table_J, paste0(path_out,.Platform$file.sep,"TABLE_J_CAPACITY.xlsx"), 
-           sheetName = "TABLE_J", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_J, paste0(path_out,.Platform$file.sep,"FIN_TABLE_J_CAPACITY.xlsx"), 
+           sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
 
