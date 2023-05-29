@@ -36,8 +36,7 @@ library(xlsx)
 # Common paths & 2022 folder:
 path_tablei <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE I is 
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
-
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 #-------------------------------------------------------------------------------
 #                       1. Import table I                        
@@ -55,7 +54,7 @@ table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022.csv"), sep = "," ,na.
 
 
 # .. add empty col for new metier 
-table_I$METIER_7 <- NA
+table_I$METIER_7 <- 'NA'
 
 # ... def coordinates 
 source("spatial.R")
@@ -66,7 +65,21 @@ table_I <- tibble::rowid_to_column(table_I, "ID")
 midpoints <- tibble::rowid_to_column(midpoints, "ID")
 
 table_I <- left_join(table_I, midpoints,copy = TRUE, by="ID")
-table_I <- table_I %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
+table_I <- table_I %>% rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG)
+
+
+
+# .. Invalid code: GNS_SPF_16-109_0_0
+table_I$METIER <- ifelse(table_I$METIER == "GNS_SPF_16-109_0_0", "GNS_SPF_16-31_0_0", table_I$METIER)
+# .. Invalid code: OTM_DEF_>=105_1_120
+table_I$METIER <- ifelse(table_I$METIER == "OTM_DEF_>=105_1_120", "OTM_DEF_105-115_1_120", table_I$METIER)
+# .. Invalid code: OTM_SPF_16-104_0_0
+table_I$METIER <- ifelse(table_I$METIER == "OTM_SPF_16-104_0_0", "OTM_SPF_16-31_0_0", table_I$METIER)
+# .. Invalid code: PTM_SPF_16-104_0_0
+table_I$METIER <- ifelse(table_I$METIER == "PTM_SPF_16-104_0_0", "PTM_SPF_16-31_0_0", table_I$METIER)
+# .. Invalid code: OTB_DEF_>=105_1_120
+table_I$METIER <- ifelse(table_I$METIER == "OTB_DEF_>=105_1_120", "OTB_DEF_115-120_0_0", table_I$METIER)
+
 
 
 #-------------------------------------------------------------------------------
@@ -79,8 +92,6 @@ Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
 # .. validate metier in table G 
 validateMetierOverall(table_I, Metier6FishingActivity)
 
-
-#                             @TODO 
 
 #-------------------------------------------------------------------------------
 #                       4. Write table I                       
@@ -95,11 +106,16 @@ table_I$C_SQUARE <- "NA"
 table_I$QUARTER <- as.character(table_I$QUARTER)
 
 
-table_I <- table_I %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, RECTANGLE_LAT, RECTANGLE_LON, C_SQUARE, TOTFISHDAYS, CONFIDENTIAL)
+table_I <- table_I %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GEAR_TYPE,
+                              TARGET_ASSEMBLAGE,MESH_SIZE_RANGE,METIER,METIER_7,SUPRA_REGION,
+                              SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR, SPECON_TECH,DEEP,
+                              RECTANGLE_TYPE,LATITUDE,LONGITUDE,C_SQUARE,TOTFISHDAYS,CONFIDENTIAL)
+
+
 
 table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESSEL_LENGTH), "NK"))
 
 # .. save table I
-xlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
+xlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
 
 
