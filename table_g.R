@@ -30,23 +30,25 @@ library(icesVocab)
 
 
 # Common paths & 2022 folder:
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_tablea
+path_tables <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where csv tables located 
+path_tables
 
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2022")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
+
+path_out
 
 #-------------------------------------------------------------------------------
 #                   1. Import table G                       
 #-------------------------------------------------------------------------------
 
 # import table G
-table_G <- read.csv2(paste0(path_tablea,.Platform$file.sep,"G_table_2013_2022.csv"), sep = "," , na.strings = "")
+table_G <- read.csv2(paste0(path_tables,.Platform$file.sep,"G_table_2013_2022.csv"), sep = "," , na.strings = "")
 
 # .. add empty col for new metier 
-table_G$METIER_7 <- NA
+table_G$METIER_7 <- 'NA'
 
 # ... order cols 
 table_G <- table_G[, c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", 
@@ -61,7 +63,23 @@ table_G <- table_G[, c("COUNTRY", "YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_T
 #                   2. Modify table G                       
 #-------------------------------------------------------------------------------
 
-#                           @TODO
+# table(table_G$METIER, useNA = 'always', table_G$YEAR)
+
+# .... modify invalid metier codes 
+# View(Metier6FishingActivity[grep(paste0("^", "OTM_DEF_"), Metier6FishingActivity$Key), ])
+
+
+# .. Invalid code: GNS_SPF_16-109_0_0
+table_G$METIER <- ifelse(table_G$METIER == "GNS_SPF_16-109_0_0", "GNS_SPF_16-31_0_0", table_G$METIER)
+# .. Invalid code: OTM_DEF_>=105_1_120
+table_G$METIER <- ifelse(table_G$METIER == "OTM_DEF_>=105_1_120", "OTM_DEF_105-115_1_120", table_G$METIER)
+# .. Invalid code: OTM_SPF_16-104_0_0
+table_G$METIER <- ifelse(table_G$METIER == "OTM_SPF_16-104_0_0", "OTM_SPF_16-31_0_0", table_G$METIER)
+# .. Invalid code: PTM_SPF_16-104_0_0
+table_G$METIER <- ifelse(table_G$METIER == "PTM_SPF_16-104_0_0", "PTM_SPF_16-31_0_0", table_G$METIER)
+# .. Invalid code: OTB_DEF_>=105_1_120
+table_G$METIER <- ifelse(table_G$METIER == "OTB_DEF_>=105_1_120", "OTB_DEF_115-120_0_0", table_G$METIER)
+
 
 #-------------------------------------------------------------------------------
 #                   3. Validate table G                       
@@ -75,12 +93,11 @@ Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
 validateMetierOverall(table_G, Metier6FishingActivity)
 
 
-#                           @TODO
 
 
 #-------------------------------------------------------------------------------
 #                   X. Write table G                       
 #-------------------------------------------------------------------------------
 
-#write.xlsx(table_A,paste0(path_out,.Platform$file.sep,"TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
 
