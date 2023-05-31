@@ -22,12 +22,15 @@
 # install.packages("xlsx")
 
 
+# Add extension _sas to the csv's in orig-folder 
+
 #- Clear workspace
 rm(list=ls())
 
 # needed libraries .. testi
 library(dplyr)
 library(xlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -46,7 +49,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022_SAS.csv"), sep = "," , na.strings = "")
 
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
@@ -103,7 +106,6 @@ Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
 # .. validate metier in table G 
 validateMetierOverall(table_A, Metier6FishingActivity)
 
-names(table_A)
 
 #FDI database did not allow "=" in DOMAINS.. now fixed
 #library(stringr)
@@ -127,8 +129,13 @@ table_A <- table_A[, c("COUNTRY","YEAR","QUARTER","VESSEL_LENGTH","FISHING_TECH"
 #                       4. Write table A                      
 #-------------------------------------------------------------------------------
 
+# ... write delivery to csv (orig-folder)
+write.csv(table_A, paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), row.names = FALSE)
+
+
+# ... write delivery to xlsx file 
 write.xlsx(table_A,paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), 
-           sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+           sheetName = "TABLE_A", col.names = TRUE, row.names = FALSE)
 
 
 #-------------------------------------------------------------------------------

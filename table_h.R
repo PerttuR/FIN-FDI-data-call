@@ -28,6 +28,7 @@ rm(list=ls())
 library(dplyr)
 library(magrittr)
 library(xlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -43,7 +44,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table H
-table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2022.csv"), sep = "," ,na.strings="")
+table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2022_SAS.csv"), sep = "," ,na.strings="")
 
 
 #-------------------------------------------------------------------------------
@@ -139,6 +140,9 @@ table_H$MESH_SIZE_RANGE <- ifelse(is.na(table_H$MESH_SIZE_RANGE) & table_H$METIE
 
 table(table_H$MESH_SIZE_RANGE, useNA = 'always')
 
+
+# ... write delivery to csv (orig-folder)
+write.csv(table_H, paste0(path_tableh,.Platform$file.sep,"H_table_2013_2022.csv"), row.names = FALSE)
 
 # save table H
 #write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)

@@ -28,7 +28,7 @@ library(dplyr)
 # library(vmstools) not available for R 4.1.2
 library(magrittr)
 library(xlsx)
-
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -43,7 +43,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # .. import table I
-table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022.csv"), sep = "," ,na.strings="")
+table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022_SAS.csv"), sep = "," ,na.strings="")
 
 #-------------------------------------------------------------------------------
 
@@ -114,6 +114,9 @@ table_I <- table_I %>% select(COUNTRY,YEAR,QUARTER,VESSEL_LENGTH,FISHING_TECH,GE
 
 
 table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESSEL_LENGTH), "NK"))
+
+# ... write delivery to csv (orig-folder)
+write.csv(table_I, paste0(path_tablei,.Platform$file.sep,"I_table_2013_2022.csv"), row.names = FALSE)
 
 # .. save table I
 xlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)

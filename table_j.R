@@ -28,6 +28,7 @@ rm(list=ls())
 library(dplyr)
 #library(magrittr)
 library(xlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -44,7 +45,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 
 # ... import table J
 
-table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022.csv"), sep = "," ,na.strings="")
+table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022_SAS.csv"), sep = "," ,na.strings="")
 
 
 #-------------------------------------------------------------------------------
@@ -78,6 +79,9 @@ table_J <- table_J[, c("COUNTRY","YEAR","VESSEL_LENGTH","FISHING_TECH",
 
 # ... preparation for writing 
 colnames(table_J) <- toupper(colnames(table_J))
+
+# ... write delivery to csv (orig-folder)
+write.csv(table_J, paste0(path_tablej,.Platform$file.sep,"J_table_2013_2022.csv"), row.names = FALSE)
 
 # save table H
 write.xlsx(table_J, paste0(path_out,.Platform$file.sep,"FIN_TABLE_J_CAPACITY.xlsx"), 

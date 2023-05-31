@@ -30,8 +30,8 @@ library(icesVocab)
 
 
 # Common paths & 2022 folder:
-path_tables <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where csv tables located 
-path_tables
+path_tableg <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where csv tables located 
+
 
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
@@ -45,8 +45,8 @@ path_out
 #-------------------------------------------------------------------------------
 
 # import table G
-table_G <- read.csv2(paste0(path_tables,.Platform$file.sep,"G_table_2013_2022.csv"), sep = "," , na.strings = "")
-
+table_G <- read.csv2(paste0(path_tableg,.Platform$file.sep,"G_table_2013_2022_SAS.csv"), sep = "," , na.strings = "")
+ 
 # .. add empty col for new metier 
 table_G$METIER_7 <- 'NA'
 
@@ -99,5 +99,9 @@ validateMetierOverall(table_G, Metier6FishingActivity)
 #                   X. Write table G                       
 #-------------------------------------------------------------------------------
 
+# ... write delivery to csv (orig-folder)
+write.csv(table_G, paste0(path_tableg,.Platform$file.sep,"G_table_2013_2022.csv"), row.names = FALSE)
+
+# ... write del as xlsx to results folder 
 write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
 
