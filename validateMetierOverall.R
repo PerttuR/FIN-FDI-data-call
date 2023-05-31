@@ -25,12 +25,13 @@
 
 validateMetierOverall <- function(D, codelist) {
   
+  
   invalidMetiers <- toString(unique(
     D[which(
       !(D$METIER %in% codelist$Key) 
       & D$METIER != "NK"),]$METIER))
   
-  invalidMetiers 
+   
   
   dataName <- deparse(substitute(D))
   invalidMetiersString <- toString(sort(invalidMetiers))
@@ -40,8 +41,13 @@ validateMetierOverall <- function(D, codelist) {
   invalidMetiersString <- paste0("  ", invalidMetiersString)
   
   # ... check what metiers are wrong type
-  message("Invalid Metiers in data ", dataName, ": ")
-  cat(invalidMetiersString)
+  if (!(invalidMetiers == "")) {
+    message("Invalid Metiers in data ", dataName, ": ")
+    cat(invalidMetiersString)
+  } else {
+    message("All metiers are valid in data ", dataName, ".")
+  }
+  
   
 }
 
