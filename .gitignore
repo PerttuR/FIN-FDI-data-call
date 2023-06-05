@@ -1,6 +1,9 @@
 # DB params
 db_params.R
 
+# Mongo params
+mongo_params.R
+
 # Data files
 *.csv
 

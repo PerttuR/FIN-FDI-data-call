@@ -7,6 +7,7 @@
 #
 # Date: JUN-2018
 # Updated: MAY-2022
+# Updated: JUN-2023 (Perttu)
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -27,6 +28,9 @@ rm(list=ls())
 library(dplyr)
 library(RPostgreSQL)
 library(openxlsx)
+library(mongolite)
+library(tidyr)
+library(lubridate)
 
 
 #-------------------------------------------------------------------------------
@@ -133,14 +137,101 @@ landing2$paino <- landing2$paino/1000
 landing2$pituus <- landing2$pituus/10
 
 #--------------------------------------------------------------------------------------------
-#       3. aggregate SALMON data to length classes and merge it with LANDING data                       
+#       3. Import SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
 
 # download anadromous species sampling data from : http://suomu.rktl.fi/lohi/Report/stecf?format=csv
 # and save it to workflow orig folder
 # import data from salmon samples
+# -> The final data from http://suomu.rktl.fi/lohi/Report/stecf?format=csv is anadromous_samples_2013_2021.csv
+# Database no longer in use !!
+# New database to anadromous samples from 2022 onwards is:  
 
-ana <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
+ana1 <- read.csv(paste0(path_salmon, "anadromous_samples_2013_2021.csv"), sep = ";", header = T, stringsAsFactors=FALSE)
+
+
+
+
+#--------------------------------------------------------------------------------------------
+#       3.1 Functions to use Mongo Individual data                      
+#--------------------------------------------------------------------------------------------
+
+
+
+get.rectangle <- function(individual) {
+  rectangle <- ices_rectangle[ices_rectangle$rktl_name ==first(individual$ruutu),]
+  if(nrow(rectangle) != 1) {
+    stop("Missing rectangle")
+  }
+  return(rectangle)
+}
+
+get.stock <- function(batch, rectangle) {
+  if(batch$aphia_id == 127186) {
+    if(rectangle$rdb_area_code == "27.3.d.32") {
+      return("sal-32")
+    } else {
+      return("sal-2431")
+    }
+  }
+  return("")
+}
+
+get.age <- function(individual) {
+  mevu <- as.integer(individual$me_vu)
+  povu <- as.integer(individual$po_vu)
+  povu <- ifelse(is.na(povu), 2, povu)
+  return(ifelse(is.na(mevu), NA, mevu + povu))
+}
+
+
+#--------------------------------------------------------------------------------------------
+#       3.2 Merge ANA1 (Oracle ana-samples 2013-2021) and ANA2 (MOngo 2022 onwards samples)                    
+#--------------------------------------------------------------------------------------------
+
+source("mongo.R")
+
+ices_rectangle <- read.csv2("ices_rectangle.csv", sep=",", dec=".")
+
+batch <- read.mongoCollectionToDataframe("batch")
+individual <- read.mongoCollectionToDataframe("individual")
+species <- read.mongoCollectionToDataframe("species")
+species$laji <- as.character(species$laji)
+batch <- batch %>% left_join(species, by = c("species_id" = "laji"))
+
+# Resolve trip names
+
+batch$trip_id <- paste(batch$year, batch$lajikv1, batch$batch_number, sep="_")
+
+#join to individual
+
+individual <- individual %>% left_join(batch, by = c("sample_id" = "batch_id"))
+
+individual <- individual %>%
+  filter(!is.na(as.numeric(pitcm))) %>%
+  mutate(length = as.numeric(pitcm) * 10) %>%
+  mutate(lengthclass = length - length %% 10) %>%
+  arrange(lengthclass, length)
+
+#Age to a single number from me_vu and po_vu variables
+individual$ika <- get.age(individual)
+
+individual$month <- format(as.Date(individual$pvm, format="%Y-%m-%d"),"%m")
+
+#add quarters
+Q1 <- c("01","02","03")
+Q2 <- c("04","05","06")
+Q3 <- c("07","08","09")
+Q4 <- c("10","11","12")
+individual$quarter [individual$month %in% Q1]<-1
+individual$quarter [individual$month %in% Q3]<-3
+individual$quarter [individual$month %in% Q4]<-4
+individual$quarter [individual$month %in% Q2]<-2
+
+#--------------------------------------------------------------------------------------------
+#       3.3 aggregate SALMON data to length classes and merge it with LANDING data                       
+#--------------------------------------------------------------------------------------------
+
 
 # make a key variable to match table A key (domain_discards or domain_landings)
 

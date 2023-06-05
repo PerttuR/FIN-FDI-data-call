@@ -213,7 +213,8 @@ table_c_pre2$no_age_measurements <- table_c_pre2$no_age
 #2020 DATACALL MUUTOS: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
 table_c_pre2$no_age <- "NK"
 
-#2022 TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used:
+# beginning from 2022 datacall TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used
+# We need this value to table_A:
 table_c_pre2$total_trips <- "NK"
 
 #test, delete when fdi db ready:
