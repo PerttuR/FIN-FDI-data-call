@@ -228,6 +228,11 @@ individual$quarter [individual$month %in% Q3]<-3
 individual$quarter [individual$month %in% Q4]<-4
 individual$quarter [individual$month %in% Q2]<-2
 
+
+# TO DO select correct variables from MONGO data!!!
+
+
+
 #--------------------------------------------------------------------------------------------
 #       3.3 aggregate SALMON data to length classes and merge it with LANDING data                       
 #--------------------------------------------------------------------------------------------
