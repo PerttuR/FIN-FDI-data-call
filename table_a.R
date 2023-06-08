@@ -13,7 +13,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is for preparing FDI data tables from Table A from statistical DEP (Pirkko)
+# The following script is for preparing FDI data tables from Table A from statistical DEP
 #-------------------------------------------------------------------------------
 
 
