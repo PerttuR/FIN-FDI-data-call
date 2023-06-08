@@ -31,7 +31,7 @@ library(openxlsx)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 
-# Common paths & 2022 folder:
+# Common paths & 2023 folder:
 path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
@@ -197,7 +197,8 @@ table_d_pre2$nep_sub_region <-"NA"
 #table_d_pre2$mean_weight_at_length <-"NK"
 table_d_pre2$weight_unit <-"g"
 
-#2022 TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used:
+# beginning from 2022 datacall TOTAL NUMBER OF TRIPS should come from logbook database KAKE. Now dummy NK value used
+# We need this value to table_A:
 table_d_pre2$total_trips <- "NK"
 
 
