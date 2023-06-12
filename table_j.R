@@ -85,5 +85,5 @@ write.csv(table_J, paste0(path_tablej,.Platform$file.sep,"J_table_2013_2022.csv"
 
 # save table H
 write.xlsx(table_J, paste0(path_out,.Platform$file.sep,"FIN_TABLE_J_CAPACITY.xlsx"), 
-           sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
+           sheetName = "TABLE_J", col.names = TRUE, row.names = FALSE)
 

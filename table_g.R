@@ -38,7 +38,7 @@ path_rproject <- getwd() # folder where the r project is (and the source file db
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
 
-path_out
+
 
 #-------------------------------------------------------------------------------
 #                   1. Import table G                       
@@ -103,5 +103,5 @@ validateMetierOverall(table_G, Metier6FishingActivity)
 write.csv(table_G, paste0(path_tableg,.Platform$file.sep,"G_table_2013_2022.csv"), row.names = FALSE)
 
 # ... write del as xlsx to results folder 
-write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
+write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", col.names = TRUE, row.names = FALSE)
 
