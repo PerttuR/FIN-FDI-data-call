@@ -26,6 +26,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(openxlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -212,6 +213,27 @@ table_D <- table_d_pre2 %>% select(country,	year,	domain_discards, nep_sub_regio
 openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
 openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_DOMAINS_TABLE_D.xlsx"), colNames = TRUE, rowNames = FALSE)
 openxlsx::write.xlsx(missing_Discard_kilos_table_d_pre2, paste0(path_out,.Platform$file.sep,"UNMERGING_and_DELETED_TABLE_D.xlsx"), sheetName = "UNMERGING_and_DELETED_TABLE_D", colNames = TRUE, rowNames = FALSE)
+
+# Validation of data added during 2023 datacall
+
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_D, Metier6FishingActivity)
+
+
+#Plotting some columns to explore data
+
+source("plotTimeSeriesByGroup.R")
+
+plotTimeSeriesByGroup(table_D, "TOTWGHTLANDG", "SPECIES", fun_ = sum)
+plotTimeSeriesByGroup(table_D, "DISCARDS", "SPECIES", fun_ = sum)
+plotTimeSeriesByGroup(table_D, "TOTWGHTLANDG", "DOMAIN_DISCARDS", fun_ = sum)
+plotTimeSeriesByGroup(table_D, "DISCARDS", "DOMAIN_DISCARDS", fun_ = sum)
+plotTimeSeriesByGroup(table_D, "TOTWGHTLANDG", "YEAR", fun_ = sum)
+plotTimeSeriesByGroup(table_D, "NO_LENGTH_MEASUREMENTS", "YEAR", fun_ = sum)
 
 
 

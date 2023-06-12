@@ -28,6 +28,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(openxlsx)
+library(icesVocab)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      

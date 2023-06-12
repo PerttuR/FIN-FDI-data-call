@@ -31,6 +31,7 @@ library(openxlsx)
 library(mongolite)
 library(tidyr)
 library(lubridate)
+library(icesVocab)
 
 
 #-------------------------------------------------------------------------------
@@ -198,17 +199,28 @@ individual <- read.mongoCollectionToDataframe("individual")
 species <- read.mongoCollectionToDataframe("species")
 species$laji <- as.character(species$laji)
 batch <- batch %>% left_join(species, by = c("species_id" = "laji"))
+project <- read.mongoCollectionToDataframe("project")
+
+# filter only landed salmon and sea trout samples
+individual$pitcm <-  as.integer(individual$pitcm)
+individual <- individual  %>% filter(pitcm >= 60) 
+
 
 # Resolve trip names
 
 batch$trip_id <- paste(batch$year, batch$lajikv1, batch$batch_number, sep="_")
 
-#join to individual
+#join batch to individual
 
 individual <- individual %>% left_join(batch, by = c("sample_id" = "batch_id"))
 
+#join project to individual
+
+individual <- individual %>% left_join(project, by = c("project_id" = "project_id"))
+
 individual <- individual %>%
   filter(!is.na(as.numeric(pitcm))) %>%
+  filter(number==0) %>% #filter only commercial samples included 
   mutate(length = as.numeric(pitcm) * 10) %>%
   mutate(lengthclass = length - length %% 10) %>%
   arrange(lengthclass, length)
@@ -223,17 +235,20 @@ Q1 <- c("01","02","03")
 Q2 <- c("04","05","06")
 Q3 <- c("07","08","09")
 Q4 <- c("10","11","12")
-individual$quarter [individual$month %in% Q1]<-1
-individual$quarter [individual$month %in% Q3]<-3
-individual$quarter [individual$month %in% Q4]<-4
-individual$quarter [individual$month %in% Q2]<-2
+individual$QUARTER [individual$month %in% Q1]<-1
+individual$QUARTER [individual$month %in% Q3]<-3
+individual$QUARTER [individual$month %in% Q4]<-4
+individual$QUARTER [individual$month %in% Q2]<-2
 
 #rename
 individual$ICES_OA <- individual$osa_al
+individual$METIER <- "FYK_ANA_>0_0_0"
+individual$FAO <- individual$lajikv1
 
 # TO DO select correct variables from MONGO data!!!
 
-
+#PITUUS + tsekkaa muut yhteidet muuttujat ana ja individual taulujen välillä TO DO
+#
 
 #--------------------------------------------------------------------------------------------
 #       3.3 aggregate SALMON data to length classes and merge it with LANDING data                       
@@ -276,7 +291,7 @@ ana3 <- filter(ana2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
 # check missing
 ana3_missing_feno_data <- filter(ana2, is.na(ika) & is.na(paino) & is.na(pituus))
 
-# Merge SUOMU DB landings data and anadromous sampling data to one dataframe
+# Merge Logbook landings data and anadromous sampling data to one dataframe
 
 landing3 <- merge(landing2, ana3, all = T)
 
