@@ -252,4 +252,11 @@ validateMetierOverall(table_c, Metier6FishingActivity)
 
 source("plotTimeSeriesByGroup.R")
 
+plotTimeSeriesByGroup(table_c, "TOTWGHTLANDG", "SPECIES", fun_ = sum)
+plotTimeSeriesByGroup(table_c, "DISCARDS", "SPECIES", fun_ = sum)
+plotTimeSeriesByGroup(table_c, "TOTWGHTLANDG", "DOMAIN_DISCARDS", fun_ = sum)
+plotTimeSeriesByGroup(table_c, "DISCARDS", "DOMAIN_DISCARDS", fun_ = sum)
+plotTimeSeriesByGroup(table_c, "TOTWGHTLANDG", "YEAR", fun_ = sum)
+plotTimeSeriesByGroup(table_c, "NO_AGE_MEASUREMENTS", "YEAR", fun_ = sum)
+
 
