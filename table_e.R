@@ -228,6 +228,8 @@ individual$quarter [individual$month %in% Q3]<-3
 individual$quarter [individual$month %in% Q4]<-4
 individual$quarter [individual$month %in% Q2]<-2
 
+#rename
+individual$ICES_OA <- individual$osa_al
 
 # TO DO select correct variables from MONGO data!!!
 

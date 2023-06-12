@@ -31,6 +31,7 @@ rm(list=ls())
 library(dplyr)
 library(xlsx)
 library(icesVocab)
+library(openxlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -133,9 +134,9 @@ table_A <- table_A[, c("COUNTRY","YEAR","QUARTER","VESSEL_LENGTH","FISHING_TECH"
 write.csv(table_A, paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), row.names = FALSE)
 
 
-# ... write delivery to xlsx file 
-write.xlsx(table_A,paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), 
-           sheetName = "TABLE_A", col.names = TRUE, row.names = FALSE)
+# ... write delivery to xlsx file using openxlsx
+
+openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 
 #-------------------------------------------------------------------------------
