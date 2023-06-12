@@ -237,3 +237,19 @@ openxlsx::write.xlsx(table_c_pre, paste0(path_out,.Platform$file.sep,"TABLE_C_NA
 openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"UNMERGING_and_DELETED_DOMAINS_TABLE_C.xlsx"), sheetName = "TABLE_A_missing_discard_domains", colNames = TRUE, rowNames = FALSE)
 
 
+
+# Validation of data added during 2023 datacall
+
+# .. METIER ..
+source("validateMetierOverall.R")
+# ... import codelist from IcesVocab 
+Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
+# .. validate metier in table G 
+validateMetierOverall(table_c, Metier6FishingActivity)
+
+
+#Plotting some columns to explore data
+
+source("plotTimeSeriesByGroup.R")
+
+
