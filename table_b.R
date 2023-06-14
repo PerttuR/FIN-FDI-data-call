@@ -142,12 +142,12 @@ table_b$VESSELS_FLEET <- "NK"
 table_b$TRIPS_FLEET <- "NK"
 table_b$TRIPS_SAMPLED_ONBOARD <- 0
 table_b$UNIQUE_VESSELS_SAMPLED <- 0
-table_b$UNIQUE_VESSELS_CONTACTED <- "NK" #See nonresponse rate
+#table_b$UNIQUE_VESSELS_CONTACTED <- "NK"
 table_b$NOT_AVAILABLE <- "NK"
 table_b$NO_CONTACT_DETAILS <- 0
-table_b$NO_ANSWER <- "NK"
-table_b$OBSERVER_DECLINED <- 0 #Not collected as a status
-table_b$INDUSTRY_DECLINED <- 0 #Not collected as a status
+#table_b$NO_ANSWER <- "NK"
+#table_b$OBSERVER_DECLINED <- 0 #Not collected as a status
+#table_b$INDUSTRY_DECLINED <- 0 #Not collected as a status
 table_b$TOT_SELECTIONS <- 0
 
 #Aggragate table B to sampling frame level:
@@ -161,6 +161,8 @@ sampling_result_grouped <- sampling_result_grouped %>% group_by(year_frame, .dro
 tally_rejection <- sampling_result_grouped %>% filter(status == "rejected") %>% tally()
 
 tally_nonresponses <- sampling_result_grouped %>% filter(status %in% c("rejected","no_contact_details","no_answer","observer_declined")) %>% tally()
+
+
 
 #count contacts
 tally_all <- sampling_result_grouped %>% summarise(sum=sum(if_else(call_count == 0,1,as.double(call_count))))
@@ -181,7 +183,7 @@ sampling_diamond_reversal <- sampling_diamond_reversal %>%
   filter(!is.na(year_frame)) %>%
   filter(year_frame %in% actual_frames$year_frame_character)
 
-unique_vessels_sampled_tally <- sampling_result_grouped %>% select(sample_source_fk) %>% distinct() %>% tally()
+unique_vessels_sampled_tally <- sampling_result_grouped %>% filter(status == "sampled", .preserve=TRUE)  %>% select(sample_source_fk) %>% distinct() %>% tally()
 
 sampling_diamond_reversal$year_frame <- as.factor(sampling_diamond_reversal$year_frame)
 sampling_diamond_reversal_tally <- sampling_diamond_reversal %>%
@@ -190,6 +192,14 @@ sampling_diamond_reversal_tally <- sampling_diamond_reversal %>%
 
 not_available_tally <- sampling_result_grouped %>% filter(status == "out of area", .preserve=TRUE) %>%
   distinct(year_frame,sample_source_fk) %>% tally()
+
+unique_vessels_contacted_tally <- sampling_result_grouped %>% filter(status %in% c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"), .preserve=TRUE) %>% distinct(year_frame,sample_source_fk) %>% tally()
+
+no_answer_tally <- sampling_result_grouped %>% filter(status %in% c("no_answer"), .preserve=TRUE) %>% distinct(year_frame,sample_source_fk) %>% tally()
+
+rejected_tally <- sampling_result_grouped %>% filter(status %in% c("rejected"), .preserve=TRUE) %>% distinct(year_frame,sample_source_fk) %>% tally()
+
+observer_declined_tally <- sampling_result_grouped %>% filter(status %in% c("observer_declined"), .preserve=TRUE) %>% distinct(year_frame,sample_source_fk) %>% tally()
 
 
 table_b$NOT_AVAILABLE <- not_available_tally$n
@@ -200,9 +210,16 @@ table_b <- table_b %>% mutate(REFUSAL_RATE = super_round(REFUSAL_RATE/TOT_SELECT
 table_b$UNIQUE_VESSELS_SAMPLED <- unique_vessels_sampled_tally$n
 table_b$COVERAGE_RATE <- super_round(table_b$UNIQUE_VESSELS_SAMPLED / table_b$VESSELS_FLEET)
 table_b$NONRESPONSE_RATE <- tally_nonresponses$n
+table_b$UNIQUE_VESSELS_CONTACTED <- unique_vessels_contacted_tally$n
+table_b$NO_ANSWER <- no_answer_tally$n
+table_b$OBSERVER_DECLINED <- rejected_tally$n
+table_b$INDUSTRY_DECLINED <- observer_declined_tally$n
 
 #TODO: use trips
 #table_b <- table_b %>% mutate(COVERAGE_RATE = super_round(UNIQUE_VESSELS_SAMPLED / VESSELS_FLEET))
+
+# ... order columns 
+table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","UNIQUE_VESSELS_CONTACTED")]
 
 openxlsx::write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
 
