@@ -201,6 +201,7 @@ rejected_tally <- sampling_result_grouped %>% filter(status %in% c("rejected"), 
 
 observer_declined_tally <- sampling_result_grouped %>% filter(status %in% c("observer_declined"), .preserve=TRUE) %>% distinct(year_frame,sample_source_fk) %>% tally()
 
+observer_onboard_tally <- sampling_result_grouped %>% left_join(trip, by=c("id.x" = "sampling_result_fk")) %>% filter(observer_onboard) %>% tally()
 
 table_b$NOT_AVAILABLE <- not_available_tally$n
 table_b$VESSELS_FLEET <- sampling_diamond_reversal_tally$n
@@ -214,6 +215,7 @@ table_b$UNIQUE_VESSELS_CONTACTED <- unique_vessels_contacted_tally$n
 table_b$NO_ANSWER <- no_answer_tally$n
 table_b$OBSERVER_DECLINED <- rejected_tally$n
 table_b$INDUSTRY_DECLINED <- observer_declined_tally$n
+table_b$TRIPS_SAMPLED_ONBOARD <- observer_onboard_tally$n
 
 #TODO: use trips
 #table_b <- table_b %>% mutate(COVERAGE_RATE = super_round(UNIQUE_VESSELS_SAMPLED / VESSELS_FLEET))
