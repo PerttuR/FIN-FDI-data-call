@@ -209,7 +209,7 @@ table_b$REFUSAL_RATE <- tally_rejection$n
 table_b <- table_b %>% mutate(REFUSAL_RATE = super_round(REFUSAL_RATE/TOT_SELECTIONS))
 table_b$UNIQUE_VESSELS_SAMPLED <- unique_vessels_sampled_tally$n
 table_b$COVERAGE_RATE <- super_round(table_b$UNIQUE_VESSELS_SAMPLED / table_b$VESSELS_FLEET)
-table_b$NONRESPONSE_RATE <- tally_nonresponses$n
+table_b$NONRESPONSE_RATE <- super_round(tally_nonresponses$n / tally_all$sum)
 table_b$UNIQUE_VESSELS_CONTACTED <- unique_vessels_contacted_tally$n
 table_b$NO_ANSWER <- no_answer_tally$n
 table_b$OBSERVER_DECLINED <- rejected_tally$n
@@ -219,7 +219,7 @@ table_b$INDUSTRY_DECLINED <- observer_declined_tally$n
 #table_b <- table_b %>% mutate(COVERAGE_RATE = super_round(UNIQUE_VESSELS_SAMPLED / VESSELS_FLEET))
 
 # ... order columns 
-table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","UNIQUE_VESSELS_CONTACTED")]
+table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","UNIQUE_VESSELS_CONTACTED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS")]
 
 openxlsx::write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
 
