@@ -247,7 +247,7 @@ individual$FAO <- individual$lajikv1
 
 # TO DO select correct variables from MONGO data!!!
 
-#PITUUS + tsekkaa muut yhteidet muuttujat ana ja individual taulujen välillä TO DO
+#PITUUS + tsekkaa muut yhteiset muuttujat ana ja individual taulujen välillä TO DO
 #
 
 #--------------------------------------------------------------------------------------------
@@ -255,9 +255,13 @@ individual$FAO <- individual$lajikv1
 #--------------------------------------------------------------------------------------------
 
 
-# make a key variable to match table A key (domain_discards or domain_landings)
 
-# first make individually all the parts that form the key
+
+
+
+
+# after combining Oracle and Mongo ana samples make individually all the parts that form the key
+# make the key variable to match table A key (domain_discards or domain_landings)
 country_code <- "FIN"
 quarter <- ana$QUARTER
 subregion <- paste("27.3.D.", ana$ICES_OA, sep = "")
