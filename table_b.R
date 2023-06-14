@@ -27,7 +27,7 @@ rm(list=ls())
 # needed libraries test
 library(dplyr)
 library(RPostgreSQL)
-library(xlsx)
+library(openxlsx)
 
 
 #-------------------------------------------------------------------------------
@@ -137,9 +137,7 @@ sampling_result_frame_quarter_sd$COUNTRY <- "FIN";
 table_b <- sampling_result_frame_quarter_sd %>% select(COUNTRY, YEAR=year, SAMPLE_FRAME=frame) %>% distinct() %>%
   arrange(YEAR, SAMPLE_FRAME)
 
-table_b$REFUSAL_RATE <- 0
-table_b$COVERAGE_RATE <- "NK"
-table_b$NONRESPONSE_RATE <- "NK" #Not collected as a status
+#table_b$REFUSAL_RATE <- 0
 table_b$VESSELS_FLEET <- "NK"
 table_b$TRIPS_FLEET <- "NK"
 table_b$TRIPS_SAMPLED_ONBOARD <- 0
@@ -159,8 +157,10 @@ sampling_result_grouped <- sampling_result_grouped %>% group_by(year_frame, .dro
 
 #TODO: call count
 
-#count Refusals
+#count Refusals & nonresponses
 tally_rejection <- sampling_result_grouped %>% filter(status == "rejected") %>% tally()
+
+tally_nonresponses <- sampling_result_grouped %>% filter(status %in% c("rejected","no_contact_details","no_answer","observer_declined")) %>% tally()
 
 #count contacts
 tally_all <- sampling_result_grouped %>% summarise(sum=sum(if_else(call_count == 0,1,as.double(call_count))))
@@ -198,10 +198,12 @@ table_b$TOT_SELECTIONS <- tally_all$sum
 table_b$REFUSAL_RATE <- tally_rejection$n
 table_b <- table_b %>% mutate(REFUSAL_RATE = super_round(REFUSAL_RATE/TOT_SELECTIONS))
 table_b$UNIQUE_VESSELS_SAMPLED <- unique_vessels_sampled_tally$n
+table_b$COVERAGE_RATE <- super_round(table_b$UNIQUE_VESSELS_SAMPLED / table_b$VESSELS_FLEET)
+table_b$NONRESPONSE_RATE <- tally_nonresponses$n
 
 #TODO: use trips
 #table_b <- table_b %>% mutate(COVERAGE_RATE = super_round(UNIQUE_VESSELS_SAMPLED / VESSELS_FLEET))
 
-write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", col.names=TRUE, row.names=FALSE)
+openxlsx::write.xlsx(table_b, paste0(path_out,.Platform$file.sep,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
 
 
