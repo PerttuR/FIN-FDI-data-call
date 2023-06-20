@@ -213,48 +213,59 @@ batch$trip_id <- paste(batch$year, batch$lajikv1, batch$batch_number, sep="_")
 
 #join batch to individual
 
-individual <- individual %>% left_join(batch, by = c("sample_id" = "batch_id"))
+individual2 <- individual %>% left_join(batch, by = c("sample_id" = "batch_id"))
 
 #join project to individual
 
-individual <- individual %>% left_join(project, by = c("project_id" = "project_id"))
+individual3 <- individual2 %>% left_join(project, by = c("project_id" = "project_id"))
 
 #filter empty lenths
 #filter only commercial samples
 #form lengthclasses
-individual <- individual %>%
+individual4 <- individual3 %>%
   filter(!is.na(as.numeric(pitcm))) %>%
   filter(number==0) %>% #filter only commercial samples included 
   mutate(length = as.numeric(pitcm) * 10) %>%
   mutate(lengthclass = length - length %% 10) %>%
   arrange(lengthclass, length)
 
+#renaming
+individual4$PITUUS <- individual4$length
+individual4$nayteno <- individual4$trip_id
+individual4$YEAR <- individual4$year
+individual4$PYYDYSKOODI <- individual4$pyydys
+
 #Age to a single number from me_vu and po_vu variables
-individual$ika <- get.age(individual)
+individual4$ika <- get.age(individual4)
 
 #calculate month
-individual$month <- format(as.Date(individual$pvm, format="%Y-%m-%d"),"%m")
+individual4$MONTH <- format(as.Date(individual4$pvm, format="%Y-%m-%d"),"%m")
 
 #add year Quarters
 Q1 <- c("01","02","03")
 Q2 <- c("04","05","06")
 Q3 <- c("07","08","09")
 Q4 <- c("10","11","12")
-individual$QUARTER [individual$month %in% Q1]<-1
-individual$QUARTER [individual$month %in% Q3]<-3
-individual$QUARTER [individual$month %in% Q4]<-4
-individual$QUARTER [individual$month %in% Q2]<-2
+individual4$QUARTER [individual4$MONTH %in% Q1]<-1
+individual4$QUARTER [individual4$MONTH %in% Q3]<-3
+individual4$QUARTER [individual4$MONTH %in% Q4]<-4
+individual4$QUARTER [individual4$MONTH %in% Q2]<-2
+
+individual4$MONTH <- as.numeric(individual4$MONTH)
+individual4$PYYDYSKOODI <- as.numeric(individual4$PYYDYSKOODI)
 
 #rename SD, add metier, rename species code
-individual$ICES_OA <- individual$osa_al
-individual$METIER <- "FYK_ANA_>0_0_0"
-individual$FAO <- individual$lajikv1
+individual4$ICES_OA <- as.numeric(individual4$osa_al)
+individual4$METIER <- "FYK_ANA_>0_0_0"
+individual4$FAO <- individual4$lajikv1
 
 # TO DO select correct variables from MONGO data as ana2
 
-#PITUUS + tsekkaa muut yhteiset muuttujat ana ja individual taulujen välillä TO DO
+ana2 <- individual4
 
 #rowbind ana1 and ana2 to ana
+
+ana <- dplyr::bind_rows(ana1, ana2)
 
 #--------------------------------------------------------------------------------------------
 #       3.3 aggregate SALMON data to length classes and merge it with LANDING data                       
