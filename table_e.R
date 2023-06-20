@@ -187,7 +187,7 @@ get.age <- function(individual) {
 
 
 #--------------------------------------------------------------------------------------------
-#       3.2 Merge ANA1 (Oracle ana-samples 2013-2021) and ANA2 (MOngo 2022 onwards samples)                    
+#       3.2 Merge ANA1 (Oracle ana-samples 2013-2021) and ANA2 (MOngo 2022 onwards anadromous samples)                    
 #--------------------------------------------------------------------------------------------
 
 source("mongo.R")
@@ -203,6 +203,7 @@ project <- read.mongoCollectionToDataframe("project")
 
 # filter only landed salmon and sea trout samples
 individual$pitcm <-  as.integer(individual$pitcm)
+# select landing salmons and sea trouts based on length
 individual <- individual  %>% filter(pitcm >= 60) 
 
 
@@ -218,6 +219,9 @@ individual <- individual %>% left_join(batch, by = c("sample_id" = "batch_id"))
 
 individual <- individual %>% left_join(project, by = c("project_id" = "project_id"))
 
+#filter empty lenths
+#filter only commercial samples
+#form lengthclasses
 individual <- individual %>%
   filter(!is.na(as.numeric(pitcm))) %>%
   filter(number==0) %>% #filter only commercial samples included 
@@ -228,9 +232,10 @@ individual <- individual %>%
 #Age to a single number from me_vu and po_vu variables
 individual$ika <- get.age(individual)
 
+#calculate month
 individual$month <- format(as.Date(individual$pvm, format="%Y-%m-%d"),"%m")
 
-#add quarters
+#add year Quarters
 Q1 <- c("01","02","03")
 Q2 <- c("04","05","06")
 Q3 <- c("07","08","09")
@@ -240,15 +245,16 @@ individual$QUARTER [individual$month %in% Q3]<-3
 individual$QUARTER [individual$month %in% Q4]<-4
 individual$QUARTER [individual$month %in% Q2]<-2
 
-#rename
+#rename SD, add metier, rename species code
 individual$ICES_OA <- individual$osa_al
 individual$METIER <- "FYK_ANA_>0_0_0"
 individual$FAO <- individual$lajikv1
 
-# TO DO select correct variables from MONGO data!!!
+# TO DO select correct variables from MONGO data as ana2
 
 #PITUUS + tsekkaa muut yhteiset muuttujat ana ja individual taulujen välillä TO DO
-#
+
+#rowbind ana1 and ana2 to ana
 
 #--------------------------------------------------------------------------------------------
 #       3.3 aggregate SALMON data to length classes and merge it with LANDING data                       
