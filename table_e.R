@@ -54,7 +54,7 @@ dir.create(path_out, showWarnings = FALSE)
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2021.csv"), sep = "," , na.strings = "")
+table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -231,12 +231,15 @@ individual4 <- individual3 %>%
 
 #renaming
 individual4$PITUUS <- individual4$length
-individual4$nayteno <- individual4$trip_id
+individual4$DB_TRIP_ID <- individual4$trip_id
 individual4$YEAR <- individual4$year
 individual4$PYYDYSKOODI <- individual4$pyydys
 
 #Age to a single number from me_vu and po_vu variables
-individual4$ika <- get.age(individual4)
+individual4$IKA <- get.age(individual4)
+
+#weight in grams
+individual4$PAINO_GRAMMOINA <- individual4$pakg * 1000
 
 #calculate month
 individual4$MONTH <- format(as.Date(individual4$pvm, format="%Y-%m-%d"),"%m")
@@ -262,7 +265,8 @@ individual4$FAO <- individual4$lajikv1
 # TO DO select correct variables from MONGO data as ana2
 
 ana2 <- individual4
-
+#cast Oracle DB_TRIP_ID to character
+ana1$DB_TRIP_ID <- as.character(ana1$DB_TRIP_ID)
 #rowbind ana1 and ana2 to ana
 
 ana <- dplyr::bind_rows(ana1, ana2)
@@ -298,23 +302,22 @@ pit_bins <- seq(300,1250, by=50)
 ana$pituusluokka <- pit_bins[findInterval(ana$PITUUS, pit_bins)]
 
 # select important variables and rename them to match landing2 data
-ana2 <- ana %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
+ana3 <- ana %>% select(YEAR, DB_TRIP_ID, PITUUS, PAINO_GRAMMOINA, IKA, domain_landings) %>% rename(vuosi = YEAR, nayteno = DB_TRIP_ID, pituus = PITUUS, paino = PAINO_GRAMMOINA, ika = IKA)
 
-#salmon2 weight from g -> to kg
-ana2$paino <- ana2$paino/1000
+#all ana weights from g -> to kg
+ana3$paino <- ana3$paino/1000
 
-#salmon2 length from mm -> to cm
-ana2$pituus <- ana2$pituus/10
+#all ana lenhgts from g -> to kg
+ana3$pituus <- ana3$pituus/10
 
 # remove missing age values
-ana3 <- filter(ana2, !is.na(ika) & !is.na(paino) & !is.na(pituus))
+ana4 <- filter(ana3, !is.na(ika) & !is.na(paino) & !is.na(pituus))
+ana_deleted_missing_feno_data <- filter(ana3, is.na(ika) |  is.na(paino) |  is.na(pituus))
 
-# check missing
-ana3_missing_feno_data <- filter(ana2, is.na(ika) & is.na(paino) & is.na(pituus))
 
 # Merge Logbook landings data and anadromous sampling data to one dataframe
 
-landing3 <- merge(landing2, ana3, all = T)
+landing3 <- merge(landing2, ana4, all = T)
 
 #-------------------------------------------------------------------------------
 #                   4. aggregate AGE DATA for merging with TABLE A                     
