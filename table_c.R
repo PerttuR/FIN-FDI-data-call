@@ -95,11 +95,12 @@ agedata <- read.dbTable("suomu","report_individual")
 
 #-------------------------------------------------------------------------------
 # choose commercial DISCARD INDIV samples only, from years 2013 to 2022 where agedata exists
+# changed ika to age Mira 19.4.2024
 
-unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022, !is.na(ika))
+unwanted <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022, !is.na(age))
 
 # CHECK missing age data numbers: age data covers only part of the individual data (individual data is collected for the use of other biological parametres as well)
-unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022, is.na(ika))
+unwanted_without_age <- filter(agedata, saalisluokka == "DISCARD", name == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022, is.na(age))
 
 #-------------------------------------------------------------------------------
 # make a key variable to match table A key (domain_discards or domain_landings)
@@ -140,25 +141,25 @@ unwanted$pituus <- unwanted$pituus/10
 #-------------------------------------------------------------------------------
 
 # select only important variables
-unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, ika, domain_discards)
+unwanted2 <- select(unwanted, vuosi, nayteno, paino, pituus, age, domain_discards)
 
 
 # aggregate data 
 # d7_8 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n())
 # 
-# d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(ika), max_age = max(ika)) 
+# d10_11 <- unwanted2 %>% group_by(vuosi, domain_discards) %>% summarise(min_age = min(age), max_age = max(age)) 
 
 
 # aggregate data for calculation of number of samples (2022: total_sampled_trips), no_age_measurements, min_age, max_age
 d12_13_15_16 <- unwanted2 %>% 
   group_by(vuosi, domain_discards) %>%
-  summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n(),min_age = min(ika), max_age = max(ika))
+  summarise(total_sampled_trips = n_distinct(nayteno), no_age_measurements = n(),min_age = min(age), max_age = max(age))
 
-#d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, ika) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
+#d12_13_14_15 <- unwanted2 %>% group_by(vuosi, domain_discards, age) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
 
 ## aggregate data for calculation of no_age, mean_weight, mean_length
 d18_19_21 <- unwanted2 %>% 
-  group_by(vuosi, domain_discards, ika) %>% 
+  group_by(vuosi, domain_discards, age) %>% 
   summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
 
 
@@ -182,8 +183,8 @@ unwanted3$discard_ci_lower <-"NK"
 
 # select only those variables important to merging with table A
 unwanted4 <- unwanted3 %>% 
-  select(country, vuosi, domain_discards, nep_sub_region, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, ika, no_age, mean_weight, mean_length, discard_cv, discard_ci_upper, discard_ci_lower) %>% 
-  rename(year = vuosi, age = ika)
+  select(country, vuosi, domain_discards, nep_sub_region, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, age, no_age, mean_weight, mean_length, discard_cv, discard_ci_upper, discard_ci_lower) %>% 
+  rename(year = vuosi, age = age)
 
 
 #-------------------------------------------------------------------------------

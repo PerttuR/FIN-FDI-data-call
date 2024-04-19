@@ -27,7 +27,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 library(magrittr)
-library(xlsx)
+library(openxlsx)
 library(icesVocab)
 
 #-------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table H
-table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2022_SAS.csv"), sep = "," ,na.strings="")
+table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2022.csv"), sep = "," ,na.strings="")
 
 
 #-------------------------------------------------------------------------------
@@ -149,5 +149,5 @@ write.csv(table_H, paste0(path_tableh,.Platform$file.sep,"H_table_2013_2022.csv"
 
 ## AKY: the line above did not work for me (some java related memory issue)
 ## Antti: As for me -> we could fix this later 
-library(openxlsx)
+
 openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)

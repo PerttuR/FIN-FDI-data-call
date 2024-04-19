@@ -28,7 +28,7 @@ rm(list=ls())
 library(dplyr)
 # library(vmstools) not available for R 4.1.2
 library(magrittr)
-library(xlsx)
+library(openxlsx)
 library(icesVocab)
 
 #-------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # .. import table I
-table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022_SAS.csv"), sep = "," ,na.strings="")
+table_I <- read.csv2(paste0(path_tablei,"I_table_2013_2022.csv"), sep = "," ,na.strings="")
 
 #-------------------------------------------------------------------------------
 
@@ -120,6 +120,6 @@ table_I <-  table_I %>% mutate(VESSEL_LENGTH = replace(VESSEL_LENGTH, is.na(VESS
 write.csv(table_I, paste0(path_tablei,.Platform$file.sep,"I_table_2013_2022.csv"), row.names = FALSE)
 
 # .. save table I
-xlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", col.names = TRUE, row.names = FALSE)
+openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
 
 
