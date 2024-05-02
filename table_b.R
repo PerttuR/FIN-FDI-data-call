@@ -80,7 +80,7 @@ sampling_result_source_fixed_year <- sampling_result %>%
   left_join(sampling_result_status_map, by=c("status" = "key")) %>% mutate(status = value)
 
 
-#lottery machine was operational since 2018 Q4
+#lottery machine was operational since 2018 Q4 in SD30 and in all SD since 2019
 trip_selected <- trip %>% filter(!is.na(target_species_fk) & year >= 2018)
 trip_haul <- trip_selected %>% left_join(haul, by=c("id" = "trip_fk"))
 
@@ -116,7 +116,7 @@ species_metier_map <- species_gear_code_tally3
 #metiers <- filter(metier, gear_code %in% wp_gears) 
 
 #FDI data call years:
-years <- seq(from=2013, to=2022)
+years <- seq(from=2013, to=2023)
 
 super_round <- function(a) {
   round(as.numeric(as.character(a)), digits = 2)
