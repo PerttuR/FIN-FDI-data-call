@@ -90,10 +90,10 @@ agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("
 #-------------------------------------------------------------------------------
 # choose commercial LANDINGS samples only, from years 2013-2022
 
-landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", !is.na(ika))
+landing <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", !is.na(age))
 
 # a lot of ages are missing
-landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", is.na(ika))
+landing_missing_age <- filter(agedata, saalisluokka == "LANDING", name == "EU-tike(CS, kaupalliset näytteet)", is.na(age))
 
 
 #-------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ commercial_cat <- "NA"
 landing$domain_landings <- paste(country_code, quarter, subregion, gear_type, vessel_length, species, commercial_cat, sep = "_")
 
 # select only important variables
-landing2 <- landing %>% select(vuosi, nayteno, paino, pituus, ika, domain_landings)
+landing2 <- landing %>% select(vuosi, nayteno, paino, pituus, age, domain_landings)
 
 #landing2 weight from g -> to kg
 landing2$paino <- landing2$paino/1000

@@ -21,7 +21,7 @@ rm(list=ls())
 
 # libraries
 library(dplyr)
-library(xlsx)
+library(openxlsx)
 library(icesVocab)
 
 #-------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 # import table G
-table_G <- read.csv2(paste0(path_tableg,.Platform$file.sep,"G_table_2013_2022_SAS.csv"), sep = "," , na.strings = "")
+table_G <- read.csv2(paste0(path_tableg,.Platform$file.sep,"G_table_2013_2022.csv"), sep = "," , na.strings = "")
  
 # .. add empty col for new metier 
 table_G$METIER_7 <- 'NA'

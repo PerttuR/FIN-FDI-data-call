@@ -27,7 +27,7 @@ rm(list=ls())
 # needed libraries
 library(dplyr)
 #library(magrittr)
-library(xlsx)
+library(openxlsx)
 library(icesVocab)
 
 #-------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 
 # ... import table J
 
-table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022_SAS.csv"), sep = "," ,na.strings="")
+table_J <- read.csv2(paste0(path_tablej,"J_table_2013_2022.csv"), sep = "," ,na.strings="")
 
 
 #-------------------------------------------------------------------------------
@@ -85,5 +85,5 @@ write.csv(table_J, paste0(path_tablej,.Platform$file.sep,"J_table_2013_2022.csv"
 
 # save table H
 write.xlsx(table_J, paste0(path_out,.Platform$file.sep,"FIN_TABLE_J_CAPACITY.xlsx"), 
-           sheetName = "TABLE_J", col.names = TRUE, row.names = FALSE)
+           sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
 
