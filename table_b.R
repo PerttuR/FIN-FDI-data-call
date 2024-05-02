@@ -7,6 +7,7 @@
 # Creation Date: JUL-2019 (Petri and Perttu)
 # Updated: April 2022 (Perttu)
 # Updated: Jun 2023 (Perttu, Petri)
+# Updated: Jun 2024 (Mira, Perttu, Petri)
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -36,13 +37,13 @@ library(openxlsx)
 
 # Paths:
 
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
+path_orig <- paste0(getwd(), .Platform$file.sep, "orig") # folder where original files & etc.. TABLE A exists (FIN_TABLE_A_CATCH.csv)
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep, "results", .Platform$file.sep, "2024")
 
 # create directories if missing, but ignore warnings in case they already exist
-dir.create(path_tablea, showWarnings = FALSE)
+dir.create(path_orig, showWarnings = FALSE)
 dir.create(path_out, showWarnings = FALSE)
 
 #-------------------------------------------------------------------------------
