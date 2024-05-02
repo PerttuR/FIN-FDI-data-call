@@ -29,7 +29,7 @@ rm(list=ls())
 
 # needed libraries .. testi
 library(dplyr)
-library(xlsx)
+library(openxlsx)
 library(icesVocab)
 library(openxlsx)
 
