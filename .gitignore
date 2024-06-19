@@ -1,5 +1,7 @@
 # DB params
 db_params.R
+#RDS files
+*.rds
 
 # Mongo params
 mongo_params.R
