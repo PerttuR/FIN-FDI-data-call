@@ -8,6 +8,7 @@
 # Updated: JUN 2021 by Perttu
 #          JUN-2022 by Anna-Kaisa and Perttu
 #          MAY-2023 by Antti
+#          JUN-2024 by Mira, Petri and Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -33,23 +34,28 @@ library(icesVocab)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Common paths & 2022 folder:
-#path_tableh <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE H is
+
 # Output folder
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
-
-
-#-------------------------------------------------------------------------------
-#                       1. Import table H                    
-#-------------------------------------------------------------------------------
-
-# import table H
-table_H <- read.csv2(paste0(path_tableh,"H_table_2013_2022.csv"), sep = "," ,na.strings="")
-
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
 
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+#                       1 Import data for 2023 H table needs                    
+#-------------------------------------------------------------------------------
 
+source("db.r")
+
+## Read in data
+# alter based on the date of the postgres schema date
+schemadate <- "2024-06-14"
+
+# read from postgres
+aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti')
+
+country <- "FIN"
+
+#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 #                       2. Modify table H                     

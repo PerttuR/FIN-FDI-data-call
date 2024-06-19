@@ -26,9 +26,43 @@ validate.params <- function(schema, table) {
   }
 }
 
+cache.write <- function(name, data) {
+  cache_folder <- "DATA-CACHE"
+  if (!dir.exists(cache_folder)) {
+    dir.create(cache_folder)
+  }
+  file_path <- file.path(cache_folder, paste0(name, ".rds"))
+  saveRDS(data, file_path)
+}
+
+cache.read <- function(name) {
+  cache_folder <- "DATA-CACHE"
+  file_path <- file.path(cache_folder, paste0(name, ".rds"))
+  if (file.exists(file_path)) {
+    data <- readRDS(file_path)
+    message("Cache does contain data with name '", name, "'")
+    return(data)
+  } else {
+    message("Cache does not contain data with name '", name, "'. Returning NA.")
+    return(NA)
+  }
+}
+
+cache.name <- function(vars) {
+  pasted <- paste(vars, collapse = ";")
+  return(paste(charToRaw(pasted), collapse=""))
+}
+
 read.dbTable <- function(schema, table, where = NA, dbname = NULL) {
   validate.params(schema, table)
-  where = ifelse(is.na(where),"",paste0(" WHERE ", where))
+  where <- ifelse(is.na(where),"",paste0(" WHERE ", where))
+
+  cname <- cache.name(c(schema, table, where))
+  candidate <- cache.read(cname)
+  if (!all(is.na(candidate))) {
+    return(candidate)
+  }
+
   tmp <- new.env()
   source("db_params.R", local=tmp)
   drv <- RPostgres::Postgres()
@@ -40,6 +74,7 @@ read.dbTable <- function(schema, table, where = NA, dbname = NULL) {
   data <- set_utf8(dbGetQuery(con, paste0('SELECT * from "',schema,'".',table,where)))
   dbDisconnect(con)
   rm(con)
+  cache.write(cname, data)
   return(data)
 }
 
