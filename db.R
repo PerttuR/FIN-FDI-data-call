@@ -1,4 +1,4 @@
-library(RPostgres);
+library(RPostgres)
 
 set_utf8 <- function(x){
   # Declare UTF-8 encoding on all character strings:
@@ -23,6 +23,15 @@ validate.params <- function(schema, table) {
   }
   if(!grepl("^[-[:digit:][:alpha:]_]+$", schema)) {
     stop(paste("bad schema name", schema));
+  }
+}
+
+get.params <- function(dbname, env) {
+  param_name <- paste0("db_params_", dbname, ".R")
+  if(!is.null(dbname) && file.exists(param_name)) {
+    source(param_name, local = env)
+  } else {
+    source("db_params.R", local = env)
   }
 }
 
@@ -64,7 +73,7 @@ read.dbTable <- function(schema, table, where = NA, dbname = NULL) {
   }
 
   tmp <- new.env()
-  source("db_params.R", local=tmp)
+  get.params(dbname, tmp)
   drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
   con <- dbConnect(drv, dbname = resolved_dbname,
@@ -81,7 +90,7 @@ read.dbTable <- function(schema, table, where = NA, dbname = NULL) {
 query.dbTable <- function(schema, table, dbname = NULL, query ) {
   validate.params(schema, table)
   tmp <- new.env()
-  source("db_params.R", local=tmp)
+  get.params(dbname, tmp)
   drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
   con <- dbConnect(drv, dbname = resolved_dbname,
@@ -97,7 +106,7 @@ query.dbTable <- function(schema, table, dbname = NULL, query ) {
 write.dbTable <- function(schema, table, data, dbname = NULL, overwrite = FALSE) {
   validate.params(schema, table)
   tmp <- new.env()
-  source("db_params.R", local=tmp)
+  get.params(dbname, tmp)
   drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
   con <- dbConnect(drv, dbname = resolved_dbname,

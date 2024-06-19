@@ -1,5 +1,5 @@
 # DB params
-db_params.R
+db_params*.R
 #RDS files
 *.rds
 
