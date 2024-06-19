@@ -27,7 +27,7 @@ rm(list=ls())
 
 # needed libraries test
 library(dplyr)
-library(RPostgreSQL)
+library(RPostgres)
 library(openxlsx)
 
 
