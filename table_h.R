@@ -34,7 +34,7 @@ library(icesVocab)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 # Common paths & 2022 folder:
-path_tableh <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE H is
+#path_tableh <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE H is
 # Output folder
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
