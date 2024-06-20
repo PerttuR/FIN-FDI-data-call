@@ -15,7 +15,7 @@ mongo_params.R
 
 #PDF files
 *.pdf
-
+!documentation/*.pdf
 # History files
 .Rhistory
 .Rapp.history
