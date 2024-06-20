@@ -3,9 +3,6 @@ rm(list=ls())
 
 # needed libraries .. testi
 library(dplyr)
-library(openxlsx)
-library(icesVocab)
-library(openxlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
