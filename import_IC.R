@@ -1,3 +1,5 @@
+# Sijoita ja pura .ZIP tiedoston sisältö, mikä saatu Nicolakselta path_IC kansioon
+
 #- Clear workspace
 rm(list=ls())
 
