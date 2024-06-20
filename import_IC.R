@@ -1,11 +1,10 @@
+# Sijoita ja pura .ZIP tiedoston sisältö, mikä saatu Nicolakselta path_IC kansioon
+
 #- Clear workspace
 rm(list=ls())
 
 # needed libraries .. testi
 library(dplyr)
-library(openxlsx)
-library(icesVocab)
-library(openxlsx)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
