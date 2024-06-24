@@ -247,4 +247,4 @@ table_I <- i2 %>% filter(TOTFISHDAYS > 0) %>% mutate(
     n2 >= 3 ~ "N")) %>% select(-n2)
 
 
-openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)

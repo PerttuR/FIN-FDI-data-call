@@ -49,6 +49,8 @@ IC_2023_HI <- IC_2023_HI %>% select(-RecordType)
 
 #Left join unitCATOn and CATON values from SI record to SD record
 IC_2023_SD_SI <- left_join(IC_2023_SD, IC_2023_SI)
+#Left join HI to others
+IC_2023_FLAT <- left_join(IC_2023_SD_SI, IC_2023_HI)
 
 
                                       
