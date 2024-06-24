@@ -56,10 +56,19 @@ schemadate <- "2024-06-14"
 # Postgres
 aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti', dbname = "kake_siirto")
 
+aktiviteetti_2023 <- aktiviteetti %>% filter(KALASTUSVUOSI == "2023") %>% 
+  mutate(kalastus_kk = format(PALUUPVM, "%m"),
+         kalastus_vuosi = format(PALUUPVM,"%Y"),
+         kalastus_kk = case_when(
+           kalastus_vuosi == "2022" ~ "01",
+           kalastus_vuosi == "2024" ~ "12",
+           TRUE ~ kalastus_kk
+         ))
+
 # Select and mutate needed variables for tables H and I
-akt1 <- aktiviteetti %>% filter(KALASTUSVUOSI == "2023") %>% 
+akt1 <- aktiviteetti_2023 %>% 
   select(YEAR = KALASTUSVUOSI,
-         KK,
+         MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
          FISHING_TECH = FT,
          GEAR_TYPE = GEAR,
@@ -73,22 +82,14 @@ akt1 <- aktiviteetti %>% filter(KALASTUSVUOSI == "2023") %>%
          -contains("SVT_KG_HUC_"),
          -contains("SVT_VALUE_HUC_"),
          -contains("SVT_VALUE_IND_"),
-         LE_SLAT = KOORDELASKU, #log event start position latitude 
-         LE_SLON = KOORDNLASKU, #log event start position longitude 
-         LE_ELAT = KOORDENOSTO, #log event end position latitude
-         LE_ELON = KOORDNNOSTO, #log event end position longitude
          RECTANGLE)%>% 
-  separate(LE_SLAT, paste("lat",c("d","m","s"), sep="_") ) %>% # coordinates into the right format (decimals)!
-  separate(LE_SLON, paste("long",c("d","m","s"), sep="_" ) ) %>%
-  separate(LE_ELAT, paste("lat2",c("d","m","s"), sep="_") ) %>%
-  separate(LE_ELON, paste("long2",c("d","m","s"), sep="_" ) ) %>%
   mutate(
     COUNTRY = "FIN",
     QUARTER = case_when(
-      1 <= KK & KK <= 3 ~ 1,
-      4 <= KK & KK <= 6 ~ 2,
-      7 <= KK & KK <= 9 ~ 3,
-      10 <= KK & KK <= 12 ~ 4),
+      MONTH %in% c("01","02","03") ~ 1,
+      MONTH %in% c("04","05","06") ~ 2,
+      MONTH %in% c("07","08","09") ~ 3,
+      MONTH %in% c("10","11","12") ~ 4),
     TARGET_ASSEMBLAGE = case_when(
       TARGET_ASSEMBLAGE == "Small pelagic" ~ "SPF",
       TARGET_ASSEMBLAGE == "Activity missing" ~ "NK",
@@ -118,36 +119,22 @@ akt1 <- aktiviteetti %>% filter(KALASTUSVUOSI == "2023") %>%
     SPECON_TECH = "NA",
     DEEP = "NA",
     RECTANGLE_TYPE = "05*1",
-    lat_d = as.numeric(lat_d),
-    lat_m = as.numeric(lat_m),
-    lat_s = as.numeric(lat_s),
-    long_d = as.numeric(long_d),
-    long_m = as.numeric(long_m),
-    long_s = as.numeric(long_s),
-    lat2_d = as.numeric(lat2_d),
-    lat2_m = as.numeric(lat2_m),
-    lat2_s = as.numeric(lat2_s),
-    long2_d = as.numeric(long2_d),
-    long2_m = as.numeric(long2_m),
-    long2_s = as.numeric(long2_s),
-    LE_SLAT=lat_d + lat_m/60 + lat_s/60^2,
-    LE_SLON=long_d + long_m/60 + long_s/60^2,
-    LE_ELAT=lat2_d + lat2_m/60 + lat2_s/60^2,
-    LE_ELON=long2_d + long2_m/60 + long2_s/60^2,
-    LATITUDE = (LE_SLAT + LE_ELAT) / 2,
-    LONGITUDE = (LE_SLON + LE_ELON) / 2
-  ) %>% 
-  select(-KK, -ICES, -lat_d, -lat_m, -lat_s, -long_d, -long_m, -long_s, -lat2_d, -lat2_m, -lat2_s, -long2_d, -long2_m, -long2_s, -LE_SLAT, -LE_SLON, -LE_ELAT, -LE_ELON)
+    C_SQUARE = "NA") %>% 
+  select(-MONTH, -ICES)
 
 # Create variables LATITUDE and LONGITUDE:
 
-celtic <- get_csquare(ecoregion = "Baltic Sea")
+# .. define coordinates 
+source("spatial.R")
 
-# Apply the function to each rectangle in the data frame
-midpoints <- do.call(rbind, lapply(df$RECTANGLE, get_midpoint))
+midpoints <- latlon(akt1$RECTANGLE,midpoint=TRUE)
 
-# Merge the midpoints with the original data frame
-akthh <- merge(akt1, midpoints, by = "RECTANGLE")
+akt1 <- tibble::rowid_to_column(akt1, "ID")
+midpoints <- tibble::rowid_to_column(midpoints, "ID")
+
+akt1 <- left_join(akt1, midpoints,copy = TRUE)
+
+akt1 <- akt1 %>% rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) %>% select(-ID, RECTANGLE)
 
 
 # Extract valid level 6 metiers 
@@ -171,23 +158,34 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
 # Pivot to longer format
 akt2 <- akt1 %>%
   pivot_longer(cols = starts_with("SVT"), 
-               names_to = c("type", "species"), 
+               names_to = c("type", "SPECIES"), 
                names_pattern = "SVT_(.+)_(.+)", 
-               values_to = "value")
+               values_to = "value")%>%
+  mutate(value = as.numeric(value),  # Ensure numeric type
+         value = ifelse(is.na(value), 0, value),
+         value = case_when(
+           value == 0.0 ~ 0,
+           TRUE ~ value
+         )) # Replace NAs with 0
 
 
 # Handle duplicates by summarising
 akt3 <- akt2 %>%
-  group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, type, species) %>%
-  summarise(value = sum(value),
-            count_non_zero = sum(value > 0), 
-            .groups = 'drop')
+  mutate(non_zero_flag = ifelse(value > 0, 1, 0)) %>%
+  group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, type, SPECIES, LATITUDE, LONGITUDE, RECTANGLE_TYPE, C_SQUARE) %>%
+  summarise(
+    value = sum(value, na.rm = TRUE),
+    n = n(),
+    count_non_zero = sum(non_zero_flag), # the number of observations summed together
+    .groups = 'drop'
+  )
+
 
 # Pivot to wider format and separate VALUE and KG
 akt4 <- akt3 %>%
   pivot_wider(names_from = type, values_from = value)
 
-# Rename columns
+# Rename columns 
 akt5 <- akt4 %>%
   rename(TOTVALLANDG = VALUE,
          TOTWGHTLANDG = KG)
@@ -199,214 +197,61 @@ akt6 <- akt5 %>% mutate(
   TOTWGHTLANDG = case_when(is.na(TOTWGHTLANDG) ~ 0,
                           TRUE ~ TOTWGHTLANDG),
   TOTVALLANDG = case_when(is.na(as.character(TOTVALLANDG)) ~ "NK",
-                          TRUE ~ as.character(TOTVALLANDG)),
-  DISCARDS = 0
+                          TRUE ~ as.character(TOTVALLANDG))
   )
 
 
-
-
-
-
-
-
-
-
-unique(is.na(akt1$GEAR_TYPE))
-unique(aktiviteetti$LEVEL5)
-p1 %>% 
-  mutate(NewCol = case_when(Value == 1 ~ "Test1Yes",
-                            is.na(Value) ~ "TestYes",
-                            Value == 0 ~ "Test0Yes",
-                            TRUE ~ "No"))
-
-
-metier7 <- read.xlsx(paste0("C:/Users/03080096/OneDrive - Valtion/2024/FIN-FDI-data-call/metier_level7.xlsx"))
-metakt <- aktiviteetti %>% distinct(METIER)
-as.data.frame(metakt)
-metier_check <-  metier7 %>% left_join(metakt, by = c("METIER_7" = "METIER"), keep = T)
-#-------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-eflalo <- aktiviteetti %>% filter(KALASTUSVUOSI == 2023)%>% select(VE_REF = ULKOINENTUNNUS, # vessel ID
-                                                                   VE_FLT = FT_TRIP, # fleet
-                                                                   VE_COU = MAA_LIPPU, # home country
-                                                                   VE_LEN = KOKONAISPITUUS, # vessel length
-                                                                   VE_KW = PAAKONETEHO, # vessel power
-                                                                   VE_TON = VETOISUUS, # vessel tonnage
-                                                                   
-                                                                   FT_REF, # fishing trip reference number
-                                                                   FT_DCOU = MAAKOODI_LAHTO, # departure country
-                                                                   FT_DHAR = LAHTOSATAMA_EUKOODI, # departure harbour
-                                                                   FT_DDAT = LAHTOPVM, # departure date DD/MM/YYYY
-                                                                   FT_DTIME = LAHTOAIKA, # departure time HH:MM
-                                                                   FT_LCOU = MAAKOODI_PALUU, # landing country 
-                                                                   FT_LHAR = PALUUSATAMA_EUKOODI, # landing harbour
-                                                                   FT_LDAT = PALUUPVM, # arrival date DD/MM/YYYY
-                                                                   FT_LTIME = PALUUAIKA, # arrival time HH:MM
-                                                                   
-                                                                   LE_ID, # log event ID 
-                                                                   LE_CDAT = KALASTUSPVM, # catch date DD/MM/YYYY
-                                                                   LE_STIME = LASKUAIKA, # log event start time *OPTIONAL*
-                                                                   LE_ETIME = NOSTOAIKA, # log event end time *OPTIONAL*
-                                                                   LE_SLAT = KOORDELASKU, #log event start position latitude *OPTIONAL*
-                                                                   LE_SLON = KOORDNLASKU, #log event start position longitude *OPTIONAL*
-                                                                   LE_ELAT = KOORDENOSTO, #log event end position latitude *OPTIONAL*
-                                                                   LE_ELON = KOORDNNOSTO, #log event end position longitude *OPTIONAL*
-                                                                   LE_GEAR = GEAR, # gear
-                                                                   LE_MSZ = SILMAKOKO, # mesh size
-                                                                   LE_RECT = RECTANGLE, # ICES rectangle
-                                                                   LE_DIV = ICES, # ICES division
-                                                                   LE_MET =  METIER,# fishing activity (metier)
-                                                                   contains("SVT_KG_"),
-                                                                   contains("SVT_VALUE_"),
-                                                                   -contains("SVT_KG_IND_"),
-                                                                   -contains("SVT_KG_HUC_"),
-                                                                   -contains("SVT_VALUE_HUC_"),
-                                                                   -contains("SVT_VALUE_IND_")
-)%>% 
-  separate(LE_SLAT, paste("lat",c("d","m","s"), sep="_") ) %>% # coordinates into the right format (decimals)!
-  separate(LE_SLON, paste("long",c("d","m","s"), sep="_" ) ) %>%
-  separate(LE_ELAT, paste("lat2",c("d","m","s"), sep="_") ) %>%
-  separate(LE_ELON, paste("long2",c("d","m","s"), sep="_" ) ) 
-
-
-
-%>%
-  mutate(FT_DDAT = format(FT_DDAT, "%d/%m/%Y"), # departure date DD/MM/YYYY)
-         FT_LDAT = format(FT_LDAT, "%d/%m/%Y"), # arrival date DD/MM/YYY
-         lat_d = as.numeric(lat_d),
-         lat_m = as.numeric(lat_m),
-         lat_s = as.numeric(lat_s),
-         long_d = as.numeric(long_d),
-         long_m = as.numeric(long_m),
-         long_s = as.numeric(long_s),
-         lat2_d = as.numeric(lat2_d),
-         lat2_m = as.numeric(lat2_m),
-         lat2_s = as.numeric(lat2_s),
-         long2_d = as.numeric(long2_d),
-         long2_m = as.numeric(long2_m),
-         long2_s = as.numeric(long2_s),
-         LE_SLAT=lat_d + lat_m/60 + lat_s/60^2,
-         LE_SLON=long_d + long_m/60 + long_s/60^2,
-         LE_ELAT=lat2_d + lat2_m/60 + lat2_s/60^2,
-         LE_ELON=long2_d + long2_m/60 + long2_s/60^2) %>% 
-  select(-starts_with("lat"), -starts_with("long"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#-------------------------------------------------------------------------------
-#                       2. Modify table H                     
-#-------------------------------------------------------------------------------
-
-
-# .. define coordinates 
-source("spatial.R")
-
-midpoints <- latlon(table_H$RECTANGLE,midpoint=TRUE)
-
-table_H <- tibble::rowid_to_column(table_H, "ID")
-midpoints <- tibble::rowid_to_column(midpoints, "ID")
-
-table_H <- left_join(table_H, midpoints,copy = TRUE)
-
-table_H <- table_H %>% rename(RECTANGLE_LAT = SI_LATI, RECTANGLE_LON = SI_LONG)
-
-# .. add empty col for new metier
-table_H$METIER_7 <- 'NA'
-
-
-
-# .. Invalid code: GNS_SPF_16-109_0_0
-table_H$METIER <- ifelse(table_H$METIER == "GNS_SPF_16-109_0_0", "GNS_SPF_16-31_0_0", table_H$METIER)
-# .. Invalid code: OTM_DEF_>=105_1_120
-table_H$METIER <- ifelse(table_H$METIER == "OTM_DEF_>=105_1_120", "OTM_DEF_105-115_1_120", table_H$METIER)
-# .. Invalid code: OTM_SPF_16-104_0_0
-table_H$METIER <- ifelse(table_H$METIER == "OTM_SPF_16-104_0_0", "OTM_SPF_16-31_0_0", table_H$METIER)
-# .. Invalid code: PTM_SPF_16-104_0_0
-table_H$METIER <- ifelse(table_H$METIER == "PTM_SPF_16-104_0_0", "PTM_SPF_16-31_0_0", table_H$METIER)
-# .. Invalid code: OTB_DEF_>=105_1_120
-table_H$METIER <- ifelse(table_H$METIER == "OTB_DEF_>=105_1_120", "OTB_DEF_115-120_0_0", table_H$METIER)
-
-
-
-#-------------------------------------------------------------------------------
-#                       3. Validate table H                       
-#-------------------------------------------------------------------------------
-
-# .. METIER ..
-source("validateMetierOverall.R")
-# ... import codelist from IcesVocab 
-Metier6FishingActivity <- getCodeList("Metier6_FishingActivity", date = NULL)
-# .. validate metier in table G 
-validateMetierOverall(table_H, Metier6FishingActivity)
-
-#                               @TODO  
-
-
-#-------------------------------------------------------------------------------
-#                       4. Write table H                       
-#-------------------------------------------------------------------------------
-
-# ... preparation for writing 
-colnames(table_H) <- toupper(colnames(table_H))
-
-table_H$RECTANGLE_TYPE <- "05*1"
-
-table_H$C_SQUARE <- "NA"
-
-# ... convert quarters to char
-table_H$QUARTER <- as.character(table_H$QUARTER)
-
-# ... changes in colnames in 2023 
-table_H$LATITUDE <- table_H$RECTANGLE_LAT
-table_H$LONGITUDE <- table_H$RECTANGLE_LON
-
-
-# ... select & order cols 
-table_H <- table_H %>% select(COUNTRY,	YEAR,	QUARTER,	VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,
-                                MESH_SIZE_RANGE,	METIER,	METIER_7,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,
-                                SPECON_TECH,	DEEP,	RECTANGLE_TYPE,	LATITUDE,	LONGITUDE,	C_SQUARE,	SPECIES,	TOTWGHTLANDG,	
-                                TOTVALLANDG,	CONFIDENTIAL)
-
-
-# NOTE 2023: a missing value in MESH_SIZE_RANGE is not anymore allowed if gear is GNS 
-#            The problem -> NA values are refering to trap code 25 = Net, unknown
-
-
-# .. modify 
-table_H$MESH_SIZE_RANGE <- ifelse(is.na(table_H$MESH_SIZE_RANGE) & table_H$METIER == "GNS_ANA_>=157_0_0", 
-                                  '157DXX', table_H$MESH_SIZE_RANGE)
-
-
-table_H$MESH_SIZE_RANGE <- ifelse(is.na(table_H$MESH_SIZE_RANGE) & table_H$METIER == "GNS_FWS_>0_0_0", 
-                                  '16D32', table_H$MESH_SIZE_RANGE)
-
-table(table_H$MESH_SIZE_RANGE, useNA = 'always')
-
+# Remove the zero rows (no catch) and create the confidential column based on the number of observations
+akt7 <- akt6 %>% filter(count_non_zero > 0) %>% mutate(
+  CONFIDENTIAL = case_when(
+    count_non_zero < 3 ~ "A",
+    count_non_zero >= 3 ~ "N"
+  )
+) %>% select(-count_non_zero, -n)
+
+
+# Put the variables in the correct order:
+
+table_H <- akt7 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
+
+test1 <- table_H %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 4)
+
+test2 <- akt1 %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 4)
+
+str(akt2$value)
+summary(akt2$value)
+unique(akt2$value)
+
+h1 <- akt2 %>% filter(value == 0.0)
+
+
+FIN
+2023
+4
+VL40XX
+TM
+OTM
+SPF
+16D32
+OTM_SPF_>0_0_0
+NA
+NAO
+27.3.c.30
+NA
+NGI
+NA
+NA
+05*1
+60.75
+20.5
+NA
+HER
+0.000
+146225.7
+N
 
 # ... write delivery to csv (orig-folder)
-write.csv(table_H, paste0(path_tableh,.Platform$file.sep,"H_table_2013_2022.csv"), row.names = FALSE)
+#write.csv(table_H, paste0(path_tableh,.Platform$file.sep,"H_table_2024.csv"), row.names = FALSE)
 
 # save table H
 #write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
