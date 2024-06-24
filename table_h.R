@@ -30,7 +30,7 @@ library(dplyr)
 library(magrittr)
 library(openxlsx)
 library(icesVocab)
-library(RPostgreSQL)
+library(RPostgres)
 library(tidyr)
 
 #-------------------------------------------------------------------------------
