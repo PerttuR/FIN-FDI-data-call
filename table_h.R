@@ -68,6 +68,7 @@ aktiviteetti_2023 <- aktiviteetti %>% filter(KALASTUSVUOSI == "2023") %>%
 # Select and mutate needed variables for tables H and I
 akt1 <- aktiviteetti_2023 %>% 
   select(YEAR = KALASTUSVUOSI,
+         ULKOINENTUNNUS,
          MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
          FISHING_TECH = FT,
@@ -96,6 +97,7 @@ akt1 <- aktiviteetti_2023 %>%
       TARGET_ASSEMBLAGE == "Freshwater" ~ "FWS",
       TARGET_ASSEMBLAGE == "Anadromous" ~ "ANA",
       TARGET_ASSEMBLAGE == "Finfish" ~ "FIF"),
+    TARGET_ASSEMBLAGE = replace_na(TARGET_ASSEMBLAGE, "NK"),
     MESH_SIZE_RANGE = case_when(
       FISHING_TECH == "TM" & MESH_SIZE_RANGE < 16 ~ "00D16",
       FISHING_TECH == "TM" & 16 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 32 ~ "16D32",
@@ -163,17 +165,18 @@ akt2 <- akt1 %>%
                names_pattern = "SVT_(.+)_(.+)", 
                values_to = "value")%>%
   mutate(value = as.numeric(value),  # Ensure numeric type
-         value = ifelse(is.na(value), 0, value)) # Replace NAs with 0
+         value = ifelse(is.na(value), as.numeric(0), value)) # Replace NAs with 0
 
 
 # Handle duplicates by summarising
 akt3 <- akt2 %>%
-  mutate(non_zero_flag = ifelse(value > 0, 1, 0)) %>%
+  #mutate(non_zero_flag = ifelse(value > 0, 1, 0)) %>%
   group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, type, SPECIES) %>%
   summarise(
     value = sum(value, na.rm = TRUE),
     n = n(),
-    count_non_zero = sum(non_zero_flag), # the number of observations summed together
+    n2 = n_distinct(ULKOINENTUNNUS),
+    #count_non_zero = sum(non_zero_flag), # the number of observations summed together
     .groups = 'drop'
   )
 
@@ -182,10 +185,12 @@ akt3 <- akt2 %>%
 akt4 <- akt3 %>%
   pivot_wider(names_from = type, values_from = value)
 
-# Rename columns 
+# Rename columns and replace NA's with 0s
 akt5 <- akt4 %>%
   rename(TOTVALLANDG = VALUE,
          TOTWGHTLANDG = KG)
+
+
 
 # Transform the total weights into tonnes, add missing values and add the remaining variables
 
@@ -193,23 +198,32 @@ akt6 <- akt5 %>% mutate(
   TOTWGHTLANDG = TOTWGHTLANDG/1000,
   TOTWGHTLANDG = case_when(is.na(TOTWGHTLANDG) ~ 0,
                           TRUE ~ TOTWGHTLANDG),
-  TOTVALLANDG = case_when(is.na(as.character(TOTVALLANDG)) ~ "NK",
+  TOTVALLANDG = case_when(as.character(TOTVALLANDG) == 0 ~ "NK",
+                          is.na(as.character(TOTVALLANDG)) ~ "NK",
                           TRUE ~ as.character(TOTVALLANDG))
   )
 
 
 # Remove the zero rows (no catch) and create the confidential column based on the number of observations
-akt7 <- akt6 %>% filter(count_non_zero > 0) %>% mutate(
+akt7 <- akt6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
   CONFIDENTIAL = case_when(
-    count_non_zero < 3 ~ "A",
-    count_non_zero >= 3 ~ "N"
-  )
-) %>% select(-count_non_zero, -n)
+    n2 < 3 ~ "A",
+    n2 >= 3 ~ "N"
+  )) %>% select(-n2, -n)
 
 
 # Put the variables in the correct order:
 
 table_H <- akt7 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
+
+
+
+openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
+
+
+
+# Testausta
+
 
 test <- akt5 %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 4)
 
@@ -222,20 +236,3 @@ test2 <- akt1 %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", 
 test3 <- table_H %>% filter(VESSEL_LENGTH == "VL2440", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 2)
 
 test4 <- akt1 %>% filter(VESSEL_LENGTH == "VL2440", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 2)
-
-
-problematic_rows <- akt5 %>%
-  filter(is.na(TOTWGHTLANDG) | is.na(TOTVALLANDG)) %>%
-  arrange(COUNTRY, YEAR, QUARTER)
-
-
-# ... write delivery to csv (orig-folder)
-#write.csv(table_H, paste0(path_tableh,.Platform$file.sep,"H_table_2024.csv"), row.names = FALSE)
-
-# save table H
-#write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", col.names = TRUE, row.names = FALSE)
-
-## AKY: the line above did not work for me (some java related memory issue)
-## Antti: As for me -> we could fix this later 
-
-openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
