@@ -43,7 +43,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-#                       1 Import data for 2023 H table needs                    
+#                       1. Import data for 2023 H and I table needs                    
 #-------------------------------------------------------------------------------
 
 source("db.r")
@@ -56,19 +56,21 @@ schemadate <- "2024-06-14"
 # Postgres
 aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti', dbname = "kake_siirto")
 
-aktiviteetti_2023 <- aktiviteetti %>% filter(KALASTUSVUOSI == "2023") %>% 
-  mutate(kalastus_kk = format(PALUUPVM, "%m"),
+# Read in data from the correct year
+aktiviteetti_2023 <- aktiviteetti %>% filter(KALASTUSVUOSI == 2023) %>% 
+  mutate(kalastus_kk = format(PALUUPVM, "%m"), #get the correct month in order to make quarters later on
          kalastus_vuosi = format(PALUUPVM,"%Y"),
          kalastus_kk = case_when(
-           kalastus_vuosi == "2022" ~ "01",
+           kalastus_vuosi == "2022" ~ "01", #set the months right on the beginning and end of the year
            kalastus_vuosi == "2024" ~ "12",
            TRUE ~ kalastus_kk
          ))
 
-# Select and mutate needed variables for tables H and I
+# Select and mutate all the needed variables for tables H and I
 akt1 <- aktiviteetti_2023 %>% 
   select(YEAR = KALASTUSVUOSI,
          ULKOINENTUNNUS,
+         KALASTUSPAIVAT,
          MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
          FISHING_TECH = FT,
@@ -128,8 +130,8 @@ akt1 <- aktiviteetti_2023 %>%
       TRUE ~ SUB_REGION
     )) #tehdään tarkaste myöhemmin!
 
-# Create variables LATITUDE and LONGITUDE:
 
+# Create variables LATITUDE and LONGITUDE:
 # .. define coordinates 
 source("spatial.R")
 
@@ -162,8 +164,15 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
   TRUE ~ METIER))  # All other values remain unchanged
 
 
+#-------------------------------------------------------------------------------
+#                   2. TABLE H (Landings by rectangle)                       
+#-------------------------------------------------------------------------------
+
+
+h <- akt1 %>% select(-KALASTUSPAIVAT) #not needed in table H
+
 # Pivot to longer format
-akt2 <- akt1 %>%
+h2 <- h %>%
   pivot_longer(cols = starts_with("SVT"), 
                names_to = c("type", "SPECIES"), 
                names_pattern = "SVT_(.+)_(.+)", 
@@ -172,33 +181,27 @@ akt2 <- akt1 %>%
          value = ifelse(is.na(value), as.numeric(0), value)) # Replace NAs with 0
 
 
-# Handle duplicates by summarising
-akt3 <- akt2 %>%
-  #mutate(non_zero_flag = ifelse(value > 0, 1, 0)) %>%
+# Handle duplicates by summarising and sum up the values of KG and VALUE (eur)
+h3 <- h2 %>%
   group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, type, SPECIES) %>%
   summarise(
     value = sum(value, na.rm = TRUE),
     n = n(),
     n2 = n_distinct(ULKOINENTUNNUS),
-    #count_non_zero = sum(non_zero_flag), # the number of observations summed together
     .groups = 'drop'
   )
 
-
 # Pivot to wider format and separate VALUE and KG
-akt4 <- akt3 %>%
+h4 <- h3 %>%
   pivot_wider(names_from = type, values_from = value)
 
 # Rename columns and replace NA's with 0s
-akt5 <- akt4 %>%
+h5 <- h4 %>%
   rename(TOTVALLANDG = VALUE,
          TOTWGHTLANDG = KG)
 
-
-
 # Transform the total weights into tonnes, add missing values and add the remaining variables
-
-akt6 <- akt5 %>% mutate(
+h6 <- h5 %>% mutate(
   TOTWGHTLANDG = TOTWGHTLANDG/1000,
   TOTWGHTLANDG = case_when(is.na(TOTWGHTLANDG) ~ 0,
                           TRUE ~ TOTWGHTLANDG),
@@ -209,7 +212,7 @@ akt6 <- akt5 %>% mutate(
 
 
 # Remove the zero rows (no catch) and create the confidential column based on the number of observations
-akt7 <- akt6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
+h7 <- h6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
   CONFIDENTIAL = case_when(
     n2 < 3 ~ "A",
     n2 >= 3 ~ "N"
@@ -218,25 +221,30 @@ akt7 <- akt6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
 
 # Put the variables in the correct order:
 
-table_H <- akt7 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
+table_H <- h7 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
 
 
-
+# Write the resulting table H
 openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
 
+#-------------------------------------------------------------------------------
+#                   3. TABLE I (Effort by rectangle)                       
+#-------------------------------------------------------------------------------
+
+# remove variables not needed in table I (relating to catch)
+i <- akt1 %>% select(-contains("SVT"))
+
+# Sum the total of fishing days and calculate the number of distinct vessels in each strata
+i2 <- i %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE) %>% summarise(
+  TOTFISHDAYS = sum(KALASTUSPAIVAT, na.rm = TRUE),
+  n2 = n_distinct(ULKOINENTUNNUS),
+  .groups = 'drop')
+
+# Create the last needed variable
+table_I <- i2 %>% filter(TOTFISHDAYS > 0) %>% mutate(
+  CONFIDENTIAL = case_when(
+    n2 < 3 ~ "Y",
+    n2 >= 3 ~ "N")) %>% select(-n2)
 
 
-# Testausta
-
-
-test <- akt5 %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 4)
-
-test1 <- table_H %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 4)
-
-test2 <- akt1 %>% filter(VESSEL_LENGTH == "VL40XX", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 4)
-
-
-
-test3 <- table_H %>% filter(VESSEL_LENGTH == "VL2440", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 2)
-
-test4 <- akt1 %>% filter(VESSEL_LENGTH == "VL2440", MESH_SIZE_RANGE == "16D32", METIER == "OTM_SPF_>0_0_0", LATITUDE == 60.75, LONGITUDE == 20.5, QUARTER == 2)
+openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
