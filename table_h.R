@@ -122,7 +122,11 @@ akt1 <- aktiviteetti_2023 %>%
     DEEP = "NA",
     RECTANGLE_TYPE = "05*1",
     C_SQUARE = "NA") %>% 
-  select(-MONTH, -ICES)
+  select(-MONTH, -ICES) %>% mutate(
+    SUB_REGION = case_when(
+      SUB_REGION == "27.3.d.28" ~ "27.3.d.28.2.", #Vaihtoehtoine 28.1 ja 28.2 ja jälkimmäinen pääallas, jolla Suomi kalastaa
+      TRUE ~ SUB_REGION
+    ))
 
 # Create variables LATITUDE and LONGITUDE:
 
