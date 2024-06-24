@@ -115,7 +115,7 @@ akt1 <- aktiviteetti_2023 %>%
     ),
     METIER_7 = "NA",
     SUPRA_REGION = "NAO",
-    SUB_REGION = paste("27.3.c.", ICES, sep = ""),
+    SUB_REGION = paste("27.3.d.", ICES, sep = ""),
     EEZ_INDICATOR = "NA",
     GEO_INDICATOR = "NGI",
     SPECON_TECH = "NA",
