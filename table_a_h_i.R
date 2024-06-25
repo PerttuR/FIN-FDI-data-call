@@ -217,12 +217,18 @@ a7 <- a6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
     n2 >= 3 ~ "N"
   )) %>% select(-n2, -n)
 
+
+mutate(b = case_when(startsWith(as.character(a), "a") ~ "letter",
+                     TRUE ~ "number"))
 # Create domain keys for landings and discards and discards variable
 a8 <- a7 %>% mutate(
+  GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
+                   GEAR_TYPE == "OTM" | GEAR_TYPE == "PTM" ~ "OTM-PTM",
+                   TRUE ~ GEAR_TYPE),
   DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
                            QUARTER, "_", # quarter
                            SUB_REGION, "_", # region
-                           GEAR_TYPE, "_", # gear type
+                           GEAR, "_", # gear type
                            TARGET_ASSEMBLAGE, "_", # target assemblage
                            "all_", # mesh size range
                            "NA_", # selective device / metier
@@ -231,20 +237,9 @@ a8 <- a7 %>% mutate(
                            SPECIES, "_", # species
                            "all" # commercial category
                            ),
-  DOMAIN_DISCARDS = paste0(COUNTRY, "_", # country
-                           QUARTER, "_", # quarter
-                           SUB_REGION, "_", # region
-                           GEAR_TYPE, "_", # gear type
-                           TARGET_ASSEMBLAGE, "_", # target assemblage
-                           "all_", # mesh size range
-                           "NA_", # selective device / metier
-                           "NA_", # mesh size range of the selective device
-                           "all_", # vessel length
-                           SPECIES, "_", # species
-                           "all" # commercial category
-  ),
+  DOMAIN_DISCARDS = DOMAIN_LANDINGS,
   DISCARDS = "NK"
-)
+) %>% select(-GEAR)
 
 
 # Put the variables in the correct order:
@@ -257,6 +252,28 @@ saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
 openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 
+
+#-------------------------------------------------------------------------------
+#                   2. TABLE G (Effort summary)                       
+#-------------------------------------------------------------------------------
+
+TOTSEADAYS = MERIPAIVAT,
+TOTFISHDAYS = KALASTUSPAIVAT,
+HRSEA = KALASTUSAIKAHH
+
+
+TOTKWDAYSATSEA = TOTSEADAYS*PAAKONETEHO,
+TOTGTDAYSATSEA = TOTSEADAYS*VETOISUUS,
+TOTKWFISHDAYS = TOTFISHDAYS*PAAKONETEHO,
+TOTGTFISHDAYS = TOTFISHDAYS*VETOISUUS,
+KWHRSEA = HRSEA*PAAKONETEHO,
+GTHRSEA = HRSEA*VETOISUUS,
+
+TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA
+
+TOTVES: [integer] Number of vessels conducting activity as defined in columns 3 to 148; ‘NK’ if the number of vessels is not known.
+CONFIDENTIAL: [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise ‘N’; missing values not allowed.
+7
 
 
 #-------------------------------------------------------------------------------
