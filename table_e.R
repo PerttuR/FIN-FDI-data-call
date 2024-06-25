@@ -297,6 +297,8 @@ table_E <- table_e_pre2  |>
        WEIGHT_UNIT=first(WEIGHT_UNIT),
        MEAN_LENGTH="NK",
        LENGTH_UNIT=first(LENGTH_UNIT))
+table_E <- table_E |> left_join(table_e_pre2 |> select(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES, AGE))
+
 
 # set working directory to save table E and table of deleted observations
 openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
