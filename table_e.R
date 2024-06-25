@@ -297,7 +297,8 @@ table_E <- table_e_pre2  |>
        WEIGHT_UNIT=first(WEIGHT_UNIT),
        MEAN_LENGTH="NK",
        LENGTH_UNIT=first(LENGTH_UNIT))
-table_E <- table_E |> left_join(table_e_pre2 |> select(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES, AGE))
+unique_ages <- table_e_pre2 |> select(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES, AGE) |> distinct()
+table_E <- table_E |> left_join(unique_ages)
 table_E <- table_E |> select(
        COUNTRY,
        YEAR,
