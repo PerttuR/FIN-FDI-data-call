@@ -14,7 +14,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is to prepare FDI data tables A, G, H and I
+# The following script is to prepare FDI data tables A, G, H, I and J
 #-------------------------------------------------------------------------------
 
 
@@ -43,7 +43,7 @@ path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-#                       1. Import data for 2023 A, G, H and I table needs                    
+#                       1. Import data for 2023 A, G, H, I and J table needs                    
 #-------------------------------------------------------------------------------
 
 source("db.r")
@@ -53,8 +53,11 @@ source("db.r")
 schemadate <- "2024-06-14"
 
 
-# Postgres
+# Postgres (used with A, G, H and I)
 aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti', dbname = "kake_siirto")
+
+# (used with J)
+kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti', dbname = "kake_siirto")
 
 # Read in data from the correct year
 aktiviteetti_2023 <- aktiviteetti %>% filter(KALASTUSVUOSI == 2023) %>% 
@@ -75,6 +78,7 @@ akt1 <- aktiviteetti_2023 %>%
          PAAKONETEHO,
          VETOISUUS,
          KALASTUSAIKAHH,
+         FT_REF, #trip id
          MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
          FISHING_TECH = FT,
@@ -172,7 +176,7 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
 #                   2. TABLE A (Catch summary)                       
 #-------------------------------------------------------------------------------
 
-a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH)
+a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
 # Pivot to longer format
 a2 <- a %>%
@@ -308,7 +312,7 @@ write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx")
 #-------------------------------------------------------------------------------
 
 
-h <- akt1 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH) #not needed in table H
+h <- akt1 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF) #not needed in table H
 
 # Pivot to longer format
 h2 <- h %>%
@@ -370,7 +374,7 @@ openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LA
 #-------------------------------------------------------------------------------
 
 # remove variables not needed in table I (relating to catch)
-i <- akt1 %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH)
+i <- akt1 %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
 # Sum the total of fishing days and calculate the number of distinct vessels in each strata
 i2 <- i %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE) %>% summarise(
@@ -386,3 +390,117 @@ table_I <- i2 %>% filter(TOTFISHDAYS > 0) %>% mutate(
 
 # Write the resulting table I
 openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
+
+
+#-------------------------------------------------------------------------------
+#                   3. TABLE J (Capacity and fleet segment effort)                       
+#-------------------------------------------------------------------------------
+
+# Select variables needed for J table
+j <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
+
+# from capacity table some needed variables
+kap <- kapasiteetti %>% filter(VUOSI == 2023, REKISTERISSAVUODENAIKANA == 1) %>% select(
+  YEAR = VUOSI,
+  ULKOINENTUNNUS, 
+  KOKPITUUS, 
+  RAKENNUSPVM,
+  VESSEL_LENGTH = VLENGTH_AER_NEW) %>% mutate(
+  rakennusvuosi = as.numeric(format(RAKENNUSPVM,"%Y")),
+  AGE = 2023-rakennusvuosi
+) %>% select(-RAKENNUSPVM, -rakennusvuosi) %>% distinct()
+
+# removing duplicates and checking there are none left
+dup<-kap %>% 
+  group_by(ULKOINENTUNNUS) %>% 
+  filter(n()>1)
+
+# two vessels have duplicates (differencing values in length), make them the same so there are no duplicates
+kap2 <- kap %>% mutate(
+  KOKPITUUS = case_when(ULKOINENTUNNUS == "FIN-318-0" ~ 6.15, # has values 6.15 and 6.20 registered
+                        ULKOINENTUNNUS == "FIN-3678-V" ~ 9.99, # has values 9.99 and 10.10 registered
+                        TRUE ~ KOKPITUUS
+)) %>% distinct()
+
+# join the capacity to the j table
+j2 <- left_join(kap2, j, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
+
+# replacing missing fishing tech's in the vessels that are not active
+# Convert the factor to a character vector
+j2 <- j2 %>% mutate(FISHING_TECH = as.character(FISHING_TECH))
+# Replace NA values with "PG"
+j3 <- j2 %>% mutate(FISHING_TECH = replace_na(FISHING_TECH, "PG"))
+# convert the character vector back to a factor
+j3 <- j3 %>% mutate(FISHING_TECH = as.factor(FISHING_TECH))
+
+
+# Calculate the principal sub region for each vessel
+j4 <- j3 %>% group_by(ULKOINENTUNNUS, SUB_REGION) %>% summarise(
+  fishingdays = n_distinct(KALASTUSPAIVAT, na.rm = TRUE),
+  fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
+  .groups = 'drop'
+  )
+  
+# Identify the principal sub region for each vessel
+principal_sub_region <- j4 %>%
+  group_by(ULKOINENTUNNUS) %>%
+  filter(fishingdays == max(fishingdays, na.rm = TRUE)) %>%
+  # Handle ties by randomly selecting one sub region
+  slice_sample(n = 1) %>%
+  ungroup() %>% rename(PRINCIPAL_SUB_REGION = SUB_REGION)
+
+# join the principal sub region to the j table
+j5 <- left_join(j3, principal_sub_region, by = "ULKOINENTUNNUS")
+  
+# Calculate the number of fishing trips for each vessel
+vessel_fishing_trips <- j5 %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% summarise(
+    total_fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
+    total_fishingdays = sum(fishingdays, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+# Calculate the average number of fishing days for the top 10 vessels with the highest number of fishing trips
+maxseadays <- vessel_fishing_trips %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% arrange(desc(total_fishingdays)) %>%
+  # Sort vessels by days at sea in descending order and take the top 10
+  slice(1:10) %>% summarise(
+    MAXSEADAYS = mean(total_fishingdays, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  mutate(MAXSEADAYS = replace_na(MAXSEADAYS, 'NK'))
+  
+
+# Calculate the other sums and averages
+j6 <- j5 %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% summarise(
+  TOTTRIPS = sum(fishingtrips, na.rm = TRUE),
+  TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
+  TOTGT = sum(VETOISUUS, na.rm = TRUE),
+  TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
+  AVGAGE = mean(AGE, na.rm = TRUE),
+  AVGLOA = mean(KOKPITUUS, na.rm = TRUE),
+  .groups = 'drop'
+)
+
+# join the maximum days at sea with j table
+j7 <- left_join(j6, maxseadays, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
+
+# replace missing values
+j8 <- j7 %>% mutate(
+  COUNTRY = replace_na(COUNTRY, "FIN"),
+  SUPRA_REGION = replace_na(SUPRA_REGION, "NAO"),
+  GEO_INDICATOR = replace_na(GEO_INDICATOR, "NGI"),
+  PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK")
+)
+
+
+# Put the variables in the correct order:
+table_J <- j8 %>% select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
+
+
+# Write the resulting table J
+write.xlsx(table_J, paste0(path_out,.Platform$file.sep,"FIN_TABLE_J_CAPACITY.xlsx"), 
+           sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
+
+
+
+
+
