@@ -39,11 +39,11 @@ library(tidyr)
 
 # Output folder
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
-
+path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-#                       1. Import data for 2023 H and I table needs                    
+#                       1. Import data for 2023 A, H and I table needs                    
 #-------------------------------------------------------------------------------
 
 source("db.r")
@@ -71,6 +71,10 @@ akt1 <- aktiviteetti_2023 %>%
   select(YEAR = KALASTUSVUOSI,
          ULKOINENTUNNUS,
          KALASTUSPAIVAT,
+         MERIPAIVAT,
+         PAAKONETEHO,
+         VETOISUUS,
+         KALASTUSAIKAHH,
          MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
          FISHING_TECH = FT,
@@ -165,11 +169,127 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
 
 
 #-------------------------------------------------------------------------------
+#                   2. TABLE A (Catch summary)                       
+#-------------------------------------------------------------------------------
+
+a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH)
+
+# Pivot to longer format
+a2 <- a %>%
+  pivot_longer(cols = starts_with("SVT"), 
+               names_to = c("type", "SPECIES"), 
+               names_pattern = "SVT_(.+)_(.+)", 
+               values_to = "value")%>%
+  mutate(value = as.numeric(value),  # Ensure numeric type
+         value = ifelse(is.na(value), as.numeric(0), value)) # Replace NAs with 0
+
+
+# Handle duplicates by summarising and sum up the values of KG and VALUE (eur)
+a3 <- a2 %>%
+  group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, type, SPECIES) %>%
+  summarise(
+    value = sum(value, na.rm = TRUE),
+    n = n(),
+    n2 = n_distinct(ULKOINENTUNNUS),
+    .groups = 'drop'
+  )
+
+# Pivot to wider format and separate VALUE and KG
+a4 <- a3 %>%
+  pivot_wider(names_from = type, values_from = value)
+
+# Rename columns and replace NA's with 0s
+a5 <- a4 %>%
+  rename(TOTVALLANDG = VALUE,
+         TOTWGHTLANDG = KG)
+
+# Transform the total weights into tonnes, add missing values and add the remaining variables
+a6 <- a5 %>% mutate(
+  TOTWGHTLANDG = TOTWGHTLANDG/1000,
+  TOTWGHTLANDG = case_when(is.na(TOTWGHTLANDG) ~ 0,
+                           TRUE ~ TOTWGHTLANDG),
+  TOTVALLANDG = case_when(as.character(TOTVALLANDG) == 0 ~ "NK",
+                          is.na(as.character(TOTVALLANDG)) ~ "NK",
+                          TRUE ~ as.character(TOTVALLANDG))
+)
+
+
+# Remove the zero rows (no catch) and create the confidential column based on the number of observations
+a7 <- a6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
+  CONFIDENTIAL = case_when(
+    n2 < 3 ~ "A",
+    n2 >= 3 ~ "N"
+  )) %>% select(-n2, -n)
+
+
+# Create domain keys for landings and discards and discards variable
+a8 <- a7 %>% mutate(
+  GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
+                   GEAR_TYPE == "OTM" | GEAR_TYPE == "PTM" ~ "OTM-PTM",
+                   SPECIES == "SPR" & (GEAR_TYPE == "GNS" | GEAR_TYPE == "FYK") ~ "GNS-FYK",
+                   TRUE ~ GEAR_TYPE),
+  DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
+                           QUARTER, "_", # quarter
+                           SUB_REGION, "_", # region
+                           GEAR, "_", # gear type
+                           TARGET_ASSEMBLAGE, "_", # target assemblage
+                           "all_", # mesh size range
+                           "NA_", # selective device / metier
+                           "NA_", # mesh size range of the selective device
+                           "all_", # vessel length
+                           SPECIES, "_", # species
+                           "all" # commercial category
+                           ),
+  DOMAIN_DISCARDS = DOMAIN_LANDINGS,
+  DISCARDS = "NK"
+) %>% select(-GEAR)
+
+
+# Put the variables in the correct order:
+table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
+
+openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+
+
+
+#-------------------------------------------------------------------------------
+#                   2. TABLE G (Effort summary)                       
+#-------------------------------------------------------------------------------
+
+g <- akt1 %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, #not needed
+                     TOTSEADAYS = MERIPAIVAT,
+                     TOTFISHDAYS = KALASTUSPAIVAT,
+                     HRSEA = KALASTUSAIKAHH) %>% mutate(
+                       TOTKWDAYSATSEA = TOTSEADAYS*PAAKONETEHO,
+                       TOTGTDAYSATSEA = TOTSEADAYS*VETOISUUS,
+                       TOTKWFISHDAYS = TOTFISHDAYS*PAAKONETEHO,
+                       TOTGTFISHDAYS = TOTFISHDAYS*VETOISUUS,
+                       KWHRSEA = HRSEA*PAAKONETEHO,
+                       GTHRSEA = HRSEA*VETOISUUS 
+                     )
+
+
+
+
+,
+
+TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA
+
+TOTVES: [integer] Number of vessels conducting activity as defined in columns 3 to 148; ‘NK’ if the number of vessels is not known.
+CONFIDENTIAL: [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise ‘N’; missing values not allowed.
+7
+
+
+#-------------------------------------------------------------------------------
 #                   2. TABLE H (Landings by rectangle)                       
 #-------------------------------------------------------------------------------
 
 
-h <- akt1 %>% select(-KALASTUSPAIVAT) #not needed in table H
+h <- akt1 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH) #not needed in table H
 
 # Pivot to longer format
 h2 <- h %>%
@@ -232,7 +352,7 @@ openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LA
 #-------------------------------------------------------------------------------
 
 # remove variables not needed in table I (relating to catch)
-i <- akt1 %>% select(-contains("SVT"))
+i <- akt1 %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH)
 
 # Sum the total of fishing days and calculate the number of distinct vessels in each strata
 i2 <- i %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE) %>% summarise(

@@ -37,32 +37,60 @@ library(icesVocab)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Common paths & 2022 folder:
+# Common paths & 2024 data call folders:
 
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
+# Paths & 2024 folder:
+
+path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
 
+
+#TO DO?
+#path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
+# folder where the output is saved
 
 # create directories if missing, but ignore warnings in case they already exist
-dir.create(path_tablea, showWarnings = FALSE)
 dir.create(path_out, showWarnings = FALSE)
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
 
-# import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
-#select order of columns
-table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+# import IC data and table A
 
-table_A <- table_A %>% rename_all(tolower)
+IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
+
+#table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
+#select order of columns
+#table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+#table_A <- table_A %>% rename_all(tolower)
 
 #colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
+
 #-------------------------------------------------------------------------------
+#                       1.1 create DOMAIN landing to IC data                       
+#-------------------------------------------------------------------------------
+
+country_code <- "FIN"
+quarter <- IC_2023$Season
+subregion <- IC_2023$FishingArea
+IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+                               IC_2023$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+                               IC_2023$Fleet == "Gillnet" ~ "GNS",
+                               IC_2023$Fleet == "Active" ~ "OTM-PTM",
+                               IC_2023$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+                               IC_2023$Fleet == " Passive" ~ "GNS-FYK"
+                               )
+vessel_length <- "all"
+
+
+#-------------------------------------------------------------------------------
+
 
 # sum totwghtlandg BY year, domain_landings and species from TABLE A
 table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))))
