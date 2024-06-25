@@ -14,7 +14,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is to prepare FDI data tables H and I
+# The following script is to prepare FDI data tables A, G, H and I
 #-------------------------------------------------------------------------------
 
 
@@ -43,7 +43,7 @@ path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-#                       1. Import data for 2023 A, H and I table needs                    
+#                       1. Import data for 2023 A, G, H and I table needs                    
 #-------------------------------------------------------------------------------
 
 source("db.r")
@@ -252,6 +252,7 @@ table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GE
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
+# Write the resulting table A
 openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 
@@ -260,7 +261,8 @@ openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CA
 #                   2. TABLE G (Effort summary)                       
 #-------------------------------------------------------------------------------
 
-g <- akt1 %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, #not needed
+# Select the variables not needed and needed in G table
+g <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
                      TOTSEADAYS = MERIPAIVAT,
                      TOTFISHDAYS = KALASTUSPAIVAT,
                      HRSEA = KALASTUSAIKAHH) %>% mutate(
@@ -270,18 +272,35 @@ g <- akt1 %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUAR
                        TOTGTFISHDAYS = TOTFISHDAYS*VETOISUUS,
                        KWHRSEA = HRSEA*PAAKONETEHO,
                        GTHRSEA = HRSEA*VETOISUUS 
-                     )
+                     ) %>% select(-PAAKONETEHO, -VETOISUUS)
+
+# Sum the total effort and calculate the number of distinct vessels in each strata
+g2 <- g %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP) %>% summarise(
+  TOTSEADAYS = sum(TOTSEADAYS, na.rm = TRUE),
+  TOTKWDAYSATSEA = sum(TOTKWDAYSATSEA, na.rm = TRUE),
+  TOTGTDAYSATSEA = sum(TOTGTDAYSATSEA, na.rm = TRUE),
+  TOTFISHDAYS = sum(TOTFISHDAYS, na.rm = TRUE),
+  TOTKWFISHDAYS = sum(TOTKWFISHDAYS, na.rm = TRUE),
+  TOTGTFISHDAYS = sum(TOTGTFISHDAYS, na.rm = TRUE),
+  HRSEA = sum(HRSEA, na.rm = TRUE),
+  KWHRSEA = sum(KWHRSEA, na.rm = TRUE),
+  GTHRSEA = sum(GTHRSEA, na.rm = TRUE),
+  TOTVES = n_distinct(ULKOINENTUNNUS),
+  .groups = 'drop') %>% mutate(
+    CONFIDENTIAL = case_when(
+      TOTVES < 3 ~ "Y",
+      TOTVES >= 3 ~ "N"),
+    # change null values into NK
+    across(c(TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA), ~ as.character(.))) %>% mutate(
+      across(c(TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA),~ replace_na(., "NK")))
 
 
+# Put the variables in the correct order:
+table_G <- g2 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, TOTVES, CONFIDENTIAL)
 
 
-,
-
-TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA
-
-TOTVES: [integer] Number of vessels conducting activity as defined in columns 3 to 148; ‘NK’ if the number of vessels is not known.
-CONFIDENTIAL: [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise ‘N’; missing values not allowed.
-7
+# Write the resulting table G
+write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
 
 
 #-------------------------------------------------------------------------------
@@ -340,7 +359,6 @@ h7 <- h6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
 
 
 # Put the variables in the correct order:
-
 table_H <- h7 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
 
 
@@ -366,5 +384,5 @@ table_I <- i2 %>% filter(TOTFISHDAYS > 0) %>% mutate(
     n2 < 3 ~ "Y",
     n2 >= 3 ~ "N")) %>% select(-n2)
 
-
+# Write the resulting table I
 openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
