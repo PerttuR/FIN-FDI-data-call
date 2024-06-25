@@ -228,7 +228,7 @@ a8 <- a7 %>% mutate(
                            "NA_", # selective device / metier
                            "NA_", # mesh size range of the selective device
                            "all_", # vessel length
-                           SPECIES, # species
+                           SPECIES, "_", # species
                            "all" # commercial category
                            ),
   DOMAIN_DISCARDS = paste0(COUNTRY, "_", # country
@@ -255,6 +255,9 @@ table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GE
 saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
 openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+
+
+
 
 #-------------------------------------------------------------------------------
 #                   2. TABLE H (Landings by rectangle)                       
