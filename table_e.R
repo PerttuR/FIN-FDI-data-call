@@ -298,6 +298,25 @@ table_E <- table_e_pre2  |>
        MEAN_LENGTH="NK",
        LENGTH_UNIT=first(LENGTH_UNIT))
 table_E <- table_E |> left_join(table_e_pre2 |> select(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES, AGE))
+table_E <- table_E |> select(
+       COUNTRY,
+       YEAR,
+       DOMAIN_LANDINGS,
+       NEP_SUB_REGION,
+       SPECIES,
+       TOTWGHTLANDG,
+       TOTAL_SAMPLED_TRIPS,
+       NO_AGE_MEASUREMENTS,
+       AGE_MEASUREMENTS_PROP,
+       MIN_AGE,
+       MAX_AGE,
+       AGE,
+       NO_AGE,
+       MEAN_WEIGHT,
+       WEIGHT_UNIT,
+       MEAN_LENGTH,
+       LENGTH_UNIT
+)
 
 
 # set working directory to save table E and table of deleted observations
