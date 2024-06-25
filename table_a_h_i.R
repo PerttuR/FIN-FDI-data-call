@@ -165,6 +165,83 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
 
 
 #-------------------------------------------------------------------------------
+#                   2. TABLE A (Catch summary)                       
+#-------------------------------------------------------------------------------
+
+a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
+
+# Pivot to longer format
+a2 <- a %>%
+  pivot_longer(cols = starts_with("SVT"), 
+               names_to = c("type", "SPECIES"), 
+               names_pattern = "SVT_(.+)_(.+)", 
+               values_to = "value")%>%
+  mutate(value = as.numeric(value),  # Ensure numeric type
+         value = ifelse(is.na(value), as.numeric(0), value)) # Replace NAs with 0
+
+
+# Handle duplicates by summarising and sum up the values of KG and VALUE (eur)
+a3 <- a2 %>%
+  group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, type, SPECIES) %>%
+  summarise(
+    value = sum(value, na.rm = TRUE),
+    n = n(),
+    n2 = n_distinct(ULKOINENTUNNUS),
+    .groups = 'drop'
+  )
+
+# Pivot to wider format and separate VALUE and KG
+a4 <- a3 %>%
+  pivot_wider(names_from = type, values_from = value)
+
+# Rename columns and replace NA's with 0s
+a5 <- a4 %>%
+  rename(TOTVALLANDG = VALUE,
+         TOTWGHTLANDG = KG)
+
+# Transform the total weights into tonnes, add missing values and add the remaining variables
+a6 <- a5 %>% mutate(
+  TOTWGHTLANDG = TOTWGHTLANDG/1000,
+  TOTWGHTLANDG = case_when(is.na(TOTWGHTLANDG) ~ 0,
+                           TRUE ~ TOTWGHTLANDG),
+  TOTVALLANDG = case_when(as.character(TOTVALLANDG) == 0 ~ "NK",
+                          is.na(as.character(TOTVALLANDG)) ~ "NK",
+                          TRUE ~ as.character(TOTVALLANDG))
+)
+
+
+# Remove the zero rows (no catch) and create the confidential column based on the number of observations
+a7 <- a6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
+  CONFIDENTIAL = case_when(
+    n2 < 3 ~ "A",
+    n2 >= 3 ~ "N"
+  )) %>% select(-n2, -n)
+
+# Create domain keys for landings and discards
+a8 <- a7 %>% mutate(
+  DOMAIN_LANDINGS = paste0("FIN_", # country
+                           QUARTER, "_", # quarter
+                           SUB_REGION, "_", # region
+                           GEAR_TYPE, "_", # gear type
+                           TARGET_ASSEMBLAGE, "_", # target assemblage
+                           MESH_SIZE_RANGE, "_", # mesh size range
+                           METIER, "_", # selective device
+                           "all_", # mesh size range of the selective device (all)
+                           VESSEL_LENGTH, # vessel length (all)
+                           SPECIES, # species
+                           "NA" # commercial category (NK/NA)
+                           )
+)
+
+
+# Put the variables in the correct order:
+table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
+
+
+# Write the resulting table H
+openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+
+#-------------------------------------------------------------------------------
 #                   2. TABLE H (Landings by rectangle)                       
 #-------------------------------------------------------------------------------
 
