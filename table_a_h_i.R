@@ -71,6 +71,10 @@ akt1 <- aktiviteetti_2023 %>%
   select(YEAR = KALASTUSVUOSI,
          ULKOINENTUNNUS,
          KALASTUSPAIVAT,
+         MERIPAIVAT,
+         PAAKONETEHO,
+         VETOISUUS,
+         KALASTUSAIKAHH,
          MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
          FISHING_TECH = FT,
@@ -168,7 +172,7 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
 #                   2. TABLE A (Catch summary)                       
 #-------------------------------------------------------------------------------
 
-a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
+a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH)
 
 # Pivot to longer format
 a2 <- a %>%
@@ -218,8 +222,6 @@ a7 <- a6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
   )) %>% select(-n2, -n)
 
 
-mutate(b = case_when(startsWith(as.character(a), "a") ~ "letter",
-                     TRUE ~ "number"))
 # Create domain keys for landings and discards and discards variable
 a8 <- a7 %>% mutate(
   GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
