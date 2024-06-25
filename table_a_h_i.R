@@ -43,7 +43,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-#                       1. Import data for 2023 H and I table needs                    
+#                       1. Import data for 2023 A, H and I table needs                    
 #-------------------------------------------------------------------------------
 
 source("db.r")
@@ -217,28 +217,41 @@ a7 <- a6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
     n2 >= 3 ~ "N"
   )) %>% select(-n2, -n)
 
-# Create domain keys for landings and discards
+# Create domain keys for landings and discards and discards variable
 a8 <- a7 %>% mutate(
-  DOMAIN_LANDINGS = paste0("FIN_", # country
+  DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
                            QUARTER, "_", # quarter
                            SUB_REGION, "_", # region
                            GEAR_TYPE, "_", # gear type
                            TARGET_ASSEMBLAGE, "_", # target assemblage
-                           MESH_SIZE_RANGE, "_", # mesh size range
-                           METIER, "_", # selective device
-                           "all_", # mesh size range of the selective device (all)
-                           VESSEL_LENGTH, # vessel length (all)
+                           "all_", # mesh size range
+                           "NA_", # selective device / metier
+                           "NA_", # mesh size range of the selective device
+                           "all_", # vessel length
                            SPECIES, # species
-                           "NA" # commercial category (NK/NA)
-                           )
+                           "all" # commercial category
+                           ),
+  DOMAIN_DISCARDS = paste0(COUNTRY, "_", # country
+                           QUARTER, "_", # quarter
+                           SUB_REGION, "_", # region
+                           GEAR_TYPE, "_", # gear type
+                           TARGET_ASSEMBLAGE, "_", # target assemblage
+                           "all_", # mesh size range
+                           "NA_", # selective device / metier
+                           "NA_", # mesh size range of the selective device
+                           "all_", # vessel length
+                           SPECIES, "_", # species
+                           "all" # commercial category
+  ),
+  DISCARDS = "NK"
 )
 
 
 # Put the variables in the correct order:
-table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
+table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 
 
-# Write the resulting table H
+# Write the resulting table A
 openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 #-------------------------------------------------------------------------------
