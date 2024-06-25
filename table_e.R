@@ -86,7 +86,7 @@ IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
                                IC_2023$Fleet == "Gillnet" ~ "GNS",
                                IC_2023$Fleet == "Active" ~ "OTM-PTM",
                                IC_2023$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
-                               IC_2023$Fleet == " Passive" ~ "GNS-FYK"
+                               IC_2023$Fleet == "Passive" ~ "GNS-FYK"
                                )
 IC_2023$vessel_length <- "all"
 IC_2023$TARGET_ASSEMBLAGE <- case_when(IC_2023$Species == "HER"| IC_2023$Species == "SPR"~ "SPF")
@@ -213,25 +213,27 @@ e1 <- e1 %>% rename_all(tolower)
 table_e_pre1 <- merge(e1, table_A, by = c("country", "year", "domain_landings"), all.x = T)
 
 # TEST some keys might not match, check how many there might be
-missing_domains <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
-missing_domains2 = missing_domains %>% distinct(domain_landings, .keep_all = T)
-length(missing_domains2$domain_landings)
+missing_domains_IC <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
+missing_domains_IC_DISTINCT = missing_domains_IC %>% distinct(domain_landings, .keep_all = T)
+length(missing_domains_IC_DISTINCT$domain_landings)
 #Liittyneet:
-domains <- table_e_pre1[!is.na(table_e_pre1$totwghtlandg),]
-domains2 <- domains%>% distinct(domain_landings, .keep_all = T)
-length(domains2$domain_landings)
+domains_IC <- table_e_pre1[!is.na(table_e_pre1$totwghtlandg),]
+domains_IC_DISTINCT <- domains_IC%>% distinct(domain_landings, .keep_all = T)
+length(domains_IC_DISTINCT$domain_landings)
 
 # merge SUOMU age data with TABLE A
 table_e_pre2 <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
 
 # TEST some keys might not match, check how many there might be
-missing_domains <- table_e_pre2[is.na(table_e_pre2$totwghtlandg),]
-missing_domains2 = missing_domains %>% distinct(domain_landings, .keep_all = T)
-length(missing_domains2$domain_landings)
+missing_domains_SUOMU <- table_e_pre2[is.na(table_e_pre2$totwghtlandg),]
+missing_domains_SUOMU_DISTINCT = missing_domains_SUOMU %>% distinct(domain_landings, .keep_all = T)
+length(missing_domains_SUOMU_DISTINCT$domain_landings)
 #Liittyneet:
-domains <- table_e_pre2[!is.na(table_e_pre2$totwghtlandg),]
-domains2 <- domains%>% distinct(domain_landings, .keep_all = T)
-length(domains2$domain_landings)
+domains_SUOMU <- table_e_pre2[!is.na(table_e_pre2$totwghtlandg),]
+domains_SUOMU_DISTINCT <- domains_SUOMU%>% distinct(domain_landings, .keep_all = T)
+length(domains_SUOMU_DISTINCT$domain_landings)
+
+
 
 
 # delete the missmatch values
