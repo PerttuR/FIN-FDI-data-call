@@ -18,6 +18,9 @@ path_rproject <- getwd() # folder where the r project is (and the source file db
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
 
+dir.create(path_out, showWarnings = FALSE)
+dir.create(path_der, showWarnings = FALSE, recursive = TRUE)
+
 
 
 sd_header <- c("RecordType","Country","Year","SeasonType","Season","Fleet","AreaType","FishingArea","DepthRange","Species","Stock","CatchCategory","ReportingCategory","Sex","CANUMtype","AgeLength","PlusGroup","SampledCatch","NumSamplesLngt","NumLngtMeas","NumSamplesAge","NumAgeMeas","unitMeanWeight","unitCANUM","UnitAgeOrLength","UnitMeanLength","Maturity","NumberCaught","MeanWeight","MeanLength","varNumLanded","varWgtLanded","varLgtLanded")
@@ -57,6 +60,6 @@ IC_2023_DATA <- left_join(IC_2023_SD_SI, IC_2023_HI)
 IC_2023_test <- IC_2023_DATA %>% select(Country,Year,Season,Fleet,FishingArea,Species,AgeLength,SampledCatch, CATON, UnitCATON) 
 
 
-saveRDS(IC_2023_DATA, file = paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+saveRDS(IC_2023_DATA, file = paste0(path_der,"IC_2023_DATA.rds"))
 
                                       
