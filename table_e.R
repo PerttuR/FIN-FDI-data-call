@@ -150,7 +150,7 @@ gear_type <- case_when(gear_type == "FPO" | gear_type == "FPN" | gear_type == "F
 
 unique(gear_type)
 
-TARGET_ASSEMBLAGE <- #metieristä merkit 5-7
+TARGET_ASSEMBLAGE <- substr(suomu$metier,5,7)#metieristä merkit 5-7
 mesh_size <- "all"
 selective_device <- "NA"
 mesh_size_range_selective_device <- "NA"
@@ -209,17 +209,29 @@ landing5 <- landing4 %>% select(country, vuosi, domain_landings, TOTAL_SAMPLED_T
 #e1 to lower
 e1 <- e1 %>% rename_all(tolower)
 
-# merge landing age data with TABLE A
-table_e_pre <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
+# merge IC age data with TABLE A
+table_e_pre1 <- merge(e1, table_A, by = c("country", "year", "domain_landings"), all.x = T)
 
 # TEST some keys might not match, check how many there might be
-missing_domains <- table_e_pre[is.na(table_e_pre$totwghtlandg),]
+missing_domains <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
 missing_domains2 = missing_domains %>% distinct(domain_landings, .keep_all = T)
 length(missing_domains2$domain_landings)
 #Liittyneet:
-domains <- table_e_pre[!is.na(table_e_pre$totwghtlandg),]
+domains <- table_e_pre1[!is.na(table_e_pre1$totwghtlandg),]
+domains2 <- domains%>% distinct(domain_landings, .keep_all = T)
+length(domains2$domain_landings)
 
+# merge SUOMU age data with TABLE A
+table_e_pre2 <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
 
+# TEST some keys might not match, check how many there might be
+missing_domains <- table_e_pre2[is.na(table_e_pre2$totwghtlandg),]
+missing_domains2 = missing_domains %>% distinct(domain_landings, .keep_all = T)
+length(missing_domains2$domain_landings)
+#Liittyneet:
+domains <- table_e_pre2[!is.na(table_e_pre2$totwghtlandg),]
+domains2 <- domains%>% distinct(domain_landings, .keep_all = T)
+length(domains2$domain_landings)
 
 
 # delete the missmatch values
