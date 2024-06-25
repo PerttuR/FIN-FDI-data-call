@@ -41,7 +41,7 @@ library(icesVocab)
 
 # Paths & 2024 folder:
 
-path_der <- paste0(getwd(), .Platform$file.sep, "der/")
+path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
@@ -75,6 +75,11 @@ IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
 #                       1.1 create DOMAIN landing to IC data                       
 #-------------------------------------------------------------------------------
 
+country_code <- "FIN"
+quarter <- IC_2023$Season
+subregion <- IC_2023$FishingArea
+
+vessel_length <- "all"
 
 
 #-------------------------------------------------------------------------------

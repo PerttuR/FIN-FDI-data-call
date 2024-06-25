@@ -13,7 +13,7 @@ library(dplyr)
 
 # Paths & 2024 folder:
 path_IC_ORIG <- paste0(getwd(), .Platform$file.sep, "orig/IC/")
-path_der <- paste0(getwd(), .Platform$file.sep, "der/")
+path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
 # folder where the output is saved
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
