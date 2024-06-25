@@ -226,6 +226,7 @@ a7 <- a6 %>% filter(TOTWGHTLANDG > 0) %>% mutate(
 a8 <- a7 %>% mutate(
   GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
                    GEAR_TYPE == "OTM" | GEAR_TYPE == "PTM" ~ "OTM-PTM",
+                   SPECIES == "SPR" & (GEAR_TYPE == "GNS" | GEAR_TYPE == "FYK") ~ "GNS-FYK",
                    TRUE ~ GEAR_TYPE),
   DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
                            QUARTER, "_", # quarter
@@ -259,17 +260,22 @@ openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CA
 #                   2. TABLE G (Effort summary)                       
 #-------------------------------------------------------------------------------
 
-TOTSEADAYS = MERIPAIVAT,
-TOTFISHDAYS = KALASTUSPAIVAT,
-HRSEA = KALASTUSAIKAHH
+g <- akt1 %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, #not needed
+                     TOTSEADAYS = MERIPAIVAT,
+                     TOTFISHDAYS = KALASTUSPAIVAT,
+                     HRSEA = KALASTUSAIKAHH) %>% mutate(
+                       TOTKWDAYSATSEA = TOTSEADAYS*PAAKONETEHO,
+                       TOTGTDAYSATSEA = TOTSEADAYS*VETOISUUS,
+                       TOTKWFISHDAYS = TOTFISHDAYS*PAAKONETEHO,
+                       TOTGTFISHDAYS = TOTFISHDAYS*VETOISUUS,
+                       KWHRSEA = HRSEA*PAAKONETEHO,
+                       GTHRSEA = HRSEA*VETOISUUS 
+                     )
 
 
-TOTKWDAYSATSEA = TOTSEADAYS*PAAKONETEHO,
-TOTGTDAYSATSEA = TOTSEADAYS*VETOISUUS,
-TOTKWFISHDAYS = TOTFISHDAYS*PAAKONETEHO,
-TOTGTFISHDAYS = TOTFISHDAYS*VETOISUUS,
-KWHRSEA = HRSEA*PAAKONETEHO,
-GTHRSEA = HRSEA*VETOISUUS,
+
+
+,
 
 TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA
 
@@ -283,7 +289,7 @@ CONFIDENTIAL: [1 character] If data are considered subject to confidentiality us
 #-------------------------------------------------------------------------------
 
 
-h <- akt1 %>% select(-KALASTUSPAIVAT) #not needed in table H
+h <- akt1 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH) #not needed in table H
 
 # Pivot to longer format
 h2 <- h %>%
@@ -346,7 +352,7 @@ openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LA
 #-------------------------------------------------------------------------------
 
 # remove variables not needed in table I (relating to catch)
-i <- akt1 %>% select(-contains("SVT"))
+i <- akt1 %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH)
 
 # Sum the total of fishing days and calculate the number of distinct vessels in each strata
 i2 <- i %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE) %>% summarise(
