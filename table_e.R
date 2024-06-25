@@ -65,6 +65,7 @@ dir.create(path_out, showWarnings = FALSE)
 IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
 table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
+
 #table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
 #select order of columns
 #table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
@@ -243,7 +244,7 @@ table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
 table_e_pre1$nep_sub_region <-"NA"
 table_e_pre1$"NA" <- "NA"
 #units
-table_e_pre1$weight_unit <- "kg"
+table_e_pre1$weight_unit <- "g"
 table_e_pre1$length_unit <- "cm"
 
 table_e_pre1 <- table_e_pre1 |> mutate(age = as.integer(agelength))
@@ -251,7 +252,8 @@ table_e_pre1 <- table_e_pre1 |> group_by(country, year, domain_landings,species)
 table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e6
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
-table_E <- table_e_pre1  %>% select(
+
+table_e_pre2 <- table_e_pre1 |> select(
        country,
        year,
        domain_landings,
@@ -271,6 +273,30 @@ table_E <- table_e_pre1  %>% select(
        length_unit
 ) %>% rename_all(toupper)
 
+table_e_pre2 <- table_e_pre2 |> mutate(
+       NO_AGE = as.integer(NO_AGE),
+       MEAN_WEIGHT = as.numeric(MEAN_WEIGHT),
+       NO_AGE_MEASUREMENTS = as.integer(NO_AGE_MEASUREMENTS),
+       TOTAL_SAMPLED_TRIPS = as.integer(TOTAL_SAMPLED_TRIPS)
+)
+table_e_pre2 <- table_e_pre2 |> mutate(
+       TOTAL_SAMPLED_TRIPS = na_if(TOTAL_SAMPLED_TRIPS,-9),
+       NO_AGE_MEASUREMENTS = na_if(NO_AGE_MEASUREMENTS,-9),
+       NO_AGE = na_if(NO_AGE,-9)
+)
+table_E <- table_e_pre2  |>
+       group_by(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES) |>
+       summarize(TOTWGHTLANDG = sum(TOTWGHTLANDG),
+       TOTAL_SAMPLED_TRIPS = replace_na(as.character(sum(TOTAL_SAMPLED_TRIPS)), "NK"),
+       NO_AGE_MEASUREMENTS=replace_na(as.character(sum(as.integer(NO_AGE_MEASUREMENTS))), "NK"),
+       AGE_MEASUREMENTS_PROP="NA",
+       MIN_AGE=min(MIN_AGE),
+       MAX_AGE=max(MAX_AGE),
+       NO_AGE=replace_na(sum(NO_AGE), "NK"),
+       MEAN_WEIGHT=sum(MEAN_WEIGHT*NO_AGE)/sum(NO_AGE),
+       WEIGHT_UNIT=first(WEIGHT_UNIT),
+       MEAN_LENGTH="NK",
+       LENGTH_UNIT=first(LENGTH_UNIT))
 
 # set working directory to save table E and table of deleted observations
 openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
