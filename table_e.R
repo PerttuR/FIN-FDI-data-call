@@ -48,7 +48,7 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"20
 
 
 #TO DO?
-path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
+#path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
 # folder where the output is saved
 
 # create directories if missing, but ignore warnings in case they already exist
@@ -61,6 +61,7 @@ dir.create(path_out, showWarnings = FALSE)
 # import IC data and table A
 
 IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
 #table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
 #select order of columns
@@ -78,7 +79,13 @@ IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
 country_code <- "FIN"
 quarter <- IC_2023$Season
 subregion <- IC_2023$FishingArea
-
+IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+                               IC_2023$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+                               IC_2023$Fleet == "Gillnet" ~ "GNS",
+                               IC_2023$Fleet == "Active" ~ "OTM-PTM",
+                               IC_2023$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+                               IC_2023$Fleet == " Passive" ~ "GNS-FYK"
+                               )
 vessel_length <- "all"
 
 
