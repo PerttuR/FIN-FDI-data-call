@@ -210,7 +210,7 @@ landing5 <- landing4 %>% select(country, vuosi, domain_landings, TOTAL_SAMPLED_T
 e1 <- e1 %>% rename_all(tolower)
 
 # merge IC age data with TABLE A
-table_e_pre1 <- merge(e1, table_A, by = c("country", "year", "domain_landings"), all.x = T)
+table_e_pre1 <- merge(e1, table_A, by = c("country", "year", "domain_landings", "species"), all.x = T)
 
 # TEST some keys might not match, check how many there might be
 missing_domains_IC <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
@@ -222,14 +222,14 @@ domains_IC_DISTINCT <- domains_IC%>% distinct(domain_landings, .keep_all = T)
 length(domains_IC_DISTINCT$domain_landings)
 
 # merge SUOMU age data with TABLE A
-table_e_pre2 <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
+table_e_suomu <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
 
 # TEST some keys might not match, check how many there might be
-missing_domains_SUOMU <- table_e_pre2[is.na(table_e_pre2$totwghtlandg),]
+missing_domains_SUOMU <- table_e_suomu[is.na(table_e_suomu$totwghtlandg),]
 missing_domains_SUOMU_DISTINCT = missing_domains_SUOMU %>% distinct(domain_landings, .keep_all = T)
 length(missing_domains_SUOMU_DISTINCT$domain_landings)
 #Liittyneet:
-domains_SUOMU <- table_e_pre2[!is.na(table_e_pre2$totwghtlandg),]
+domains_SUOMU <- table_e_suomu[!is.na(table_e_suomu$totwghtlandg),]
 domains_SUOMU_DISTINCT <- domains_SUOMU%>% distinct(domain_landings, .keep_all = T)
 length(domains_SUOMU_DISTINCT$domain_landings)
 
@@ -237,21 +237,39 @@ length(domains_SUOMU_DISTINCT$domain_landings)
 
 
 # delete the missmatch values
-table_e_pre2 <- filter(table_e_pre, !is.na(totwghtlandg))
+table_e_pre1 <- filter(table_e_pre1, !is.na(totwghtlandg))
+table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
 
-table_e_pre2$nep_sub_region <-"NA"
+table_e_pre1$nep_sub_region <-"NA"
+table_e_pre1$"NA" <- "NA"
 #units
-table_e_pre2$weight_unit <- "kg"
-table_e_pre2$length_unit <- "cm"
+table_e_pre1$weight_unit <- "kg"
+table_e_pre1$length_unit <- "cm"
 
-#2020 testi: ikäkohtaisten mittauslukumäärä domainkohtaisen lukumäärä tilalle..
-table_e_pre2$no_age_measurements <- table_e_pre2$no_age
-#2020 testi: ja samalla oletettu laajennettu ikämäärä (estimaatti) NK:ksi..
-table_e_pre2$no_age <- "NK"
-
+table_e_pre1 <- table_e_pre1 |> mutate(age = as.integer(agelength))
+table_e_pre1 <- table_e_pre1 |> group_by(country, year, domain_landings,species) |> mutate(min_age = min(age), max_age = max(age))
+table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e6
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
-table_E <- table_e_pre2  %>% select(country,	year,	domain_landings, nep_sub_region, species,	totwghtlandg,	TOTAL_SAMPLED_TRIPS,	no_age_measurements,	age_measurements_prop,	min_age,	max_age,	age,	no_age,	mean_weight, weight_unit,	mean_length, length_unit) %>% rename_all(toupper)
+table_E <- table_e_pre1  %>% select(
+       country,
+       year,
+       domain_landings,
+       nep_sub_region,
+       species,
+       totwghtlandg,
+       TOTAL_SAMPLED_TRIPS=numsamplesage,
+       no_age_measurements=numagemeas,
+       age_measurements_prop="NA",
+       min_age,
+       max_age,
+       age,
+       no_age,
+       mean_weight=meanweight,
+       weight_unit,
+       mean_length=meanlength,
+       length_unit
+) %>% rename_all(toupper)
 
 
 # set working directory to save table E and table of deleted observations
