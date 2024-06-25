@@ -138,7 +138,7 @@ suomu_missing_age <- filter(agedata, name == "EU-tike(CS, kaupalliset näytteet)
 # first make individually all the parts that form the key
 country_code <- "FIN"
 quarter <- suomu$q
-subregion <- paste("27.3.D.", suomu$ices_osa_alue, sep = "")
+subregion <- paste("27.3.d.", suomu$ices_osa_alue, sep = "")
 #Stat dep uses FPO instead of FPN so change
 suomu <- suomu %>% mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
 suomu <- suomu %>% mutate(metier = replace(metier,metier=="FPN_SPF_>0_0_0","FPO_SPF_>0_0_0"))
