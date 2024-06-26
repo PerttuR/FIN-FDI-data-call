@@ -125,10 +125,13 @@ agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("
 #-------------------------------------------------------------------------------
 # choose commercial LANDINGS samples only, from years 2013-2022
 
-suomu <- filter(agedata, name == "EU-tike(CS, kaupalliset näytteet)", !is.na(age))
+agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)")
+
+#Filter ages, 99 is essentially NA
+suomu <- agedata_cs |> filter(!is.na(age) & age != "99")
 
 # a lot of ages are missing
-suomu_missing_age <- filter(agedata, name == "EU-tike(CS, kaupalliset näytteet)", is.na(age))
+suomu_missing_age <- agedata_cs |> filter(is.na(age) | age == "99")
 
 
 #-------------------------------------------------------------------------------
@@ -165,43 +168,39 @@ suomu$domain_landings <- paste(country_code, quarter, subregion, gear_type, TARG
 # select only important variables
 suomu2 <- suomu %>% select(vuosi, nayteno, paino, pituus, age, domain_landings)
 
-#landing2 weight from g -> to kg
-suomu2$paino <- suomu2$paino/1000
-
 #landing2 length from mm -> to cm
 suomu2$pituus <- suomu2$pituus/10
 
 
 # Merge Logbook landings data and anadromous sampling data to one dataframe
 
-landing3 <- suomu2
-
 #-------------------------------------------------------------------------------
 #                   4. aggregate AGE DATA for merging with TABLE A     2024 alkaen:                
 #-------------------------------------------------------------------------------
 
 # aggregate data separately:
-d6_7 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(TOTAL_SAMPLED_TRIPS = n_distinct(nayteno), no_age_measurements = n())
+suomu2_year_domain <- suomu2 |>
+  group_by(vuosi, domain_landings) |>
+  summarise(
+            total_sampled_trips = n_distinct(nayteno),
+            no_age_measurements = n(),
+            min_age = min(age),
+            max_age = max(age))
 
-d9_10 <- landing3 %>% group_by(vuosi, domain_landings) %>% summarise(min_age = min(age), max_age = max(age)) 
 
-d11_12_13_14 <- landing3 %>% group_by(vuosi, domain_landings, age) %>% summarise(no_age = n(), mean_weight = round(mean(paino), digits = 3), mean_length = round(mean(pituus), digits = 1))
+suomu2_year_domain_age <- suomu2 |>
+  group_by(vuosi, domain_landings, age) |>
+  summarise(
+            no_age = n(),
+            mean_weight = round(mean(paino),digits = 3),
+            mean_length = round(mean(pituus), digits = 1))
 
+suomu2_year_domain <- suomu2_year_domain |> left_join(suomu2_year_domain_age, relationship="many-to-many")
 
-#-------------------------------------------------------------------------------
-# merge the aggregated datas (above) to landing catch data 
+suomu2_year_domain$country <- "FIN"
+suomu2_year_domain$age_measurements_prop <- "NA"
 
-landing3 <- merge(d11_12_13_14, d9_10, by = c("vuosi", "domain_landings"))
-
-landing4 <- merge(landing3, d6_7, by = c("vuosi", "domain_landings"))
-
-# add variables
-landing4$country <- "FIN"
-landing4$age_measurements_prop <- "NA"
-
-# select only those variables important to merging with table A
-landing5 <- landing4 %>% select(country, vuosi, domain_landings, TOTAL_SAMPLED_TRIPS, no_age_measurements, age_measurements_prop, min_age, max_age, age, no_age, mean_weight, mean_length) %>% rename(year = vuosi, age = age)
-
+suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, age, no_age, mean_weight, mean_length)
 
 #-------------------------------------------------------------------------------
 #                       3. Merge SAMPLED DATA with TABLE A                       
@@ -227,7 +226,7 @@ length(domains_IC_DISTINCT$domain_landings)
 
 #Aggrekoi ensin Suomu yksilödata samaan sapluunaan ja tee sitten left joini :)
 # merge SUOMU age data with TABLE A
-table_e_suomu <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
+table_e_suomu <- left_join(landing5, table_A, by = join_by(country, year, domain_landings))
 
 # TEST some keys might not match, check how many there might be
 missing_domains_SUOMU <- table_e_suomu[is.na(table_e_suomu$totwghtlandg),]
@@ -308,3 +307,8 @@ table_E <- table_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES,AGE)
 # set working directory to save table E and table of deleted observations
 openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 #openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+suomu2_e <- suomu2_e1 |> rename_all(toupper)
+mega_E <- table_E |> full_join(suomu2_e, relationship="many-to-many", by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("_A","_SUOMU"))
+
+openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
