@@ -303,6 +303,7 @@ table_e_pre2 <- table_e_pre2 |> mutate(
 
 table_E <- table_e_pre2 |> rename_all(toupper)
 
+table_E <- table_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES,AGE)
 
 # set working directory to save table E and table of deleted observations
 openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
