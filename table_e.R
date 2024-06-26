@@ -305,21 +305,69 @@ table_E <- table_e_pre2 |> rename_all(toupper)
 table_E <- table_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES,AGE)
 
 # set working directory to save table E and table of deleted observations
-openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+#openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 #openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 suomu2_e <- suomu2_e1 |> rename_all(toupper)
-mega_E <- table_E |> full_join(suomu2_e,, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("_A","_SUOMU"))
+mega_E <- table_E |> full_join(suomu2_e,, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("","_SUOMU"))
 
 mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
-openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
-message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
-suomu_missing <- mega_E |> filter(!is.na(NO_AGE_A) & is.na(NO_AGE_SUOMU)) |> ungroup()
+message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+suomu_missing <- mega_E |> filter(!is.na(NO_AGE) & is.na(NO_AGE_SUOMU)) |> ungroup()
 message("Missing in suomu: ", suomu_missing |> tally())
 message("\tof which SPR ", suomu_missing |> filter(SPECIES == "SPR") |> tally())
 message("\tother GNS ", suomu_missing |> filter(SPECIES != "SPR", grepl("GNS", DOMAIN_LANDINGS)) |> tally())
 suomu_missing_exclude = suomu_missing |> filter(!grepl("GNS", DOMAIN_LANDINGS), SPECIES != "SPR")
 message("\tneither ", suomu_missing_exclude |> tally())
 
-message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+
+check <- mega_E |> group_by(COUNTRY,YEAR,DOMAIN_LANDINGS) |> summarize(c = all(is.na(TOTWGHTLANDG))) |> filter(c == TRUE) |> ungroup() |> tally()
+message("Categories that have data only in suomu ", check)
+#Fill in static columns per group
+mega_E_expanded <- mega_E |>
+  group_by(COUNTRY,YEAR,DOMAIN_LANDINGS) |>
+  fill(NEP_SUB_REGION,
+       SPECIES,
+       TOTWGHTLANDG,
+       TOTAL_SAMPLED_TRIPS,
+       NO_AGE_MEASUREMENTS,
+       AGE_MEASUREMENTS_PROP,
+       WEIGHT_UNIT,
+       LENGTH_UNIT,
+       .direction="downup")
+#Fix min, max
+mega_E_expanded <- mega_E_expanded |>
+  group_by(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES) |>
+  mutate(MIN_AGE = min(AGE), MAX_AGE = max(AGE)) |>
+  mutate(NO_AGE=replace_na(as.character(NO_AGE), "NK"))
+
+mega_E_expanded <- mega_E_expanded |>
+  mutate(MEAN_WEIGHT=coalesce(as.character(MEAN_WEIGHT), as.character(MEAN_WEIGHT_SUOMU), "NK")) |>
+  mutate(MEAN_LENGTH=coalesce(na_if(MEAN_LENGTH, "NK"), as.character(MEAN_LENGTH_SUOMU), "NK"))
+
+openxlsx::write.xlsx(mega_E_expanded, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+#Write table_E by dropping extra columns from mega_E
+table_E_mega <- mega_E_expanded |> select(
+       COUNTRY,
+       YEAR,
+       DOMAIN_LANDINGS,
+       NEP_SUB_REGION,
+       SPECIES,
+       TOTWGHTLANDG,
+       TOTAL_SAMPLED_TRIPS,
+       NO_AGE_MEASUREMENTS,
+       AGE_MEASUREMENTS_PROP,
+       MIN_AGE,
+       MAX_AGE,
+       AGE,
+       NO_AGE,
+       MEAN_WEIGHT,
+       WEIGHT_UNIT,
+       MEAN_LENGTH,
+       LENGTH_UNIT
+)
+
+openxlsx::write.xlsx(table_E_mega, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
