@@ -226,7 +226,7 @@ length(domains_IC_DISTINCT$domain_landings)
 
 #Aggrekoi ensin Suomu yksilödata samaan sapluunaan ja tee sitten left joini :)
 # merge SUOMU age data with TABLE A
-table_e_suomu <- left_join(landing5, table_A, by = join_by(country, year, domain_landings))
+table_e_suomu <- left_join(suomu2_e1, table_A, by = join_by(country, year, domain_landings))
 
 # TEST some keys might not match, check how many there might be
 missing_domains_SUOMU <- table_e_suomu[is.na(table_e_suomu$totwghtlandg),]
@@ -316,3 +316,4 @@ openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_
 message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
 message("Missing in suomu: ", mega_E |> filter(!is.na(NO_AGE_A) & is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
 message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+
