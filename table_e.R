@@ -312,3 +312,7 @@ suomu2_e <- suomu2_e1 |> rename_all(toupper)
 mega_E <- table_E |> full_join(suomu2_e, relationship="many-to-many", by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("_A","_SUOMU"))
 
 openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+message("Missing in suomu: ", mega_E |> filter(!is.na(NO_AGE_A) & is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
