@@ -125,7 +125,7 @@ agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("
 #-------------------------------------------------------------------------------
 # choose commercial LANDINGS samples only, from years 2013-2022 and species
 
-agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR", "TRS", "COD"))
+agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR", "COD"))
 
 #Filter ages, 99 is essentially NA
 suomu <- agedata_cs |> filter(!is.na(age) & age != "99")
@@ -315,6 +315,11 @@ mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
 openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
-message("Missing in suomu: ", mega_E |> filter(!is.na(NO_AGE_A) & is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
-message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+suomu_missing <- mega_E |> filter(!is.na(NO_AGE_A) & is.na(NO_AGE_SUOMU)) |> ungroup()
+message("Missing in suomu: ", suomu_missing |> tally())
+message("\tof which SPR ", suomu_missing |> filter(SPECIES == "SPR") |> tally())
+message("\tother GNS ", suomu_missing |> filter(SPECIES != "SPR", grepl("GNS", DOMAIN_LANDINGS)) |> tally())
+suomu_missing_exclude = suomu_missing |> filter(!grepl("GNS", DOMAIN_LANDINGS), SPECIES != "SPR")
+message("\tneither ", suomu_missing_exclude |> tally())
 
+message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
