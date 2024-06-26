@@ -123,9 +123,9 @@ source("db.R")
 agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2023 AND vuosi <= 2023"))
 
 #-------------------------------------------------------------------------------
-# choose commercial LANDINGS samples only, from years 2013-2022
+# choose commercial LANDINGS samples only, from years 2013-2022 and species
 
-agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)")
+agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR", "TRS", "COD"))
 
 #Filter ages, 99 is essentially NA
 suomu <- agedata_cs |> filter(!is.na(age) & age != "99")
@@ -311,6 +311,7 @@ openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NA
 suomu2_e <- suomu2_e1 |> rename_all(toupper)
 mega_E <- table_E |> full_join(suomu2_e,, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("_A","_SUOMU"))
 
+mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
 openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE_A) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
