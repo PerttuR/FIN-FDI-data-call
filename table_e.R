@@ -226,7 +226,7 @@ length(domains_IC_DISTINCT$domain_landings)
 
 #Aggrekoi ensin Suomu yksilödata samaan sapluunaan ja tee sitten left joini :)
 # merge SUOMU age data with TABLE A
-table_e_suomu <- left_join(suomu2_e1, table_A, by = join_by(country, year, domain_landings))
+table_e_suomu <- left_join(suomu2_e1, table_A_SUM, by = join_by(country, year, domain_landings))
 
 # TEST some keys might not match, check how many there might be
 missing_domains_SUOMU <- table_e_suomu[is.na(table_e_suomu$totwghtlandg),]
