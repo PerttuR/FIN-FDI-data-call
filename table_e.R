@@ -245,8 +245,8 @@ length(domains_SUOMU_DISTINCT$domain_landings)
 table_e_pre1 <- filter(table_e_pre1, !is.na(totwghtlandg))
 table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
 
-table_e_pre1$nep_sub_region <-"NA"
-table_e_pre1$"NA" <- "NA"
+table_e_pre1$age_measurements_prop <-"NA"
+table_e_pre1$nep_sub_region <- "NA"
 #units
 table_e_pre1$weight_unit <- "g"
 table_e_pre1$length_unit <- "cm"
@@ -257,6 +257,7 @@ table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e6
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
 
+
 table_e_pre2 <- table_e_pre1 |> select(
        country,
        year,
@@ -264,9 +265,9 @@ table_e_pre2 <- table_e_pre1 |> select(
        nep_sub_region,
        species,
        totwghtlandg,
-       TOTAL_SAMPLED_TRIPS=numsamplesage,
+       total_sampled_trips=numsamplesage,
        no_age_measurements=numagemeas,
-       age_measurements_prop="NA",
+       age_measurements_prop,
        min_age,
        max_age,
        age,
@@ -275,53 +276,32 @@ table_e_pre2 <- table_e_pre1 |> select(
        weight_unit,
        mean_length=meanlength,
        length_unit
-) %>% rename_all(toupper)
+)
 
 table_e_pre2 <- table_e_pre2 |> mutate(
-       NO_AGE = as.integer(NO_AGE),
-       MEAN_WEIGHT = as.numeric(MEAN_WEIGHT),
-       NO_AGE_MEASUREMENTS = as.integer(NO_AGE_MEASUREMENTS),
-       TOTAL_SAMPLED_TRIPS = as.integer(TOTAL_SAMPLED_TRIPS)
+       no_age = as.integer(no_age),
+       mean_weight = as.numeric(mean_weight),
+       no_age_measurements = as.integer(no_age_measurements),
+       total_sampled_trips = as.integer(total_sampled_trips)
 )
+
+#-9 removal
 table_e_pre2 <- table_e_pre2 |> mutate(
-       TOTAL_SAMPLED_TRIPS = na_if(TOTAL_SAMPLED_TRIPS,-9),
-       NO_AGE_MEASUREMENTS = na_if(NO_AGE_MEASUREMENTS,-9),
-       NO_AGE = na_if(NO_AGE,-9)
+       total_sampled_trips = na_if(total_sampled_trips, -9),
+       no_age_measurements = na_if(no_age_measurements, -9),
+       no_age = na_if(no_age, -9),
+       mean_length = na_if(mean_length, -9)
 )
-table_E <- table_e_pre2  |>
-       group_by(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES) |>
-       summarize(TOTWGHTLANDG = sum(TOTWGHTLANDG),
-       TOTAL_SAMPLED_TRIPS = replace_na(as.character(sum(TOTAL_SAMPLED_TRIPS)), "NK"),
-       NO_AGE_MEASUREMENTS=replace_na(as.character(sum(as.integer(NO_AGE_MEASUREMENTS))), "NK"),
-       AGE_MEASUREMENTS_PROP="NA",
-       MIN_AGE=min(MIN_AGE),
-       MAX_AGE=max(MAX_AGE),
-       NO_AGE=replace_na(sum(NO_AGE), "NK"),
-       MEAN_WEIGHT=sum(MEAN_WEIGHT*NO_AGE)/sum(NO_AGE),
-       WEIGHT_UNIT=first(WEIGHT_UNIT),
-       MEAN_LENGTH="NK",
-       LENGTH_UNIT=first(LENGTH_UNIT))
-unique_ages <- table_e_pre2 |> select(COUNTRY, YEAR, DOMAIN_LANDINGS, NEP_SUB_REGION, SPECIES, AGE) |> distinct()
-table_E <- table_E |> left_join(unique_ages)
-table_E <- table_E |> select(
-       COUNTRY,
-       YEAR,
-       DOMAIN_LANDINGS,
-       NEP_SUB_REGION,
-       SPECIES,
-       TOTWGHTLANDG,
-       TOTAL_SAMPLED_TRIPS,
-       NO_AGE_MEASUREMENTS,
-       AGE_MEASUREMENTS_PROP,
-       MIN_AGE,
-       MAX_AGE,
-       AGE,
-       NO_AGE,
-       MEAN_WEIGHT,
-       WEIGHT_UNIT,
-       MEAN_LENGTH,
-       LENGTH_UNIT
+
+#NK input
+table_e_pre2 <- table_e_pre2 |> mutate(
+       total_sampled_trips = replace_na(as.character(total_sampled_trips), "NK"),
+       no_age_measurements = replace_na(as.character(no_age_measurements), "NK"),
+       no_age = replace_na(no_age, "NK"),
+       mean_length = replace_na(as.character(mean_length), "NK")
 )
+
+table_E <- table_e_pre2 |> rename_all(toupper)
 
 
 # set working directory to save table E and table of deleted observations
