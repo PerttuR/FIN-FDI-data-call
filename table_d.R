@@ -72,5 +72,5 @@ table_D <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SP
   )%>% filter(SPECIES == c("HER", "SPR"))
 
 
-openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
 

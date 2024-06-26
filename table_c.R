@@ -75,6 +75,6 @@ table_C <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SP
 
 
 
-openxlsx::write.xlsx(table_C, paste0(path_out,.Platform$file.sep,"TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(table_C, paste0(path_out,.Platform$file.sep,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
 
 
