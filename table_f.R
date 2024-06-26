@@ -165,8 +165,7 @@ landing5$length_unit <- "mm"
 landing5$country = "FIN"
 
 #-------------------------------------------------------------------------------
-#2020 changes definition of length measurements Count
-landing5$no_length_measurements <- landing5$no_length
+
 landing5$no_length <- "NK"
 landing5$weight_unit <-"g"
 landing5$nep_sub_region <-"NA"
