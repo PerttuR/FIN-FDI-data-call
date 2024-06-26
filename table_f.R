@@ -4,10 +4,11 @@
 #
 # Coded: Perttu Rantanen, Mira Sustar, Petri Sarvamaa
 #
-# Date: JUN-2018
+# Date: JUN-2018 by Mira
 # Updated: JUN 2021 by Perttu
 # Updated: JUN 2022 by Perttu
 # Updated: JUN 2023 by Perttu
+# Updated: JUN 2023 by Perttu, Mira and Petri
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -34,20 +35,25 @@ library(openxlsx)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Common paths & 2022 folder:
-path_tablea <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where TABLE A is (FIN_TABLE_A_CATCH.csv)
-path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
-# folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2023")
 
+path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
+path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
+# folder where the output is saved
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
+
+# create directories if missing, but ignore warnings in case they already exist
+dir.create(path_out, showWarnings = FALSE)
 
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
 
+table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
+
+
 # import table A
-table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
+#table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
 #select order of columns
 table_A <- table_A %>% select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
 
@@ -58,13 +64,14 @@ table_A <- table_A %>% rename_all(tolower)
 #-------------------------------------------------------------------------------
 
 # sum totwghtlandg BY year, domain_landings and species from TABLE A
-table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg))))
+table_A_sum <- table_A %>% group_by(country, year, domain_landings, species) %>% summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg)))) %>% filter(species == 'HER' | species == 'SPR')
 
 # rounding the number to three digits precision
 table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
 #Just to check: table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
-table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
+#ehkä Elokuussa tätä?
+#table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 
 #-------------------------------------------------------------------------------
 
@@ -85,9 +92,9 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
 
 #-------------------------------------------------------------------------------
-# choose commercial LANDING samples only, from years 2013-2022
-
-landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2022)
+# choose commercial LANDING samples only, from years 2013-2023 HUOM 2023 valittu kesäkuussa 2024 toimituksessa..
+ 
+landing <- filter(lengthdata, saalisluokka == "LANDING", projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2023 & vuosi <= 2023)
 
 #-------------------------------------------------------------------------------
 
