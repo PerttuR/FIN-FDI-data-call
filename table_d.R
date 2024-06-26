@@ -62,7 +62,7 @@ table_D <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SP
     TOTAL_TRIPS = "NK",
     TOTAL_SAMPLED_TRIPS = "NK",
     NO_LENGTH_MEASUREMENTS = "NK",
-    LENGTH_UNIT = "NA",
+    LENGTH_UNIT = "NK",
     MIN_LENGTH = "NK",
     MAX_LENGTH = "NK",
     LENGTH = "NK",
