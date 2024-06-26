@@ -309,7 +309,7 @@ openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NA
 #openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 suomu2_e <- suomu2_e1 |> rename_all(toupper)
-mega_E <- table_E |> full_join(suomu2_e, relationship="many-to-many", by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("_A","_SUOMU"))
+mega_E <- table_E |> full_join(suomu2_e,, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("_A","_SUOMU"))
 
 openxlsx::write.xlsx(mega_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
