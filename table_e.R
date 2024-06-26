@@ -341,7 +341,12 @@ mega_E_expanded <- mega_E |>
 mega_E_expanded <- mega_E_expanded |>
   group_by(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES) |>
   mutate(MIN_AGE = min(AGE), MAX_AGE = max(AGE)) |>
-  mutate(NO_AGE=replace_na(format(NO_AGE, digits=3, nssmall=3), "NK"))
+  mutate(NO_AGE=replace_na(format(NO_AGE, digits = 3, nssmall = 3), "NK"))
+
+#TODO: clean up this mess
+mega_E_expanded <- mega_E_expanded |> mutate(NO_AGE = trimws(NO_AGE))
+mega_E_expanded <- mega_E_expanded |> mutate(NO_AGE = na_if(NO_AGE, "NA"))
+mega_E_expanded <- mega_E_expanded |> mutate(NO_AGE = replace_na(NO_AGE, "NK"))
 
 mega_E_expanded <- mega_E_expanded |>
   mutate(MEAN_WEIGHT=coalesce(as.character(MEAN_WEIGHT), as.character(MEAN_WEIGHT_SUOMU), "NK")) |>
