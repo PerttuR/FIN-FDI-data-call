@@ -210,8 +210,11 @@ landing5 <- landing4 %>% select(country, vuosi, domain_landings, TOTAL_SAMPLED_T
 #e1 to lower
 e1 <- e1 %>% rename_all(tolower)
 
+#poistetaan alusryhmittely ja gear type, jotke tekevät monia rivejä per DOMAIN
+table_A_SUM <- table_A %>% group_by(country,year,domain_landings,species) %>% summarise(totwghtlandg=sum(totwghtlandg))
+
 # merge IC age data with TABLE A
-table_e_pre1 <- merge(e1, table_A, by = c("country", "year", "domain_landings", "species"), all.x = T)
+table_e_pre1 <- e1 %>% left_join(table_A_SUM, by=join_by("country", "year", "domain_landings", "species"))
 
 # TEST some keys might not match, check how many there might be
 missing_domains_IC <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
@@ -222,6 +225,7 @@ domains_IC <- table_e_pre1[!is.na(table_e_pre1$totwghtlandg),]
 domains_IC_DISTINCT <- domains_IC%>% distinct(domain_landings, .keep_all = T)
 length(domains_IC_DISTINCT$domain_landings)
 
+#Aggrekoi ensin Suomu yksilödata samaan sapluunaan ja tee sitten left joini :)
 # merge SUOMU age data with TABLE A
 table_e_suomu <- merge(landing5, table_A, by = c("country", "year", "domain_landings"), all.x = T)
 
