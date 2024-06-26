@@ -252,7 +252,7 @@ table_e_pre1$length_unit <- "cm"
 
 table_e_pre1 <- table_e_pre1 |> mutate(age = as.integer(agelength))
 table_e_pre1 <- table_e_pre1 |> group_by(country, year, domain_landings,species) |> mutate(min_age = min(age), max_age = max(age))
-table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e6
+table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e3
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
 
@@ -278,7 +278,7 @@ table_e_pre2 <- table_e_pre1 |> select(
 )
 
 table_e_pre2 <- table_e_pre2 |> mutate(
-       no_age = as.integer(no_age),
+       no_age = as.numeric(no_age),
        mean_weight = as.numeric(mean_weight),
        no_age_measurements = as.integer(no_age_measurements),
        total_sampled_trips = as.integer(total_sampled_trips)
@@ -341,7 +341,7 @@ mega_E_expanded <- mega_E |>
 mega_E_expanded <- mega_E_expanded |>
   group_by(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES) |>
   mutate(MIN_AGE = min(AGE), MAX_AGE = max(AGE)) |>
-  mutate(NO_AGE=replace_na(as.character(NO_AGE), "NK"))
+  mutate(NO_AGE=replace_na(format(NO_AGE, digits=3, nssmall=3), "NK"))
 
 mega_E_expanded <- mega_E_expanded |>
   mutate(MEAN_WEIGHT=coalesce(as.character(MEAN_WEIGHT), as.character(MEAN_WEIGHT_SUOMU), "NK")) |>
