@@ -62,14 +62,14 @@ table_D <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SP
     TOTAL_TRIPS = "NK",
     TOTAL_SAMPLED_TRIPS = "NK",
     NO_LENGTH_MEASUREMENTS = "NK",
-    LENGTH_UNIT = "NA",
+    LENGTH_UNIT = "NK",
     MIN_LENGTH = "NK",
     MAX_LENGTH = "NK",
     LENGTH = "NK",
     NO_LENGTH = "NK",
     MEAN_WEIGHT_AT_LENGTH = "NK",
     WEIGHT_UNIT = "NK"
-  )
+  )%>% filter(SPECIES == c("HER", "SPR"))
 
 
 openxlsx::write.xlsx(table_D, paste0(path_out,.Platform$file.sep,"TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
