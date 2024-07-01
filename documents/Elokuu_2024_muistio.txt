@@ -1,0 +1,10 @@
+FDI tietopyynnön täydennykset Elokuussa 2024:
+
+- Tyhjennetään Discard taulut 2013-2022 aiemmista lähetyksistä.
+- Tuotetaan tableA & TableE ja F 2016-2022 DCPROD
+- Tuotetaan tableA & TableE ja F 2013-2015 G-SAS
+- LOHI Discard tonnit TableA:han
+- LOHI pituus-ikätiedot Table C ja D tauluihin?
+- Kapasiteetti 2013-2023 DCPROD:sta, koska alusluokittelu on muuttunut 2024 alkaen
+- Metier luokitukset FDI scipteistä DCPROD:iin
+- Laitetaanko Logbookit tauluihin H ja I VMS? Ja sitä myötä myös A-taulun datat VMS:n(eflalo) uusiksi eri tavalla?
