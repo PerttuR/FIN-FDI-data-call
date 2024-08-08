@@ -53,27 +53,27 @@ table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 #                   2. TABLE C (NAO OFR. Discards age data)                       
 #-------------------------------------------------------------------------------
 
-table_C <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG) %>% distinct() %>% 
-  mutate(
-    DISCARDS = 0,
-    DISCARD_CV = "NK",
-    DISCARD_CI_UPPER = "NK",
-    DISCARD_CI_LOWER = "NK",
-    TOTAL_TRIPS = "NK",
-    TOTAL_SAMPLED_TRIPS = "NK",
-    NO_AGE_MEASUREMENTS = "NK",
-    AGE_MEASUREMENTS_PROP = "NA",
-    MIN_AGE = "NK",
-    MAX_AGE = "NK",
-    AGE = "NK",
-    NO_AGE = "NK",
-    MEAN_WEIGHT = "NK",
-    WEIGHT_UNIT = "NK",
-    MEAN_LENGTH = "NK",
-    LENGTH_UNIT = "NK"
-  ) %>% filter(SPECIES %in% c("HER", "SPR"))
-
-
+table_C <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG) %>% filter(SPECIES %in% c("HER", "SPR")) %>% 
+  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) %>% 
+  summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
+            DISCARDS = 0,
+            DISCARD_CV = "NK",
+            DISCARD_CI_UPPER = "NK",
+            DISCARD_CI_LOWER = "NK",
+            TOTAL_TRIPS = "NK",
+            TOTAL_SAMPLED_TRIPS = "NK",
+            NO_AGE_MEASUREMENTS = "NK",
+            AGE_MEASUREMENTS_PROP = "NA",
+            MIN_AGE = "NK",
+            MAX_AGE = "NK",
+            AGE = "NK",
+            NO_AGE = "NK",
+            MEAN_WEIGHT = "NK",
+            WEIGHT_UNIT = "NK",
+            MEAN_LENGTH = "NK",
+            LENGTH_UNIT = "NK",
+            .groups = "drop"
+  )
 
 openxlsx::write.xlsx(table_C, paste0(path_out,.Platform$file.sep,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
 
