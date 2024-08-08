@@ -11,3 +11,11 @@ FDI tietopyynnön täydennykset Elokuussa 2024:
    -> Vessels reported should not be in clustered fleet segments (DTMT) Väärin vuosissa: 2013-2022
 - Metier luokitukset FDI scipteistä DCPROD:iin
 - Laitetaanko Logbookit tauluihin H ja I VMS? Ja sitä myötä myös A-taulun datat VMS:n(eflalo) uusiksi eri tavalla?
+
+DATA CHECKS 2024 palautteet:
+- Hinta puuttuu FIN lajilta (muu laji) ja validaattori on outo, koska raportoi NK arvot - puuttuvina. R scriptin voisi silti
+tarkistaa saadaanko numerot? Samoin SPR ja HER laitettaisiinko jokin default arvo esim. alueelle 25 tms.. ?
+- A, E ja F taulujen Totwghtlandg arvoista osa poikkeaa toisistaan
+-Table_E_ikäkohtaiset painot eivät summaudu kokonaistonnimäärään. (SUM of PRODUCTS)
+- TAble C ja D duplikaattirivejä
+
