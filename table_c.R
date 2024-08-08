@@ -71,7 +71,7 @@ table_C <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SP
     WEIGHT_UNIT = "NK",
     MEAN_LENGTH = "NK",
     LENGTH_UNIT = "NK"
-  ) %>% filter(SPECIES == c("HER", "SPR"))
+  ) %>% filter(SPECIES %in% c("HER", "SPR"))
 
 
 
