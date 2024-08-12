@@ -28,7 +28,7 @@ rm(list=ls())
 
 # needed libraries
 library(dplyr)
-library(RPostgreSQL)
+library(RPostgres)
 library(openxlsx)
 library(mongolite)
 library(tidyr)
