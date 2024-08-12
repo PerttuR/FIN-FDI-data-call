@@ -244,7 +244,7 @@ a8 <- a7 %>% mutate(
                            QUARTER, "_", # quarter
                            SUB_REGION, "_", # region
                            GEAR, "_", # gear type
-                           TARGET_ASSEMBLAGE, "_", # target assemblage
+                           "all_", # target assemblage
                            "all_", # mesh size range
                            "NA_", # selective device / metier
                            "NA_", # mesh size range of the selective device
