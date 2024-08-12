@@ -84,7 +84,8 @@ akt1 <- aktiviteetti_2023 %>%
          FISHING_TECH = FT,
          GEAR_TYPE = GEAR,
          TARGET_ASSEMBLAGE = LEVEL5,
-         MESH_SIZE_RANGE = SILMAKOKO,
+         MESH_SIZE = SILMAKOKO,
+         PYYDYS,
          METIER,
          ICES,
          contains("SVT_KG_"),
@@ -109,18 +110,25 @@ akt1 <- aktiviteetti_2023 %>%
       TARGET_ASSEMBLAGE == "Finfish" ~ "FIF"),
     TARGET_ASSEMBLAGE = replace_na(TARGET_ASSEMBLAGE, "NK"),
     MESH_SIZE_RANGE = case_when(
-      FISHING_TECH == "TM" & MESH_SIZE_RANGE < 16 ~ "00D16",
-      FISHING_TECH == "TM" & 16 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 32 ~ "16D32",
-      FISHING_TECH == "TM" & 32 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 90 ~ "32D90",
-      FISHING_TECH == "TM" & 90 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 105 ~ "90D105",
-      FISHING_TECH == "TM" & 105 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 110 ~ "105D110",
-      FISHING_TECH == "TM" & 110 <= MESH_SIZE_RANGE ~ "110DXX",
-      FISHING_TECH == "PG" & MESH_SIZE_RANGE < 16 ~ "00D16",
-      FISHING_TECH == "PG" & 16 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 32 ~ "16D32",
-      FISHING_TECH == "PG" & 32 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 90 ~ "32D90",
-      FISHING_TECH == "PG" & 90 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 110 ~ "90D110",
-      FISHING_TECH == "PG" & 110 <= MESH_SIZE_RANGE & MESH_SIZE_RANGE < 157 ~ "110D157",
-      FISHING_TECH == "PG" & 157 <= MESH_SIZE_RANGE ~ "157DXX",
+      FISHING_TECH == "TM" & MESH_SIZE < 16 ~ "00D16",
+      FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
+      FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ "32D90",
+      FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ "90D105",
+      FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ "105D110",
+      FISHING_TECH == "TM" & 110 <= MESH_SIZE ~ "110DXX",
+      FISHING_TECH == "PG" & MESH_SIZE < 16 ~ "00D16",
+      FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
+      FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ "32D90",
+      FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ "90D110",
+      FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ "110D157",
+      FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ "157DXX",
+      #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+      is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ "16D32",
+      is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ "32D90",
+      is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ "90D110",
+      is.na(MESH_SIZE) & PYYDYS == 13 ~ "110D157",
+      is.na(MESH_SIZE) & PYYDYS == 22 ~ "157DXX",
+      is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
       TRUE ~ "NK"
     ),
     METIER_7 = "NA",
@@ -132,7 +140,7 @@ akt1 <- aktiviteetti_2023 %>%
     DEEP = "NA",
     RECTANGLE_TYPE = "05*1",
     C_SQUARE = "NA") %>% 
-  select(-MONTH, -ICES) %>% mutate(
+  select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS) %>% mutate(
     SUB_REGION = case_when(
       SUB_REGION == "27.3.d.28" ~ "27.3.d.28.2", #Vaihtoehtoinen 28.1 ja 28.2 ja jälkimmäinen pääallas, jolla Suomi kalastaa
       TRUE ~ SUB_REGION
