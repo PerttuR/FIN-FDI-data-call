@@ -310,7 +310,7 @@ table_E <- table_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES,AGE)
 #openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 suomu2_e <- suomu2_e1 |> rename_all(toupper)
-mega_E <- table_E |> full_join(suomu2_e,, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("","_SUOMU"))
+mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("","_SUOMU"))
 
 mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
 
