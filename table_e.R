@@ -352,6 +352,9 @@ mega_E_expanded <- mega_E_expanded |>
   mutate(MEAN_WEIGHT=coalesce(as.character(MEAN_WEIGHT), as.character(MEAN_WEIGHT_SUOMU), "NK")) |>
   mutate(MEAN_LENGTH=coalesce(na_if(MEAN_LENGTH, "NK"), as.character(MEAN_LENGTH_SUOMU), "NK"))
 
+SOP <- mega_E_expanded |> summarize(SOP=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6)
+mega_E_expanded <- mega_E_expanded |> left_join(SOP)
+
 openxlsx::write.xlsx(mega_E_expanded, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 #Write table_E by dropping extra columns from mega_E
