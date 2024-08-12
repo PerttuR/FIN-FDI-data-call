@@ -154,7 +154,7 @@ gear_type <- case_when(gear_type == "FPO" | gear_type == "FPN" | gear_type == "F
 
 unique(gear_type)
 
-TARGET_ASSEMBLAGE <- substr(suomu$metier,5,7)#metieristä merkit 5-7
+TARGET_ASSEMBLAGE <- "all" # muutettu elokuun 2024 korjauksessa ennen käytössä: substr(suomu$metier,5,7)#metieristä merkit 5-7
 mesh_size <- "all"
 selective_device <- "NA"
 mesh_size_range_selective_device <- "NA"
@@ -244,6 +244,7 @@ length(domains_SUOMU_DISTINCT$domain_landings)
 table_e_pre1 <- filter(table_e_pre1, !is.na(totwghtlandg))
 table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
 
+#error tarkista
 table_e_pre1$age_measurements_prop <-"NA"
 table_e_pre1$nep_sub_region <- "NA"
 #units
