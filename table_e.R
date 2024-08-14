@@ -34,7 +34,6 @@ library(mongolite)
 library(tidyr)
 library(lubridate)
 library(icesVocab)
-library(tibble)
 
 
 #-------------------------------------------------------------------------------
@@ -361,7 +360,7 @@ mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
 mega_E_expanded <- mega_E_expanded |> left_join(SOP, relationship = "many-to-one")
 
 #Lavennetaan yli 10%:lla SOP-luvun ylittävät yksilökappalemäärät TOTWGHTLANDG painon mukaisiksi:
-mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$SOP_R_DIFF < 0.1, mega_E_expanded$NO_AGE, num(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$SOP_R_DIFF < 0.1, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
 
 SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
 SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
