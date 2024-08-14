@@ -34,6 +34,7 @@ library(mongolite)
 library(tidyr)
 library(lubridate)
 library(icesVocab)
+library(tibble)
 
 
 #-------------------------------------------------------------------------------
@@ -354,10 +355,19 @@ mega_E_expanded <- mega_E_expanded |>
   mutate(MEAN_LENGTH=coalesce(na_if(MEAN_LENGTH, "NK"), as.character(MEAN_LENGTH_SUOMU), "NK"))
 
 SOP <- mega_E_expanded |> summarize(SOP=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
-SOP$SOP_R_DIFF <- abs((SOP$TOTWGHTLANDG - SOP$SOP) / SOP$TOTWGHTLANDG)
+SOP$SOP_R_DIFF <- (SOP$TOTWGHTLANDG - SOP$SOP) / SOP$TOTWGHTLANDG
 SOP <- SOP |> select(-TOTWGHTLANDG)
 mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
 mega_E_expanded <- mega_E_expanded |> left_join(SOP, relationship = "many-to-one")
+
+#Lavennetaan yli 10%:lla SOP-luvun ylittävät yksilökappalemäärät TOTWGHTLANDG painon mukaisiksi:
+mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$SOP_R_DIFF < 0.1, mega_E_expanded$NO_AGE, num(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+
+SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
+SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> left_join(SOP2, relationship = "many-to-one")
+mega_E_expanded$prosentti <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP2*100
 
 openxlsx::write.xlsx(mega_E_expanded, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
