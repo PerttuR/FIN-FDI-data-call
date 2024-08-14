@@ -9,7 +9,7 @@
 # Updated: MAY-2022
 # Updated: JUN-2023 (Perttu)
 # Updated: JUN-2024 (Perttu, Mira and Petri)
-
+# Updated: AUG-2024 (Perttu, Mira and Petri)
 #
 # Client: LUKE EU-DCF projects
 #-------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
                                IC_2023$Fleet == "Passive" ~ "GNS-FYK"
                                )
 IC_2023$vessel_length <- "all"
-IC_2023$TARGET_ASSEMBLAGE <- case_when(IC_2023$Species == "HER"| IC_2023$Species == "SPR"~ "SPF")
+IC_2023$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_2023$Species == "HER"| IC_2023$Species == "SPR"~ "SPF")
                                        
 e1 <- IC_2023 %>% mutate(DOMAIN_LANDINGS = paste0(
                           Country, "_", # country
@@ -244,7 +244,7 @@ length(domains_SUOMU_DISTINCT$domain_landings)
 table_e_pre1 <- filter(table_e_pre1, !is.na(totwghtlandg))
 table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
 
-#error tarkista
+#error tarkista:
 table_e_pre1$age_measurements_prop <-"NA"
 table_e_pre1$nep_sub_region <- "NA"
 #units
