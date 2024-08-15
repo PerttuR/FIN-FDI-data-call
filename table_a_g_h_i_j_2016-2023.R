@@ -47,6 +47,11 @@ path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 #                       1. Import data for 2016-2023 A, G, H, I and J table needs                    
 #-------------------------------------------------------------------------------
 
+#----------- set years ---------------
+
+years <- c(2016:2023)
+
+
 source("db.r")
 
 ## Read in data
@@ -61,7 +66,7 @@ aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), tabl
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti', dbname = "kake_siirto")
 
 # Read in data from the correct year
-aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% c(2016:2023)) %>% 
+aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>% 
   mutate(kalastus_kk = format(PALUUPVM, "%m"), #get the correct month in order to make quarters later on
          kalastus_vuosi = format(PALUUPVM,"%Y"),
          kalastus_kk = case_when(
@@ -411,14 +416,14 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 j <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
 
 # from capacity table some needed variables
-kap <- kapasiteetti %>% filter(VUOSI %in% c(2016:2023), REKISTERISSAVUODENAIKANA == 1) %>% select(
+kap <- kapasiteetti %>% filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) %>% select(
   YEAR = VUOSI,
   ULKOINENTUNNUS, 
   KOKPITUUS, 
   RAKENNUSPVM,
   VESSEL_LENGTH = VLENGTH_AER_NEW) %>% mutate(
   rakennusvuosi = as.numeric(format(RAKENNUSPVM,"%Y")),
-  AGE = 2023-rakennusvuosi
+  AGE = max(years)-rakennusvuosi
 ) %>% select(-RAKENNUSPVM, -rakennusvuosi) %>% distinct()
 
 # removing duplicates and checking there are none left
