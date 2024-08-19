@@ -1,7 +1,7 @@
 FDI tietopyynnön täydennykset Elokuussa 2024:
 
 - Tyhjennetään Discard taulut 2013-2022 aiemmista lähetyksistä. (DTMT) Väärin vuosissa: 2013-2022
-- Tuotetaan tableA & TableE ja F 2016-2022 DCPROD
+- TO DO: Tuotetaan tableA & TableE ja F 2016-2023 DCPROD
 - Tuotetaan tableA & TableE ja F 2013-2015 G-SAS
 - LOHI Discard tonnit TableA:han
 - LOHI pituus-ikätiedot Table C ja D tauluihin?
@@ -13,9 +13,9 @@ FDI tietopyynnön täydennykset Elokuussa 2024:
 - Laitetaanko Logbookit tauluihin H ja I VMS? Ja sitä myötä myös A-taulun datat VMS:n(eflalo) uusiksi eri tavalla?
 
 DATA CHECKS 2024 palautteet:
-- Hinta puuttuu FIN lajilta (muu laji) ja validaattori on outo, koska raportoi NK arvot - puuttuvina. R scriptin voisi silti
+- DONE (paitsi yksi rivi) Hinta puuttuu FIN lajilta (muu laji) ja validaattori on outo, koska raportoi NK arvot - puuttuvina. R scriptin voisi silti
 tarkistaa saadaanko numerot? Samoin SPR ja HER laitettaisiinko jokin default arvo esim. alueelle 25 tms.. ?
-- A, E ja F taulujen Totwghtlandg arvoista osa poikkeaa toisistaan
--Table_E_ikäkohtaiset painot eivät summaudu kokonaistonnimäärään. (SUM of PRODUCTS)
-- TAble C ja D duplikaattirivejä
+-DONE A, E ja F taulujen Totwghtlandg arvoista osa poikkeaa toisistaan
+-DONE Table_E_ikäkohtaiset painot eivät summaudu kokonaistonnimäärään. (SUM of PRODUCTS)
+-DONE TAble C ja D duplikaattirivejä
 
