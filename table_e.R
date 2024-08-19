@@ -63,6 +63,7 @@ dir.create(path_out, showWarnings = FALSE)
 # import IC data and table A
 
 IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+IC_DB <- readRDS(paste0(path_der,.Platform$file.sep,"IC_DB.rds"))
 table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
 
@@ -76,7 +77,7 @@ table_A <- table_A %>% rename_all(tolower)
 
 
 #-------------------------------------------------------------------------------
-#                       1.1 create DOMAIN landing to IC data                       
+#                       1.1 create DOMAIN landing to IC 2023 ZIP data data                       
 #-------------------------------------------------------------------------------
 
 IC_2023$Country <- "FIN"
@@ -106,6 +107,45 @@ e1 <- IC_2023 %>% mutate(DOMAIN_LANDINGS = paste0(
                          "all" # commercial category
                          )
                   )
+
+
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+#                       1.1 create DOMAIN landing to IC data between 2013-2023                      
+#-------------------------------------------------------------------------------
+
+IC_DB <- IC_DB %>% filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023))
+IC_DB <- IC_DB %>% filter (Species %in% c("HER","SPR"))
+
+
+IC_DB$Country <- "FIN"
+IC_DB$quarter <- IC_DB$Season
+IC_DB$subregion <- IC_DB$FishingArea
+IC_DB$gear_type <- case_when(IC_DB$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+                               IC_DB$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+                               IC_DB$Fleet == "Gillnet" ~ "GNS",
+                               IC_DB$Fleet == "Active" ~ "OTM-PTM",
+                               IC_DB$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+                               IC_DB$Fleet == "Passive" ~ "GNS-FYK"
+)
+IC_DB$vessel_length <- "all"
+IC_DB$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_DB$Species == "HER"| IC_DB$Species == "SPR"~ "SPF")
+
+e1 <- IC_DB %>% mutate(DOMAIN_LANDINGS = paste0(
+  Country, "_", # country
+  quarter, "_", # quarter
+  subregion, "_", # region
+  gear_type, "_", # gear type
+  TARGET_ASSEMBLAGE, "_", # target assemblage
+  "all_", # mesh size range
+  "NA_", # selective device / metier
+  "NA_", # mesh size range of the selective device
+  "all_", # vessel length
+  Species, "_", # species
+  "all" # commercial category
+)
+)
 
 
 #-------------------------------------------------------------------------------
