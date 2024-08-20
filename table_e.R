@@ -62,7 +62,7 @@ dir.create(path_out, showWarnings = FALSE)
 
 # import IC data and table A
 
-IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+#IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
 IC_DB <- readRDS(paste0(path_der,.Platform$file.sep,"IC_DB.rds"))
 table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
@@ -80,33 +80,33 @@ table_A <- table_A %>% rename_all(tolower)
 #                       1.1 create DOMAIN landing to IC 2023 ZIP data data                       
 #-------------------------------------------------------------------------------
 
-IC_2023$Country <- "FIN"
-IC_2023$quarter <- IC_2023$Season
-IC_2023$subregion <- IC_2023$FishingArea
-IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
-                               IC_2023$Fleet == "Pelagic trawl" ~ "OTM-PTM",
-                               IC_2023$Fleet == "Gillnet" ~ "GNS",
-                               IC_2023$Fleet == "Active" ~ "OTM-PTM",
-                               IC_2023$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
-                               IC_2023$Fleet == "Passive" ~ "GNS-FYK"
-                               )
-IC_2023$vessel_length <- "all"
-IC_2023$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_2023$Species == "HER"| IC_2023$Species == "SPR"~ "SPF")
-                                       
-e1 <- IC_2023 %>% mutate(DOMAIN_LANDINGS = paste0(
-                          Country, "_", # country
-                         quarter, "_", # quarter
-                         subregion, "_", # region
-                         gear_type, "_", # gear type
-                         TARGET_ASSEMBLAGE, "_", # target assemblage
-                         "all_", # mesh size range
-                         "NA_", # selective device / metier
-                         "NA_", # mesh size range of the selective device
-                         "all_", # vessel length
-                         Species, "_", # species
-                         "all" # commercial category
-                         )
-                  )
+# IC_2023$Country <- "FIN"
+# IC_2023$quarter <- IC_2023$Season
+# IC_2023$subregion <- IC_2023$FishingArea
+# IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+#                                IC_2023$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+#                                IC_2023$Fleet == "Gillnet" ~ "GNS",
+#                                IC_2023$Fleet == "Active" ~ "OTM-PTM",
+#                                IC_2023$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+#                                IC_2023$Fleet == "Passive" ~ "GNS-FYK"
+#                                )
+# IC_2023$vessel_length <- "all"
+# IC_2023$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_2023$Species == "HER"| IC_2023$Species == "SPR"~ "SPF")
+#                                        
+# e1 <- IC_2023 %>% mutate(DOMAIN_LANDINGS = paste0(
+#                           Country, "_", # country
+#                          quarter, "_", # quarter
+#                          subregion, "_", # region
+#                          gear_type, "_", # gear type
+#                          TARGET_ASSEMBLAGE, "_", # target assemblage
+#                          "all_", # mesh size range
+#                          "NA_", # selective device / metier
+#                          "NA_", # mesh size range of the selective device
+#                          "all_", # vessel length
+#                          Species, "_", # species
+#                          "all" # commercial category
+#                          )
+#                   )
 
 
 #-------------------------------------------------------------------------------
@@ -122,15 +122,27 @@ IC_DB <- IC_DB %>% filter (Species %in% c("HER","SPR"))
 IC_DB$Country <- "FIN"
 IC_DB$quarter <- IC_DB$Season
 IC_DB$subregion <- IC_DB$FishingArea
+IC_DB <- IC_DB |> filter(Fleet != "Winter Seine")
+IC_DB <- IC_DB |> filter(Fleet != "BT-Fi-Bal")
+IC_DB <- IC_DB |> filter(Fleet != "Fleet-All" | Species=="HER")
+
+year_unique <- IC_DB %>% group_by(Year, Species, subregion, Season, Fleet) %>% summarise(unique(Fleet), OffLandings = max(OffLandings))
+
 IC_DB$gear_type <- case_when(IC_DB$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
                                IC_DB$Fleet == "Pelagic trawl" ~ "OTM-PTM",
-                               IC_DB$Fleet == "Gillnet" ~ "GNS",
-                               IC_DB$Fleet == "Active" ~ "OTM-PTM",
                                IC_DB$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
-                               IC_DB$Fleet == "Passive" ~ "GNS-FYK"
+                               IC_DB$Fleet == "Active" ~ "OTM-PTM",
+                               IC_DB$Fleet == "Gillnet" ~ "GNS",
+                               IC_DB$Fleet == "Passive" ~ "GNS-FYK",
+                               IC_DB$Fleet == "Passive gears" ~ "GNS-FYK",
+                               IC_DB$Fleet == "Fleet-All" ~ "OTM-PTM"
 )
 IC_DB$vessel_length <- "all"
 IC_DB$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_DB$Species == "HER"| IC_DB$Species == "SPR"~ "SPF")
+
+year_unique2 <- IC_DB %>% group_by(Year, Species, gear_type) %>% summarise(unique(gear_type), OffLandings = max(OffLandings))
+
+IC_DB$NumberCaught <- as.numeric(IC_DB$NumberCaught)/1000000
 
 e1 <- IC_DB %>% mutate(DOMAIN_LANDINGS = paste0(
   Country, "_", # country
@@ -147,6 +159,10 @@ e1 <- IC_DB %>% mutate(DOMAIN_LANDINGS = paste0(
 )
 )
 
+#testing 2023:
+#openxlsx::write.xlsx(e1, paste0(path_out,.Platform$file.sep,"e1.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(e1, paste0(path_out,.Platform$file.sep,"e1_vertaa3.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
 
 #-------------------------------------------------------------------------------
 
@@ -160,12 +176,12 @@ e1 <- IC_DB %>% mutate(DOMAIN_LANDINGS = paste0(
 
 source("db.R")
 
-agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2023 AND vuosi <= 2023"))
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2023"))
 
 #-------------------------------------------------------------------------------
 # choose commercial LANDINGS samples only, from years 2013-2022 and species
 
-agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR", "COD"))
+agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR"))
 
 #Filter ages, 99 is essentially NA
 suomu <- agedata_cs |> filter(!is.na(age) & age != "99")
@@ -212,8 +228,6 @@ suomu2 <- suomu %>% select(vuosi, nayteno, paino, pituus, age, domain_landings)
 suomu2$pituus <- suomu2$pituus/10
 
 
-# Merge Logbook landings data and anadromous sampling data to one dataframe
-
 #-------------------------------------------------------------------------------
 #                   4. aggregate AGE DATA for merging with TABLE A     2024 alkaen:                
 #-------------------------------------------------------------------------------
@@ -249,7 +263,7 @@ suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, 
 #e1 to lower
 e1 <- e1 %>% rename_all(tolower)
 
-#poistetaan alusryhmittely ja gear type, jotke tekevät monia rivejä per DOMAIN
+#poistetaan alusryhmittely ja gear type, jotka tekevät monia rivejä per DOMAIN ja lasketaan domainin summasaalis
 table_A_SUM <- table_A %>% group_by(country,year,domain_landings,species) %>% summarise(totwghtlandg=sum(totwghtlandg))
 
 # merge IC age data with TABLE A
@@ -293,7 +307,7 @@ table_e_pre1$length_unit <- "cm"
 
 table_e_pre1 <- table_e_pre1 |> mutate(age = as.integer(agelength))
 table_e_pre1 <- table_e_pre1 |> group_by(country, year, domain_landings,species) |> mutate(min_age = min(age), max_age = max(age))
-table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e3
+table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e3 
 # arrange the variables in proper order and put them to upper case
 #table_E <- table_e_pre2  %>% select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) %>% rename_all(toupper)
 
@@ -330,7 +344,7 @@ table_e_pre2 <- table_e_pre2 |> mutate(
        total_sampled_trips = na_if(total_sampled_trips, -9),
        no_age_measurements = na_if(no_age_measurements, -9),
        no_age = na_if(no_age, -9),
-       mean_length = na_if(mean_length, -9)
+       mean_length = na_if(as.integer(mean_length), -9)
 )
 
 #NK input
@@ -398,15 +412,16 @@ SOP$SOP_R_DIFF <- (SOP$TOTWGHTLANDG - SOP$SOP) / SOP$TOTWGHTLANDG
 SOP <- SOP |> select(-TOTWGHTLANDG)
 mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
 mega_E_expanded <- mega_E_expanded |> left_join(SOP, relationship = "many-to-one")
+mega_E_expanded$prosentti_SOP <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*100
 
 #Lavennetaan yli 10%:lla SOP-luvun ylittävät yksilökappalemäärät TOTWGHTLANDG painon mukaisiksi:
-mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$SOP_R_DIFF < 0.1, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
-
-SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
-SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
-mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
-mega_E_expanded <- mega_E_expanded |> left_join(SOP2, relationship = "many-to-one")
-mega_E_expanded$prosentti <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP2*100
+# mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$SOP_R_DIFF < 0.1, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+# 
+# SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
+# SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
+# mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
+# mega_E_expanded <- mega_E_expanded |> left_join(SOP2, relationship = "many-to-one")
+# mega_E_expanded$prosentti_SOP2 <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP2*100
 
 openxlsx::write.xlsx(mega_E_expanded, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 

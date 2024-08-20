@@ -1,5 +1,4 @@
-# Sijoita ja pura .ZIP tiedoston sisältö, mikä saatu Nicolakselta path_IC kansioon
-
+# Sijoita ja pura .ZIP tiedoston sisältö, jossa IC data Henrikiltä kansioon: path_IC_ORIG
 #- Clear workspace
 rm(list=ls())
 
