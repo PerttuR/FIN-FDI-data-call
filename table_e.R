@@ -167,9 +167,9 @@ e1 <- IC_DB5 %>% mutate(DOMAIN_LANDINGS = paste0(
 )
 )
 
-#testing 2023:
-#openxlsx::write.xlsx(e1, paste0(path_out,.Platform$file.sep,"e1.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
-openxlsx::write.xlsx(e1, paste0(path_out,.Platform$file.sep,"e1_vertaa3.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+#printing e1 for browsing:
+
+openxlsx::write.xlsx(e1, paste0(path_out,.Platform$file.sep,"e1.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
 
 #-------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ openxlsx::write.xlsx(e1, paste0(path_out,.Platform$file.sep,"e1_vertaa3.xlsx"), 
 #-------------------------------------------------------------------------------
 
 
-## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
+## SUOMU sample data for age numbers
 
 source("db.R")
 
@@ -203,7 +203,7 @@ suomu_missing_age <- agedata_cs |> filter(is.na(age) | age == "99")
 
 # make a key variable to match table A key (domain_discards or domain_landings)
 
-# first make individually all the parts that form the key
+# first make individually all the parts that form the DOMAIN key
 country_code <- "FIN"
 quarter <- suomu$q
 subregion <- paste("27.3.d.", suomu$ices_osa_alue, sep = "")
@@ -279,11 +279,11 @@ table_e_pre1 <- e1 %>% left_join(table_A_SUM, by=join_by("country", "year", "dom
 
 # TEST some keys might not match, check how many there might be
 missing_domains_IC <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
-missing_domains_IC_DISTINCT = missing_domains_IC %>% distinct(domain_landings, .keep_all = T)
+missing_domains_IC_DISTINCT = missing_domains_IC %>% distinct(year, domain_landings, .keep_all = T)
 length(missing_domains_IC_DISTINCT$domain_landings)
 #Liittyneet:
 domains_IC <- table_e_pre1[!is.na(table_e_pre1$totwghtlandg),]
-domains_IC_DISTINCT <- domains_IC%>% distinct(domain_landings, .keep_all = T)
+domains_IC_DISTINCT <- domains_IC %>% distinct(year, domain_landings, .keep_all = T)
 length(domains_IC_DISTINCT$domain_landings)
 
 #Aggrekoi ensin Suomu yksilödata samaan sapluunaan ja tee sitten left joini :)
@@ -292,21 +292,21 @@ table_e_suomu <- left_join(suomu2_e1, table_A_SUM, by = join_by(country, year, d
 
 # TEST some keys might not match, check how many there might be
 missing_domains_SUOMU <- table_e_suomu[is.na(table_e_suomu$totwghtlandg),]
-missing_domains_SUOMU_DISTINCT = missing_domains_SUOMU %>% distinct(domain_landings, .keep_all = T)
+missing_domains_SUOMU_DISTINCT = missing_domains_SUOMU %>% distinct(year, domain_landings, .keep_all = T)
 length(missing_domains_SUOMU_DISTINCT$domain_landings)
 #Liittyneet:
 domains_SUOMU <- table_e_suomu[!is.na(table_e_suomu$totwghtlandg),]
-domains_SUOMU_DISTINCT <- domains_SUOMU%>% distinct(domain_landings, .keep_all = T)
+domains_SUOMU_DISTINCT <- domains_SUOMU%>% distinct(year, domain_landings, .keep_all = T)
 length(domains_SUOMU_DISTINCT$domain_landings)
 
 
 
 
-# delete the missmatch values
+# delete domains with no catches from table A e.g missmatching joins
 table_e_pre1 <- filter(table_e_pre1, !is.na(totwghtlandg))
 table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
 
-#error tarkista:
+#add statis columns:
 table_e_pre1$age_measurements_prop <-"NA"
 table_e_pre1$nep_sub_region <- "NA"
 #units
@@ -371,10 +371,13 @@ table_E <- table_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES,AGE)
 #openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 #openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
-suomu2_e <- suomu2_e1 |> rename_all(toupper)
-mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE), suffix=c("","_SUOMU"))
+suomu2_e <- table_e_suomu |> rename_all(toupper) #suomu2_e1
+suomu2_e$TOTAL_SAMPLED_TRIPS <- as.character(suomu2_e$TOTAL_SAMPLED_TRIPS)
+suomu2_e$NO_AGE_MEASUREMENTS <- as.character(suomu2_e$NO_AGE_MEASUREMENTS)
 
+mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE,	SPECIES), suffix=c("","_SUOMU"))
 mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
+mega_E <- mega_E %>% filter(!is.na(TOTWGHTLANDG))
 
 message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
 suomu_missing <- mega_E |> filter(!is.na(NO_AGE) & is.na(NO_AGE_SUOMU)) |> ungroup()
@@ -423,13 +426,18 @@ mega_E_expanded <- mega_E_expanded |> left_join(SOP, relationship = "many-to-one
 mega_E_expanded$prosentti_SOP <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*100
 
 #Lavennetaan yli 10%:lla SOP-luvun ylittävät yksilökappalemäärät TOTWGHTLANDG painon mukaisiksi:
-# mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$SOP_R_DIFF < 0.1, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
-# 
-# SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
-# SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
-# mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
-# mega_E_expanded <- mega_E_expanded |> left_join(SOP2, relationship = "many-to-one")
-# mega_E_expanded$prosentti_SOP2 <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP2*100
+mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$prosentti_SOP < 110, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+#Deletoidaan, jos kappalemäärä on yli 45% korkeampi kuin tableA:n domainin landing määrä
+mega_E_expanded <- mega_E_expanded %>% filter(prosentti_SOP > 45)
+#Supistettaan kappalemäärät 45-90% vastaamaan Totalcatchin saalista
+mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$prosentti_SOP > 90, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+
+
+SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
+SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> left_join(SOP2, relationship = "many-to-one")
+mega_E_expanded$prosentti_SOP2 <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP2*100
 
 openxlsx::write.xlsx(mega_E_expanded, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 

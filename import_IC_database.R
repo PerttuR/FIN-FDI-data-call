@@ -36,7 +36,7 @@ IC_1 <- IC_SD_SI_HI %>% filter (Deleted != 1)
 #select columns based on IC_DB names:
 IC_2 <- IC_1 %>% select(Country,Year,SeasonType,Season,Fleet,AreaType,Area,DepthRange,Species,Stock,CatCat,RepCat,Sex,CanumType,AgeOrLength,PlusGroup,SampledCatch,NumSamplesLength,NumLengthMeasurements,NumSamplesAge,NumAgeMeasurement,UnitWeca,UnitCanum,UnitAgeOrLength,UnitMeanLength,Maturity,NumberLanded,MeanWeight,MeanLength,varNumLanded,varWgtLanded,varLgtLanded,DataToFrom,Usage,SamplesOrigin,QualityFlag,UnitCaton,CATON,OfficialLandings,UnitEffort,Effort,AreaQualifier)
 
-# vector fot column names:
+# vector for column names:
 ic_names <- c("Country","Year","SeasonType","Season","Fleet","AreaType","FishingArea","DepthRange","Species","Stock","CatchCategory","ReportingCategory","Sex","CANUMtype","AgeLength","PlusGroup","SampledCatch","NumSamplesLngt","NumLngtMeas","NumSamplesAge","NumAgeMeas","unitMeanWeight","unitCANUM","UnitAgeOrLength","UnitMeanLength","Maturity","NumberCaught","MeanWeight","MeanLength","varNumLanded","varWgtLanded","varLgtLanded","DataToFrom","Usage","SamplesOrigin","QualityFlag","UnitCATON","CATON","OffLandings","UnitEffort","Effort","AreaQualifier")
 #rename columns:
 colnames(IC_2) <- ic_names
