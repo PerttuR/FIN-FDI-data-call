@@ -41,6 +41,7 @@ library(lubridate)
 # Output folder
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
 path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
+path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -51,6 +52,8 @@ path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 
 years <- c(2016:2023)
 
+
+#----------- get data ---------------
 
 source("db.r")
 
@@ -64,6 +67,13 @@ aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), tabl
 
 # (used with J)
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti', dbname = "kake_siirto")
+
+# Discards excel
+discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023.xlsx"))
+names(discards) <- toupper(names(discards))
+
+
+#--------------------------
 
 # Read in data from the correct year
 aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>% 
@@ -271,6 +281,12 @@ table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GE
 # Remove observations (2016-2023 there are 8) that have missing TOTVALLANDG
 table_A <- table_A %>% filter(TOTVALLANDG != "NK")
 
+
+# Add the discards data
+Vaurioitetut lohet 2016-2023.xlsx
+
+
+
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
 
@@ -449,7 +465,7 @@ j3 <- j3 %>% mutate(FISHING_TECH = as.factor(FISHING_TECH))
 
 
 # Calculate the principal sub region for each vessel
-j4 <- j3 %>% group_by(ULKOINENTUNNUS, SUB_REGION) %>% summarise(
+j4 <- j3 %>% group_by(YEAR, ULKOINENTUNNUS, SUB_REGION) %>% summarise(
   fishingdays = n_distinct(KALASTUSPAIVAT, na.rm = TRUE),
   fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
   .groups = 'drop'
@@ -457,14 +473,14 @@ j4 <- j3 %>% group_by(ULKOINENTUNNUS, SUB_REGION) %>% summarise(
   
 # Identify the principal sub region for each vessel
 principal_sub_region <- j4 %>%
-  group_by(ULKOINENTUNNUS) %>%
+  group_by(YEAR, ULKOINENTUNNUS) %>%
   filter(fishingdays == max(fishingdays, na.rm = TRUE)) %>%
   # Handle ties by randomly selecting one sub region
   slice_sample(n = 1) %>%
   ungroup() %>% rename(PRINCIPAL_SUB_REGION = SUB_REGION)
 
 # join the principal sub region to the j table
-j5 <- left_join(j3, principal_sub_region, by = "ULKOINENTUNNUS")
+j5 <- left_join(j3, principal_sub_region, by = c("YEAR","ULKOINENTUNNUS"))
   
 # Calculate the number of fishing trips for each vessel
 vessel_fishing_trips <- j5 %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% summarise(
@@ -497,13 +513,13 @@ j6 <- j5 %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, 
 # join the maximum days at sea with j table
 j7 <- left_join(j6, maxseadays, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
 
-# replace missing values
+# replace missing values and arrange by year
 j8 <- j7 %>% mutate(
   COUNTRY = replace_na(COUNTRY, "FIN"),
   SUPRA_REGION = replace_na(SUPRA_REGION, "NAO"),
   GEO_INDICATOR = replace_na(GEO_INDICATOR, "NGI"),
   PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK")
-)
+) %>% arrange(by = YEAR)
 
 
 # Put the variables in the correct order:
