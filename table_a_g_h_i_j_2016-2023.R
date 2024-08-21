@@ -270,20 +270,27 @@ a8 <- a7 %>% mutate(
                            SPECIES, "_", # species
                            "all" # commercial category
                            ),
-  DOMAIN_DISCARDS = DOMAIN_LANDINGS,
-  DISCARDS = "NK"
+  DOMAIN_DISCARDS = DOMAIN_LANDINGS
 ) %>% select(-GEAR)
 
-
-# Put the variables in the correct order:
-table_A <- a8 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
-
 # Remove observations (2016-2023 there are 8) that have missing TOTVALLANDG
-table_A <- table_A %>% filter(TOTVALLANDG != "NK")
-
+a9 <- a8 %>% filter(TOTVALLANDG != "NK")
 
 # Add the discards data
-Vaurioitetut lohet 2016-2023.xlsx
+a10 <- a9 %>% left_join(discards, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH" = "FT", "GEAR_TYPE" = "GEAR", "SUB_REGION", "TARGET_ASSEMBLAGE", "MESH_SIZE_RANGE", "SPECIES"))
+
+a11 <- a10 %>% rename(DISCARDS = DISCARDS_KG) %>% mutate(DISCARDS = case_when(
+  is.na(DISCARDS) ~ 0,
+  TRUE ~ DISCARDS))
+
+# Put the variables in the correct oDISCARDS_KG# Put the variables in the correct order:
+table_A <- a11 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+
+
+
+
+
+
 
 
 
