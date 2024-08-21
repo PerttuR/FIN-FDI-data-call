@@ -375,7 +375,7 @@ suomu2_e <- table_e_suomu |> rename_all(toupper) #suomu2_e1
 suomu2_e$TOTAL_SAMPLED_TRIPS <- as.character(suomu2_e$TOTAL_SAMPLED_TRIPS)
 suomu2_e$NO_AGE_MEASUREMENTS <- as.character(suomu2_e$NO_AGE_MEASUREMENTS)
 
-mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE,	SPECIES), suffix=c("","_SUOMU"))
+mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE, SPECIES), suffix=c("","_SUOMU"))
 mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
 mega_E <- mega_E %>% filter(!is.na(TOTWGHTLANDG))
 
