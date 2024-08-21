@@ -115,36 +115,44 @@ table_A <- table_A %>% rename_all(tolower)
 #                       1.1 create DOMAIN landing to IC data between 2013-2023                      
 #-------------------------------------------------------------------------------
 
-IC_DB <- IC_DB %>% filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023))
-IC_DB <- IC_DB %>% filter (Species %in% c("HER","SPR"))
+IC_DB1 <- IC_DB %>% filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023))
+IC_DB2 <- IC_DB1 %>% filter (Species %in% c("HER","SPR"))
 
 
-IC_DB$Country <- "FIN"
-IC_DB$quarter <- IC_DB$Season
-IC_DB$subregion <- IC_DB$FishingArea
-IC_DB <- IC_DB |> filter(Fleet != "Winter Seine")
-IC_DB <- IC_DB |> filter(Fleet != "BT-Fi-Bal")
-IC_DB <- IC_DB |> filter(Fleet != "Fleet-All" | Species=="HER")
+IC_DB2$Country <- "FIN"
+IC_DB2$quarter <- IC_DB2$Season
+IC_DB2$subregion <- IC_DB2$FishingArea
 
-year_unique <- IC_DB %>% group_by(Year, Species, subregion, Season, Fleet) %>% summarise(unique(Fleet), OffLandings = max(OffLandings))
+#Filter duplicate and unknown gears out
+IC_DB3 <- IC_DB2 |> filter(Fleet != "Winter Seine")
+IC_DB4 <- IC_DB3 |> filter(Fleet != "BT-Fi-Bal")
+IC_DB5 <- IC_DB4 |> filter(Fleet != "Fleet-All" | Species=="HER")
 
-IC_DB$gear_type <- case_when(IC_DB$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
-                               IC_DB$Fleet == "Pelagic trawl" ~ "OTM-PTM",
-                               IC_DB$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
-                               IC_DB$Fleet == "Active" ~ "OTM-PTM",
-                               IC_DB$Fleet == "Gillnet" ~ "GNS",
-                               IC_DB$Fleet == "Passive" ~ "GNS-FYK",
-                               IC_DB$Fleet == "Passive gears" ~ "GNS-FYK",
-                               IC_DB$Fleet == "Fleet-All" ~ "OTM-PTM"
+# check IC Off landings by year, species, season fleet:
+year_unique <- IC_DB5 %>% group_by(Year, Species, subregion, Season, Fleet) %>% summarise(unique(Fleet), OffLandings = max(OffLandings))
+
+#set common gear_codes to gear_type column
+IC_DB5$gear_type <- case_when(IC_DB5$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+                               IC_DB5$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+                               IC_DB5$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+                               IC_DB5$Fleet == "Active" ~ "OTM-PTM",
+                               IC_DB5$Fleet == "Gillnet" ~ "GNS",
+                               IC_DB5$Fleet == "Passive" ~ "GNS-FYK",
+                               IC_DB5$Fleet == "Passive gears" ~ "GNS-FYK",
+                               IC_DB5$Fleet == "Fleet-All" ~ "OTM-PTM"
 )
-IC_DB$vessel_length <- "all"
-IC_DB$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_DB$Species == "HER"| IC_DB$Species == "SPR"~ "SPF")
 
-year_unique2 <- IC_DB %>% group_by(Year, Species, gear_type) %>% summarise(unique(gear_type), OffLandings = max(OffLandings))
+IC_DB5$vessel_length <- "all"
+IC_DB5$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_DB$Species == "HER"| IC_DB$Species == "SPR"~ "SPF")
 
-IC_DB$NumberCaught <- as.numeric(IC_DB$NumberCaught)/1000000
+# check IC Off landings by year, species, gear_type:
+year_unique2 <- IC_DB5 %>% group_by(Year, Species, gear_type) %>% summarise(unique(gear_type), OffLandings = max(OffLandings))
 
-e1 <- IC_DB %>% mutate(DOMAIN_LANDINGS = paste0(
+#IC_DB fish number are millions -> to thousand tons
+IC_DB5$NumberCaught <- as.numeric(IC_DB5$NumberCaught)/1000000
+
+#create DOMAIN:
+e1 <- IC_DB5 %>% mutate(DOMAIN_LANDINGS = paste0(
   Country, "_", # country
   quarter, "_", # quarter
   subregion, "_", # region
