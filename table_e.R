@@ -387,7 +387,7 @@ mega_E <- mega_E |> ungroup()
 mega_E <- mega_E |>
   mutate(across(all_of(suomu_cols),
     ~ if_else(is.na(.x), mega_E[[paste0(cur_column(), "_SUOMU")]], .x)
-  )) |> group_by(group_cols)
+  )) |> group_by(!!!syms(group_cols))
 
 
 mega_E <- mega_EE %>% filter(!is.na(TOTWGHTLANDG))
