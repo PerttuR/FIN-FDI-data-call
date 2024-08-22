@@ -377,7 +377,7 @@ suomu2_e$NO_AGE_MEASUREMENTS <- as.character(suomu2_e$NO_AGE_MEASUREMENTS)
 
 mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE, SPECIES), suffix=c("","_SUOMU"))
 mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
-suomu_cols <- c("NO_AGE_MEASUREMENTS", "AGE_MEASUREMENTS_PROP", "MIN_AGE", "MAX_AGE", "NO_AGE", "MEAN_WEIGHT", "MEAN_LENGTH", "TOTWGHTLANDG")
+suomu_cols <- c("NO_AGE_MEASUREMENTS", "AGE_MEASUREMENTS_PROP", "MIN_AGE", "MAX_AGE", "MEAN_WEIGHT", "MEAN_LENGTH", "TOTWGHTLANDG")
 
 # ChatGPT: Replace NA values in non-suffixed columns using the native pipe syntax
 
