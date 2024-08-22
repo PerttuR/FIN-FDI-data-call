@@ -390,7 +390,7 @@ mega_E <- mega_E |>
   )) |> group_by(!!!syms(group_cols))
 
 
-mega_E <- mega_EE %>% filter(!is.na(TOTWGHTLANDG))
+mega_E <- mega_E %>% filter(!is.na(TOTWGHTLANDG))
 
 message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
 suomu_missing <- mega_E |> filter(!is.na(NO_AGE) & is.na(NO_AGE_SUOMU)) |> ungroup()
