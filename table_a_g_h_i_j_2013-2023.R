@@ -160,7 +160,7 @@ akt1 <- aktiviteetti_all %>%
       TRUE ~ "NK"
     ),
     ICES = case_when(
-      ICES == 19 ~ 29,
+      ICES == 19 ~ 29, # bugi, korjataan myöhemmin dcprodiin!!
       TRUE ~ ICES
     ),
     METIER_7 = "NA",
