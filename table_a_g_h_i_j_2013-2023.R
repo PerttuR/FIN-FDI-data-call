@@ -69,7 +69,7 @@ aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), tabl
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti', dbname = "kake_siirto")
 
 # Discards excel
-discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023.xlsx"))
+discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023_ver3.xlsx"))
 names(discards) <- toupper(names(discards))
 
 # Table A years 2013-2015
@@ -284,33 +284,10 @@ a8 <- a7 %>% mutate(
 # Remove observations (2016-2023 there are 8) that have missing TOTVALLANDG
 a9 <- a8 %>% filter(TOTVALLANDG != "NK")
 
-# Add the discards data
-a10 <- a9 %>% left_join(discards, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH" = "FT", "GEAR_TYPE" = "GEAR", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES"))
 
-a11 <- a10 %>% rename(DISCARDS = DISCARDS_KG) %>% mutate(DISCARDS = case_when(
-  is.na(DISCARDS) ~ 0,
-  TRUE ~ DISCARDS))
+# -------------- 
+# Add the discard data
 
-#---------- datacheck ----------------
-
-# Laita data järjestykseen join muuttujien sekä saalismäärän mukaan ja naita ekaan havaintoon
-
-disc_joined <- a11 %>% filter(DISCARDS > 0)
-
-# vain 22 yhdistyi
-# Pirkko: Esim gear ja target muuttujien määrittely on vuosien kuluessa muuttunut ja saattaa aiheuttaa ongelmia yhdistämisessä. Discardingit voi yhdistää lähimpään vastaavaan luokkaan.Targetin määrittly muuttui pintaverkkojen kohdalla jossain vaiheessa. Siellä siis saattaa olla targettina fws, vaikka voisi olla tarkemmin ana.Ja aluksia ryhmiteltiin samoin kuin economic fleet data callissa eli jos aluksia oli jossain pituus-gear -yhdistelmässä hyvin vähän, yhdistettiin toiseen....
-
-disc_a_test <- a11 %>% filter(YEAR == 2023, QUARTER == 3, FISHING_TECH == "PG", SUB_REGION == "27.3.d.30", SPECIES == "SAL")
-
-disc_test <- discards %>% filter(YEAR == 2023, QUARTER == 3, FT == "PG", SUB_REGION == "27.3.d.30", MESH_SIZE_RANGE == "32D90", SPECIES == "SAL")
-
-disc_2023 <- disc_joined %>% filter(YEAR == 2023)
-
-
-
-
-
-# Kokeillaan tehdä joini uniikisti:
 discards2 <- discards %>% select(-MESH_SIZE_RANGE) %>% rename(DISCARDS = DISCARDS_KG)
 
 # Step 1: Add a row identifier in a9 to preserve row order
@@ -327,7 +304,7 @@ a9_first_occurrence <- a9_sorted %>% group_by(YEAR, QUARTER, VESSEL_LENGTH, FISH
 # Step 4: Perform the left join only on the first occurrences
 a10_with_discard_matches <- a9_first_occurrence %>%
   filter(first_occurrence) %>%
-  left_join(discards2, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH" = "FT", "GEAR_TYPE" = "GEAR", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES"))
+  left_join(discards2, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES"))
 
 # Step 5: Get rows from a9 that did not have a discard match (not first occurrences or those that didn't join)
 a10_without_discard_matches <- a9_first_occurrence %>%
@@ -339,27 +316,17 @@ a10 <- bind_rows(a10_with_discard_matches, a10_without_discard_matches) %>%
   arrange(row_id) %>%
   select(-row_id, -first_occurrence)  # Clean up helper columns if not needed
 
-disc_joined <- a10 %>% filter(DISCARDS > 0)
+a11 <- a10 %>% mutate(DISCARDS = case_when(
+  is.na(DISCARDS) ~ 0,
+  TRUE ~ DISCARDS))
 
-disc_test <- discards2 %>% filter(YEAR == 2023, QUARTER == 2, FT == "PG", SUB_REGION == "27.3.d.32", SPECIES == "SAL", VESSEL_LENGTH == "VL0812", GEAR == "FYK", TARGET_ASSEMBLAGE == "ANA")
-
-disc_a9_first_occurrence <- a9_first_occurrence %>% filter(YEAR == 2023, QUARTER == 3, FISHING_TECH == "PG", SUB_REGION == "27.3.d.32", SPECIES == "SAL", VESSEL_LENGTH == "VL0812", GEAR_TYPE == "FYK", TARGET_ASSEMBLAGE == "ANA")
-
+disc_joined <- a11 %>% filter(DISCARDS > 0)
 
 # Step 1: Perform a left join from discards to a9 to check for non-matches
-discards_not_joined <- discards2 %>%
-  left_join(
-    a9, 
-    by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FT" = "FISHING_TECH", "GEAR" = "GEAR_TYPE", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES")
-  ) %>%
-  # Step 2: Filter for rows where all columns from a9 are NA, indicating no match
-  filter(is.na(row_id)) 
+#discards_not_joined <- discards2 %>% left_join(a9, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES")) %>% filter(is.na(row_id)) 
 
 # Export the filtered data to an Excel file
-write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
-
-
-disc_a_test <- a10 %>% filter(YEAR == 2016, QUARTER == 2, FISHING_TECH == "PG", SUB_REGION == "27.3.d.30", SPECIES == "SAL")
+#write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
 
 
 #------------------------
@@ -391,7 +358,7 @@ tableA20132015 <- tableA1315 %>% mutate(SUB_REGION = tolower(SUB_REGION),
   DOMAIN_DISCARDS = DOMAIN_LANDINGS
 ) %>% select(-GEAR, -METIER7)
 
-tableA_all <- rbind(a10, tableA20132015)
+tableA_all <- rbind(a11, tableA20132015)
 
 
 
