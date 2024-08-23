@@ -369,7 +369,9 @@ tableA_all <- rbind(a11, tableA20132015) %>%
 # Put the variables in the correct order:
 table_A <- tableA_all %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 
-
+#Rounding:
+table_A$DISCARDS <- round(table_A$DISCARDS, digits = 3)
+table_A$TOTWGHTLANDG <- round(table_A$TOTWGHTLANDG, digits = 3)
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))

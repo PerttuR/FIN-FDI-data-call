@@ -1,16 +1,16 @@
 FDI tietopyynnön täydennykset Elokuussa 2024:
 
-- Tyhjennetään Discard taulut 2013-2022 aiemmista lähetyksistä. (DTMT) Väärin vuosissa: 2013-2022
+- DONE Tyhjennetään Discard taulut 2013-2022 aiemmista lähetyksistä. (DTMT) Väärin vuosissa: 2013-2022
 - DONE Tuotetaan tableA & TableE ja F 2016-2023 DCPROD
 - Tuotetaan tableA & TableE ja F 2013-2015 G-SAS
-- LOHI Discard tonnit TableA:han
+- DONE LOHI Discard tonnit TableA:han
 - LOHI pituus-ikätiedot Table C ja D tauluihin?
-- Kapasiteetti 2013-2023 DCPROD:sta, koska alusluokittelu on muuttunut 2024 alkaen
+- DONE(2016-2023) Kapasiteetti 2013-2023 DCPROD:sta, koska alusluokittelu on muuttunut 2024 alkaen
    -> GEO indicator specified as 'NK' when reported in AER as 'NGI' (DTMT), Väärin vuosissa: 2017-2021
    -> No inactive vessels are reported in table J (DTMT), Väärin vuosissa: 2021-2022
    -> Vessels reported should not be in clustered fleet segments (DTMT) Väärin vuosissa: 2013-2022
-- Metier luokitukset FDI scipteistä DCPROD:iin
-- Laitetaanko Logbookit tauluihin H ja I VMS? Ja sitä myötä myös A-taulun datat VMS:n(eflalo) uusiksi eri tavalla?
+- DONE (2016-2023) Metier luokitukset FDI scipteistä DCPROD:iin
+- (KYSY kokouksessa) Laitetaanko Logbookit tauluihin H ja I VMS? Ja sitä myötä myös A-taulun datat VMS:n(eflalo) uusiksi eri tavalla?
 
 DATA CHECKS 2024 palautteet:
 - DONE (paitsi yksi rivi) Hinta puuttuu FIN lajilta (muu laji) ja validaattori on outo, koska raportoi NK arvot - puuttuvina. R scriptin voisi silti
