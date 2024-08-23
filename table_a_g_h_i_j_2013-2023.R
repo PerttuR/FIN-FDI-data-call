@@ -390,7 +390,7 @@ tableA20132015 <- tableA1315 %>% mutate(METIER_7 = "NA",
   DOMAIN_DISCARDS = DOMAIN_LANDINGS
 ) %>% select(-GEAR, -METIER7)
 
-tableA_all <- rbind(a11, tableA20132015)
+tableA_all <- rbind(a10, tableA20132015)
 
 
 
