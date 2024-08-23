@@ -94,7 +94,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial LANDING samples only, from years 2013-2023 HUOM 2023 valittu kesäkuussa 2024 toimituksessa..
  
-suomu <- filter(lengthdata, projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2023 & vuosi <= 2023,fao %in% c("HER", "SPR"))
+suomu <- filter(lengthdata, projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2023,fao %in% c("HER", "SPR"))
 
 suomu$metier <- suomu$metiers_fk
 
@@ -120,7 +120,7 @@ gear_type <- case_when(gear_type == "FPO" | gear_type == "FPN" | gear_type == "F
 
 unique(gear_type)
 
-TARGET_ASSEMBLAGE <- substr(suomu$metier,5,7)#metieristä merkit 5-7
+TARGET_ASSEMBLAGE <- "all" #substr(suomu$metier,5,7)  #metieristä merkit 5-7
 mesh_size <- "all"
 selective_device <- "NA"
 mesh_size_range_selective_device <- "NA"
