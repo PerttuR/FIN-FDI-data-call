@@ -1,7 +1,7 @@
 FDI tietopyynnön täydennykset Elokuussa 2024:
 
 - Tyhjennetään Discard taulut 2013-2022 aiemmista lähetyksistä. (DTMT) Väärin vuosissa: 2013-2022
-- TO DO: Tuotetaan tableA & TableE ja F 2016-2023 DCPROD
+- DONE Tuotetaan tableA & TableE ja F 2016-2023 DCPROD
 - Tuotetaan tableA & TableE ja F 2013-2015 G-SAS
 - LOHI Discard tonnit TableA:han
 - LOHI pituus-ikätiedot Table C ja D tauluihin?
@@ -18,4 +18,5 @@ tarkistaa saadaanko numerot? Samoin SPR ja HER laitettaisiinko jokin default arv
 -DONE A, E ja F taulujen Totwghtlandg arvoista osa poikkeaa toisistaan
 -DONE Table_E_ikäkohtaiset painot eivät summaudu kokonaistonnimäärään. (SUM of PRODUCTS)
 -DONE TAble C ja D duplikaattirivejä
+-DONE table J 
 

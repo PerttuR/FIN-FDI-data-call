@@ -377,7 +377,7 @@ suomu2_e$NO_AGE_MEASUREMENTS <- as.character(suomu2_e$NO_AGE_MEASUREMENTS)
 
 mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE, SPECIES), suffix=c("","_SUOMU"))
 mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
-suomu_cols <- c("NO_AGE_MEASUREMENTS", "AGE_MEASUREMENTS_PROP", "MIN_AGE", "MAX_AGE", "NO_AGE", "MEAN_WEIGHT", "MEAN_LENGTH", "TOTWGHTLANDG")
+suomu_cols <- c("NO_AGE_MEASUREMENTS", "AGE_MEASUREMENTS_PROP", "MIN_AGE", "MAX_AGE", "MEAN_WEIGHT", "MEAN_LENGTH", "TOTWGHTLANDG")
 
 # ChatGPT: Replace NA values in non-suffixed columns using the native pipe syntax
 
@@ -387,10 +387,10 @@ mega_E <- mega_E |> ungroup()
 mega_E <- mega_E |>
   mutate(across(all_of(suomu_cols),
     ~ if_else(is.na(.x), mega_E[[paste0(cur_column(), "_SUOMU")]], .x)
-  )) |> group_by(group_cols)
+  )) |> group_by(!!!syms(group_cols))
 
 
-mega_E <- mega_EE %>% filter(!is.na(TOTWGHTLANDG))
+mega_E <- mega_E %>% filter(!is.na(TOTWGHTLANDG))
 
 message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
 suomu_missing <- mega_E |> filter(!is.na(NO_AGE) & is.na(NO_AGE_SUOMU)) |> ungroup()
