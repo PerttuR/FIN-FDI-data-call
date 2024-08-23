@@ -133,6 +133,10 @@ akt1 <- aktiviteetti_all %>%
       TARGET_ASSEMBLAGE == "Anadromous" ~ "ANA",
       TARGET_ASSEMBLAGE == "Finfish" ~ "FIF"),
     TARGET_ASSEMBLAGE = replace_na(TARGET_ASSEMBLAGE, "NK"),
+    FISHING_TECH = case_when(
+      is.na(FISHING_TECH) & (GEAR_TYPE == "LLS" | GEAR_TYPE == "LLD") ~ "PG",
+      TRUE ~ FISHING_TECH
+    ),
     MESH_SIZE_RANGE = case_when(
       FISHING_TECH == "TM" & MESH_SIZE < 16 ~ "00D16",
       FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
@@ -358,25 +362,45 @@ tableA20132015 <- tableA1315 %>% mutate(SUB_REGION = tolower(SUB_REGION),
   DOMAIN_DISCARDS = DOMAIN_LANDINGS
 ) %>% select(-GEAR, -METIER7)
 
+# Check for any metiers that are not valid
+metier2 <- tableA20132015 %>% dplyr::select(METIER) %>% distinct()
+metier_check2 <- metier2 %>% left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
+missing2 <- metier_check2 %>% filter(is.na(valid_metiers))
+print(missing2)
+
+# Change the needed metiers into new format and delete one missing value row
+tableA20132015 <- tableA20132015 %>%  mutate(METIER = case_when(
+  METIER == "MISSING" ~ "NK",
+  METIER == "GNS_SPF_16-109" ~ "GNS_SPF_>=16_0_0",
+  METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_>=16_0_0",
+  METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_>0_0_0",
+  METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_>0_0_0",
+  METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_100-119_0_0",
+  METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_100-119_0_0",
+  TRUE ~ METIER)) %>% filter(!is.na(TOTVALLANDG))
+
 tableA_all <- rbind(a11, tableA20132015) %>% 
   mutate(DISCARDS = DISCARDS/1000) 
 
 #Rounding discards:
-tableA_all$DISCARDS <- round(tableA_all$DISCARDS, digits = 3)         
+tableA_all$DISCARDS <- round(tableA_all$DISCARDS, digits = 3)      
+
+#Rounding landings:
+tableA_all$TOTWGHTLANDG <- round(tableA_all$TOTWGHTLANDG, digits = 3)
+
+#Rounding value:
+tableA_all$TOTVALLANDG <- round(as.numeric(tableA_all$TOTVALLANDG), digits = 0)
  
 tableA_all <- tableA_all %>% 
   mutate (DISCARDS = case_when(
   DISCARDS == 0 ~ "NK",
   TRUE ~ as.character(DISCARDS)))
 
+
 # Put the variables in the correct order:
 table_A <- tableA_all %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 
-#Rounding landings:
-table_A$TOTWGHTLANDG <- round(table_A$TOTWGHTLANDG, digits = 3)
 
-#Rounding value:
-table_A$TOTVALLANDG <- round(as.numeric(table_A$TOTVALLANDG), digits = 0)
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
