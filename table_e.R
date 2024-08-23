@@ -475,4 +475,8 @@ table_E_mega <- mega_E_expanded |> select(
        LENGTH_UNIT
 )
 
+no_IC_DATA <- table_E_mega  %>% filter(is.na(NO_AGE)) %>% distinct(DOMAIN_LANDINGS) 
+table_E_mega <- table_E_mega  %>% filter(!is.na(NO_AGE))
+table_E_mega <-  table_E_mega %>%   mutate(NO_AGE = ifelse(is.na(NO_AGE),"NK", NO_AGE)) 
+
 openxlsx::write.xlsx(table_E_mega, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
