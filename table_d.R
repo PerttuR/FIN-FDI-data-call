@@ -53,10 +53,10 @@ table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 #                   2. TABLE C (NAO OFR. Discards length data)                       
 #-------------------------------------------------------------------------------
 
-table_D <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG) %>% filter(SPECIES %in% c("HER", "SPR")) %>% 
+table_D <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) %>% filter(SPECIES %in% c("HER", "SPR", "SAL")) %>% 
   group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) %>% 
   summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
-            DISCARDS = 0,
+            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
             DISCARD_CV = "NK",
             DISCARD_CI_UPPER = "NK",
             DISCARD_CI_LOWER = "NK",

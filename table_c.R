@@ -56,7 +56,7 @@ table_A <- readRDS(paste0(path_der,.Platform$file.sep,"table_A.rds"))
 table_C <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) %>% filter(SPECIES %in% c("HER", "SPR", "SAL")) %>% 
   group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) %>% 
   summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
-            DISCARDS = sum(TOTWGHTLANDG, na.rm = T),
+            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
             DISCARD_CV = "NK",
             DISCARD_CI_UPPER = "NK",
             DISCARD_CI_LOWER = "NK",
@@ -74,6 +74,7 @@ table_C <- table_A %>% select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SP
             LENGTH_UNIT = "NK",
             .groups = "drop"
   )
+
 
 openxlsx::write.xlsx(table_C, paste0(path_out,.Platform$file.sep,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
 
