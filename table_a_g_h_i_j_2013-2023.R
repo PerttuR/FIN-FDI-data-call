@@ -159,6 +159,10 @@ akt1 <- aktiviteetti_all %>%
       is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
       TRUE ~ "NK"
     ),
+    ICES = case_when(
+      ICES == 19 ~ 29,
+      TRUE ~ ICES
+    ),
     METIER_7 = "NA",
     SUPRA_REGION = "NAO",
     SUB_REGION = paste("27.3.d.", ICES, sep = ""),
