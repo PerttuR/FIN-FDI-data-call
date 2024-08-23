@@ -288,7 +288,7 @@ a9 <- a8 %>% filter(TOTVALLANDG != "NK")
 # -------------- 
 # Add the discard data
 
-discards2 <- discards %>% select(-MESH_SIZE_RANGE) %>% rename(DISCARDS = DISCARDS_KG)
+discards2 <- discards %>% select(-MESH_SIZE_RANGE) %>% rename(DISCARDS = DISCARDS_KG) 
 
 # Step 1: Add a row identifier in a9 to preserve row order
 a9 <- a9 %>% mutate(row_id = row_number())
@@ -358,7 +358,11 @@ tableA20132015 <- tableA1315 %>% mutate(SUB_REGION = tolower(SUB_REGION),
   DOMAIN_DISCARDS = DOMAIN_LANDINGS
 ) %>% select(-GEAR, -METIER7)
 
-tableA_all <- rbind(a11, tableA20132015)
+tableA_all <- rbind(a11, tableA20132015) %>% 
+  mutate(DISCARDS = DISCARDS/1000,
+         DISCARDS = case_when(
+  DISCARDS == 0 ~ "NK",
+  TRUE ~ as.character(DISCARDS)))
 
 
 
