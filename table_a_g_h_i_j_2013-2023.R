@@ -366,7 +366,8 @@ disc_a_test <- a10 %>% filter(YEAR == 2016, QUARTER == 2, FISHING_TECH == "PG", 
 
 # Add years 2013-2015
 
-tableA20132015 <- tableA1315 %>% mutate(METIER_7 = "NA", 
+tableA20132015 <- tableA1315 %>% mutate(SUB_REGION = tolower(SUB_REGION),
+                                        METIER_7 = "NA", 
                                         EEZ_INDICATOR = "NA",
                                         SPECON_TECH = "NA",
                                         DEEP = "NA",
