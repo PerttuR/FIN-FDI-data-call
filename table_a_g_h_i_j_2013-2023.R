@@ -457,7 +457,7 @@ table_G <- g2 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GE
 
 
 # Write the resulting table G
-write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
+write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT_test.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
 
 
 #-------------------------------------------------------------------------------
@@ -641,8 +641,17 @@ j8 <- j7 %>% mutate(
 ) %>% arrange(by = YEAR)
 
 
+# mutate the fishing technique to INACTIVE if TOTTRIPS ==0
+
+j9 <- j8 %>% mutate(FISHING_TECH = case_when(
+  TOTTRIPS == 0 ~"INACTIVE",
+  TRUE ~ FISHING_TECH
+))
+
+
+
 # Put the variables in the correct order:
-table_J <- j8 %>% select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
+table_J <- j9 %>% select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
 
 
 # Write the resulting table J

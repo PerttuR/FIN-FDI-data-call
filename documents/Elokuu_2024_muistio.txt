@@ -2,7 +2,7 @@ FDI tietopyynnön täydennykset Elokuussa 2024:
 
 - DONE Tyhjennetään Discard taulut 2013-2022 aiemmista lähetyksistä. (DTMT) Väärin vuosissa: 2013-2022
 - DONE Tuotetaan tableA & TableE ja F 2016-2023 DCPROD
-- Tuotetaan tableA & TableE ja F 2013-2015 G-SAS
+- DONE Tuotetaan tableA & TableE ja F 2013-2015 G-SAS
 - DONE LOHI Discard tonnit TableA:han
 - LOHI pituus-ikätiedot Table C ja D tauluihin?
 - DONE(2016-2023) Kapasiteetti 2013-2023 DCPROD:sta, koska alusluokittelu on muuttunut 2024 alkaen
