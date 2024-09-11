@@ -1,0 +1,8 @@
+Notes from FDI EWG meeting
+
+- Value data from 2013-2015 are much lower than 2016-2023 (Perhaps thousands of Euros?)
+- 2013-2015 capasity are missing inactive vessels
+- Table G: Fishing days & Seadays are not complete in data from DCPROD (NK:s exist .. -> outputs look wrong in FDI Table G)
+- Table G: KALASTUSAIKAHH and KALASTUSAIKAMIN Usage in Fishing hours? (KALASTUSAIKAMIN not used?) 
+- Spatial data tables H and I should be from ICES VMS data call workflow.
+- try Spatial checks on updates (Table H and Table I)
