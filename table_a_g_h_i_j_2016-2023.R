@@ -39,7 +39,7 @@ library(lubridate)
 #-------------------------------------------------------------------------------
 
 # Output folder
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2025")
 path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #-------------------------------------------------------------------------------
@@ -59,14 +59,14 @@ source("db.r")
 
 ## Read in data
 # alter based on the date of the postgres schema date
-schemadate <- "2024-06-14"
+schemadate <- "2025-04-10"
 
 
 # Postgres (used with A, G, H and I)
-aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti', dbname = "kake_siirto")
+aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti_2025_05_06', dbname = "kake_siirto")
 
 # (used with J)
-kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti', dbname = "kake_siirto")
+kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti_2025_05_06', dbname = "kake_siirto")
 
 # Discards excel
 discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023.xlsx"))
