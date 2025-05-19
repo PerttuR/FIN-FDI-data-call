@@ -1,3 +1,8 @@
+library(tidyverse)      # dplyr, ggplot etc.
+library(sf)             # simple spatial features
+library(readxl)
+
+
 # grab map data for Baltic states
 p <- c("Finland","Sweden","Norway","Russia","Denmark","Germany",
        "Estonia","Latvia","Lithuania","Belarus","Poland")
