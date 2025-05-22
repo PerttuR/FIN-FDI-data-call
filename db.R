@@ -120,3 +120,34 @@ write.dbTable <- function(schema, table, data, dbname = NULL, overwrite = FALSE)
   rm(con)
   return(data)
 }
+
+# JCD: list all tables in a schema ####
+list.dbTable <- function(dbname = NULL){
+  tmp <- new.env()
+  source("db_params.R", local=tmp)
+  drv <- RPostgres::Postgres()
+  resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
+  con <- dbConnect(drv, dbname = resolved_dbname,
+                   host = tmp$host, tmp$port,
+                   user = tmp$user, password = tmp$password)
+  rm(tmp)
+  data <- dbListObjects(con)
+  dbDisconnect(con)
+  rm(con)
+  return(data)
+}
+
+list.dbTable.tbl <- function(dbname = NULL, schema=schema){
+  tmp <- new.env()
+  source("db_params.R", local=tmp)
+  drv <- RPostgres::Postgres()
+  resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
+  con <- dbConnect(drv, dbname = resolved_dbname,
+                   host = tmp$host, tmp$port,
+                   user = tmp$user, password = tmp$password)
+  rm(tmp)
+  data <- dbListObjects(con, DBI::Id(schema = schema))
+  dbDisconnect(con)
+  rm(con)
+  return(data)
+}

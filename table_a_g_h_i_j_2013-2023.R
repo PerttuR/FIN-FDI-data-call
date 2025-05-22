@@ -9,6 +9,7 @@
 #          JUN-2022 by Anna-Kaisa and Perttu
 #          MAY-2023 by Antti
 #          JUN-2024 by Mira, Petri and Perttu
+#          MAY-2025 by Joanne, Petri and Perttu
 #
 # Client: LUKE EU-DCF project
 #-------------------------------------------------------------------------------
@@ -38,10 +39,13 @@ library(lubridate)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 
+run.year = 2025
+
 # Output folder
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
-path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,run.year)
+path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
 path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
+
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -50,7 +54,7 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
 #----------- set years ---------------
 
-years <- c(2016:2023)
+years <- c(2016:run.year-1)
 
 
 #----------- get data ---------------
@@ -58,15 +62,44 @@ years <- c(2016:2023)
 source("db.r")
 
 ## Read in data
-# alter based on the date of the postgres schema date
-schemadate <- "2024-06-14"
+### JCD: get newest postgres schema date ####
+table.list <- list.dbTable()[,1] |> as.character(table)
+table.list <- substr(table.list, 30, nchar(table.list)-3)
+table.dates <- sort(unique(substr(table.list,1,10)))
+# only keep dates
+table.dates <- grep("\\d{4}-\\d{2}-\\d{2}", table.dates, value=TRUE)
 
+# output choice here ####
+schemadate <- max(table.dates)
+message("Newest schema is from: ", schemadate)
+
+# find the correct table name and date
+tbl.list <- list.dbTable.tbl(schema=paste0(schemadate, "-dcprod"))
+tag <- grep("kalastusaktiviteetti", tbl.list$table)
+tablename <- tbl.list$table[tag]
+class(tablename) <- "character"
+tablename <- unlist(strsplit(tablename, '"'))
+tablename <- tablename[length(tablename)-1]
 
 # Postgres (used with A, G, H and I)
-aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kalastusaktiviteetti', dbname = "kake_siirto")
+message(paste("Reading schema:", paste0(schemadate, "-dcprod.kalastusaktiviteetti")))
+message(paste("Reading table:", tablename))
+              
+aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
+                             table=tablename, dbname = "kake_siirto")
+
+# find second table
+tag <- grep("kapasiteetti", tbl.list$table)
+tablename <- tbl.list$table[tag]
+class(tablename) <- "character"
+tablename <- unlist(strsplit(tablename, '"'))
+tablename <- tablename[length(tablename)-1]
+
+message(paste("Reading table:", tablename))
 
 # (used with J)
-kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), table='kapasiteetti', dbname = "kake_siirto")
+kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
+                             table=tablename, dbname = "kake_siirto")
 
 # Discards excel
 discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023_ver3.xlsx"))
