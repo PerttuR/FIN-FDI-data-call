@@ -101,6 +101,10 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
+### I AM HERE JCD !!! ####
+
+# TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
+
 # Discards excel
 discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023_ver3.xlsx"))
 names(discards) <- toupper(names(discards))

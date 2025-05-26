@@ -1,0 +1,36 @@
+TODO and FIX in 2025 FDI data:
+
+ISSUE 1)
+ONLY in year 2013 Table I Table G difference:
+IN Table I. Effort by rectangle, variable: 21. TOTFISHDAYS: Fishing days; missing values not allowed.
+IS more than 3% greater in I than in Table G 20. TOTFISHDAYS: Fishing days; ‘NK’ if the number of fishing days is not available.
+
+Need details about is it row numberd ? or sum of all fishing days??
+
+ISSUE 2)
+
+Effort comparison issue again relating days at sea... 2016-2023 data. To be updated...
+
+ISSUE 3)
+
+METIER - TARGET ASSAMPLE mismatch camparison
+
+ISSUE 4)
+
+METIER - GEAR mismatch camparison
+
+ISSUE 5)
+
+Spatial VMS crosschecking
+
+ISSUE 6)
+
+COMPINE 3 scripts
+
+ISSUE 7)
+
+password to DTMT-platform
+
+ISSUE 8)
+
+Update on exclusions -> The Salmon FILE!!
