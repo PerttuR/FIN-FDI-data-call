@@ -101,8 +101,6 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
-### I AM HERE JCD !!! ####
-
 # Discards excel
 discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023_ver3.xlsx"))
 names(discards) <- toupper(names(discards))
@@ -127,6 +125,8 @@ aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>%
            kalastus_vuosi == as.character(as.numeric(KALASTUSVUOSI) + 1) ~ "12",  # Next year, set to December
            TRUE ~ kalastus_kk
          ))
+
+### I AM HERE JCD !!! ####
 
 # Select and mutate all the needed variables for tables H and I
 akt1 <- aktiviteetti_all %>% 
