@@ -7,6 +7,11 @@ IS more than 3% greater in I than in Table G 20. TOTFISHDAYS: Fishing days; ‘N
 
 Need details about is it row numberd ? or sum of all fishing days??
 
+# JCD comments
+# table I+G only starts in 2015
+# table I+G do not have any missing TOTFISHDAYS
+
+
 ISSUE 2)
 
 Effort comparison issue again relating days at sea... 2016-2023 data. To be updated...
@@ -26,6 +31,12 @@ Spatial VMS crosschecking
 ISSUE 6)
 
 COMPINE 3 scripts
+
+# JCD suggestions:
+# 2013-2023 seems to be the most up-to-date file with the other 2 files being earlier versions.
+# one table was renames to "*_test", perhaps we ought to change that back
+# perhaps we ought to rename it back to exclude the years from the script to make it more generic
+# the years could be added to the header descriptions in the script
 
 ISSUE 7)
 

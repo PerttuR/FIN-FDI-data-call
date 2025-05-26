@@ -101,8 +101,6 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
-### I AM HERE JCD !!! ####
-
 # TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
 
 # Discards excel
@@ -129,8 +127,6 @@ aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>%
            kalastus_vuosi == as.character(as.numeric(KALASTUSVUOSI) + 1) ~ "12",  # Next year, set to December
            TRUE ~ kalastus_kk
          ))
-
-### I AM HERE JCD !!! ####
 
 # Select and mutate all the needed variables for tables H and I
 akt1 <- aktiviteetti_all %>% 
@@ -446,7 +442,7 @@ table_A <- tableA_all %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSE
 
 
 # Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_A, file = paste0(path_der,.Platform$file.sep,"table_A.rds"))
+saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
 
 # Write the resulting table A
 openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
