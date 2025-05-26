@@ -42,7 +42,7 @@ library(lubridate)
 run.year = 2025
 
 # Output folder
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,run.year)
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep, run.year)
 path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
 path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
