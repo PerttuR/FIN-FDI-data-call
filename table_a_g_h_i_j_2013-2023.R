@@ -82,7 +82,7 @@ tablename <- unlist(strsplit(tablename, '"'))
 tablename <- tablename[length(tablename)-1]
 
 # Postgres (used with A, G, H and I)
-message(paste("Reading schema:", paste0(schemadate, "-dcprod.kalastusaktiviteetti")))
+message(paste("Reading schema:", paste0(schemadate, "-dcprod")))
 message(paste("Reading table:", tablename))
               
 aktiviteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
