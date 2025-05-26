@@ -52,7 +52,7 @@ cache.read <- function(name) {
     message("Cache does contain data with name '", name, "'")
     return(data)
   } else {
-    message("Cache does not contain data with name '", name, "'. Returning NA.")
+    message("Cache does not contain data with name '", name, "'. Data fetched from DB to CACHE")
     return(NA)
   }
 }

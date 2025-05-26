@@ -74,7 +74,7 @@ schemadate <- max(table.dates)
 message("Newest schema is from: ", schemadate)
 
 # find the correct table name and date
-tbl.list <- list.dbTable.tbl(schema=paste0(schemadate, "-dcprod"))
+tbl.list <- list.dbTable.tbl(dbname = "kake_siirto", schema=paste0(schemadate, "-dcprod"))
 tag <- grep("kalastusaktiviteetti", tbl.list$table)
 tablename <- tbl.list$table[tag]
 class(tablename) <- "character"
