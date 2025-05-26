@@ -63,7 +63,7 @@ source("db.r")
 
 ## Read in data
 ### JCD: get newest postgres schema date ####
-table.list <- list.dbTable()[,1] |> as.character(table)
+table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
 table.list <- substr(table.list, 30, nchar(table.list)-3)
 table.dates <- sort(unique(substr(table.list,1,10)))
 # only keep dates

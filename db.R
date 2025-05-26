@@ -124,7 +124,7 @@ write.dbTable <- function(schema, table, data, dbname = NULL, overwrite = FALSE)
 # JCD: list all tables in a schema ####
 list.dbTable <- function(dbname = NULL){
   tmp <- new.env()
-  source("db_params.R", local=tmp)
+  get.params(dbname, tmp)
   drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
   con <- dbConnect(drv, dbname = resolved_dbname,
@@ -139,7 +139,7 @@ list.dbTable <- function(dbname = NULL){
 
 list.dbTable.tbl <- function(dbname = NULL, schema=schema){
   tmp <- new.env()
-  source("db_params.R", local=tmp)
+  get.params(dbname, tmp)
   drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
   con <- dbConnect(drv, dbname = resolved_dbname,
