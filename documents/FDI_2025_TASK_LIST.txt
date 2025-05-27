@@ -45,3 +45,10 @@ password to DTMT-platform
 ISSUE 8)
 
 Update on exclusions -> The Salmon FILE!!
+GOT the file from Pirkko :) -> Please store it ti orig.
+
+ISSUE 9)
+
+Add 2024 biologival estimated to table: FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx
+TODO update script: 
+
