@@ -8,10 +8,28 @@ IS more than 3% greater in I than in Table G 20. TOTFISHDAYS: Fishing days; ‘N
 Need details about is it row numberd ? or sum of all fishing days??
 
 # JCD comments
+<<<<<<< HEAD
 # table I+G only starts in 2016
 # table I+G do not have any missing TOTFISHDAYS
 
 -> We need 2013 - 2015 data to fix this issue!
+=======
+# table I+G only starts in 2015, 2013-2015 data is only used for table A (imported from SAS to Excel?)
+# the current SAS extract is probably not in the correct format for the other tables
+# do we need a new extract?
+# > names(tableA1315)
+#  [1] "COUNTRY"           "YEAR"              "QUARTER"           "VESSEL_LENGTH"     "FISHING_TECH"     
+#  [6] "GEAR_TYPE"         "TARGET_ASSEMBLAGE" "MESH_SIZE_RANGE"   "METIER"            "METIER7"          
+# [11] "SUPRA_REGION"      "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "NEP_SUB_REGION"   
+# [16] "SPECON_TECH"       "DEEP"              "CONFIDENTIAL"      "SPECIES"           "TOTWGHTLANDG"     
+# [21] "TOTVALLANDG"       "DISCARDS"         
+# > names(tableA20132015)
+#  [1] "COUNTRY"           "YEAR"              "QUARTER"           "VESSEL_LENGTH"     "FISHING_TECH"     
+#  [6] "GEAR_TYPE"         "TARGET_ASSEMBLAGE" "MESH_SIZE_RANGE"   "METIER"            "SUPRA_REGION"     
+# [11] "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "NEP_SUB_REGION"    "SPECON_TECH"      
+# [16] "DEEP"              "CONFIDENTIAL"      "SPECIES"           "TOTWGHTLANDG"      "TOTVALLANDG"      
+# [21] "DISCARDS"          "METIER_7"          "DOMAIN_LANDINGS"   "DOMAIN_DISCARDS"  
+>>>>>>> ea100a1448b9593dbd61c4782a98319278dd86bd
 
 ISSUE 2)
 
@@ -31,7 +49,7 @@ Spatial VMS crosschecking
 
 ISSUE 6)
 
-COMPINE 3 scripts
+COMBINE 3 scripts
 
 # JCD suggestions:
 # 2013-2023 seems to be the most up-to-date file with the other 2 files being earlier versions.
