@@ -8,9 +8,10 @@ IS more than 3% greater in I than in Table G 20. TOTFISHDAYS: Fishing days; ‘N
 Need details about is it row numberd ? or sum of all fishing days??
 
 # JCD comments
-# table I+G only starts in 2015
+# table I+G only starts in 2016
 # table I+G do not have any missing TOTFISHDAYS
 
+-> We need 2013 - 2015 data to fix this issue!
 
 ISSUE 2)
 
