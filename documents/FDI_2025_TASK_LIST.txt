@@ -42,7 +42,7 @@ Spatial VMS crosschecking
 
 ISSUE 6)
 
-COMPINE 3 scripts
+COMBINE 3 scripts
 
 # JCD suggestions:
 # 2013-2023 seems to be the most up-to-date file with the other 2 files being earlier versions.
