@@ -10,6 +10,7 @@
 # Updated: JUN-2023 (Perttu)
 # Updated: JUN-2024 (Perttu, Mira and Petri)
 # Updated: AUG-2024 (Perttu, Mira and Petri)
+# Updated: JUN-2025 (Perttu, Joanne and Petri)
 #
 # Client: LUKE EU-DCF projects
 #-------------------------------------------------------------------------------
@@ -42,6 +43,7 @@ library(icesVocab)
 # Common paths & 2024 data call folders:
 
 # Paths & 2024 folder:
+#TODO year parametres also dynamic ####
 
 path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)

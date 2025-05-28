@@ -8,6 +8,7 @@ mongo_params.R
 *.csv
 # Excell files
 *.xlsx
+ISSUES reported by EWG.xlsx
 *.xls
 #PDF files
 *.pdf
