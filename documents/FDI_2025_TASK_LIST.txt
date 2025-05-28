@@ -1,5 +1,9 @@
 TODO and FIX in 2025 FDI data:
 
+ISSUE 0)
+
+Decicion: we use the file: table_a_g_h_i_j_2013-2024.R for A, G , H, I and J :) DONE
+
 ISSUE 1)
 ONLY in year 2013 Table I Table G difference:
 IN Table I. Effort by rectangle, variable: 21. TOTFISHDAYS: Fishing days; missing values not allowed.
@@ -35,6 +39,8 @@ ISSUE 2)
 
 Effort comparison issue again relating days at sea... 2016-2023 data. To be updated...
 
+Now we have the issue DTMT text. Everybody could check it out..
+
 ISSUE 3)
 
 METIER - TARGET ASSAMPLE mismatch camparison
@@ -49,7 +55,7 @@ Spatial VMS crosschecking
 
 ISSUE 6)
 
-COMBINE 3 scripts
+COMBINE 3 scripts: DONE
 
 # JCD suggestions:
 # 2013-2023 seems to be the most up-to-date file with the other 2 files being earlier versions.
@@ -59,7 +65,7 @@ COMBINE 3 scripts
 
 ISSUE 7)
 
-password to DTMT-platform
+password to DTMT-platform: DONE!
 
 ISSUE 8)
 

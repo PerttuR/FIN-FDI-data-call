@@ -9,6 +9,8 @@ mongo_params.R
 # Excell files
 *.xlsx
 !ISSUES reported by EWG.xlsx
+!Mismatches for checks.xlsx
+!Table_A_metier and gear comparison.csv
 *.xls
 #PDF files
 *.pdf
