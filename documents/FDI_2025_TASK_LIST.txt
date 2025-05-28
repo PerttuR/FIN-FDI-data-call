@@ -17,6 +17,7 @@ Need details about is it row numberd ? or sum of all fishing days??
 # table I+G do not have any missing TOTFISHDAYS
 
 -> We need 2013 - 2015 data to fix this issue!
+-> FILES are in. G:\Luke2\Stat_kala_tiedonkeruu\FDI\2023\Out
 =======
 # table I+G only starts in 2015, 2013-2015 data is only used for table A (imported from SAS to Excel?)
 # the current SAS extract is probably not in the correct format for the other tables
@@ -43,15 +44,19 @@ Now we have the issue DTMT text. Everybody could check it out..
 
 ISSUE 3)
 
+Table A +?
 METIER - TARGET ASSAMPLE mismatch camparison
+-> DOCUMENTS ADDED
 
 ISSUE 4)
-
+Table A +?
 METIER - GEAR mismatch camparison
+-> DOCUMENTS ADDED
 
 ISSUE 5)
 
 Spatial VMS crosschecking
+-Pending
 
 ISSUE 6)
 
@@ -70,10 +75,12 @@ password to DTMT-platform: DONE!
 ISSUE 8)
 
 Update on exclusions -> The Salmon FILE!!
-GOT the file from Pirkko :) -> Please store it ti orig.
+GOT the file from Pirkko :) 
+-> DONE
 
 ISSUE 9)
 
 Add 2024 biologival estimated to table: FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx
-TODO update script: 
+TODO update script:
+-Pending
 
