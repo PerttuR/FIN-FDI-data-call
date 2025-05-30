@@ -99,3 +99,7 @@ Add 2024 biologival estimated to table: FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx
 TODO update script:
 -Pending
 
+ISSUE 10)
+
+2013 - 2015 Table J. Capacity and fleet segment effort TABLE is missing all INACTIVE vessels
+
