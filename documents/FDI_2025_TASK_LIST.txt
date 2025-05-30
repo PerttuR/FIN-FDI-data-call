@@ -38,7 +38,19 @@ Need details about is it row numberd ? or sum of all fishing days??
 
 ISSUE 2)
 
-Effort comparison issue again relating days at sea... 2016-2023 data. To be updated...
+2016-2023 DATA Table G
+Effort (Table G)comparison issue again relating days at sea and fishing hour 2016-2023 data inside table G.
+
+DTMT wording:
+-Days at sea/
+-gtdaysatsea/
+-kwdaysatsea 
+or/and 
+-fishing days/
+-gtfishdays/
+-kwfishdays  reported as "0" value 
+
+-> while hours at sea/gthrsea/kwhrsea reported
 
 Now we have the issue DTMT text. Everybody could check it out..
 
