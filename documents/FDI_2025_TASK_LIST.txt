@@ -36,6 +36,9 @@ Need details about is it row numberd ? or sum of all fishing days??
 # [21] "DISCARDS"          "METIER_7"          "DOMAIN_LANDINGS"   "DOMAIN_DISCARDS"  
 >>>>>>> ea100a1448b9593dbd61c4782a98319278dd86bd
 
+
+# JCD: to fully compare the differences between table I and G
+
 ISSUE 2)
 
 Effort comparison issue again relating days at sea... 2016-2023 data. To be updated...

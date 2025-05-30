@@ -32,12 +32,37 @@ sum.I |>
 
 
 join.IG <- sum.G |> full_join(sum.I) |> 
-            mutate(DIFF = abs(TOTFISHDAYS.G-TOTFISHDAYS.I),
-                                               DIFF_PCT = round(DIFF/if_else(TOTFISHDAYS.G>TOTFISHDAYS.I, TOTFISHDAYS.G, TOTFISHDAYS.I)*100,3))
+            mutate(DIFF = TOTFISHDAYS.I-TOTFISHDAYS.G,
+            DIFF_PCT = round(DIFF/if_else(TOTFISHDAYS.I>TOTFISHDAYS.G, TOTFISHDAYS.I, TOTFISHDAYS.G)*100,3))
 
 join.IG |> flextable() |> set_caption("Difference I/G") |>
-  highlight(i=which(join.IG$DIFF_PCT >2), color="yellow") |>
+  highlight(i=which(join.IG$DIFF >0), color="yellow") |>
   hline(i=dim(join.IG)[1]-1, border=fp_border(width=1.5))
 
+# check quarters
+
+quarter.G <- G_table |> filter(YEAR == 2013) |> 
+  filter(METIER %in% c("FYK_FWS_>0_0_0","GNS_FWS_>0_0_0","GNS_SPF_16-109_0_0","LLS_FWS_0_0_0","NK")) |>
+  select(QUARTER, VESSEL_LENGTH, GEAR_TYPE, METIER, TOTFISHDAYS) |>
+  mutate(TOTFISHDAYS.G = TOTFISHDAYS,
+         GEAR_TYPE.G = GEAR_TYPE) |>
+  select(-TOTFISHDAYS, -GEAR_TYPE) |>
+  adorn_totals("row")
+
+quarter.I <- I_table |> filter(YEAR == 2013) |> 
+  filter(METIER %in% c("FYK_FWS_>0_0_0","GNS_FWS_>0_0_0","GNS_SPF_16-109_0_0","LLS_FWS_0_0_0","NK")) |>
+  select(QUARTER, VESSEL_LENGTH, GEAR_TYPE, METIER, TOTFISHDAYS) |>
+  mutate(TOTFISHDAYS.I = TOTFISHDAYS,
+         GEAR_TYPE.I = GEAR_TYPE) |>
+  select(-TOTFISHDAYS, -GEAR_TYPE) |>
+  adorn_totals("row")
+
+quarter.G |> full_join(quarter.I) |> 
+  mutate(DIFF = TOTFISHDAYS.I-TOTFISHDAYS.G,
+         DIFF_PCT = round(DIFF/if_else(TOTFISHDAYS.I>TOTFISHDAYS.G, TOTFISHDAYS.I, TOTFISHDAYS.G)*100,3)) |>
+  filter(DIFF >0) |>
+  View()
 
 # ISSUE 2 ####
+
+
