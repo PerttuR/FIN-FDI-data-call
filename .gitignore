@@ -6,6 +6,8 @@ db_params*.R
 mongo_params.R
 # Data files
 *.csv
+*.docx
+!FDI-vertailu.docx
 # Excell files
 *.xlsx
 !ISSUES reported by EWG.xlsx
