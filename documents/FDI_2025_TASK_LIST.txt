@@ -1,10 +1,10 @@
 TODO and FIX in 2025 FDI data:
 
-ISSUE 0)
+# ISSUE 0) ####
 
-Decicion: we use the file: table_a_g_h_i_j_2013-2024.R for A, G , H, I and J :) DONE
+Decision: we use the file: table_a_g_h_i_j_2013-2024.R for A, G , H, I and J :) DONE
 
-ISSUE 1)
+# ISSUE 1) ####
 ONLY in year 2013 Table I Table G difference:
 IN Table I. Effort by rectangle, variable: 21. TOTFISHDAYS: Fishing days; missing values not allowed.
 IS more than 3% greater in I than in Table G 20. TOTFISHDAYS: Fishing days; ‘NK’ if the number of fishing days is not available.
@@ -39,10 +39,10 @@ Need details about is it row numberd ? or sum of all fishing days??
 
 # JCD: to fully compare the differences between table I and G
 
-ISSUE 2)
+# ISSUE 2) ####
 
 2016-2023 DATA Table G
-Effort (Table G)comparison issue again relating days at sea and fishing hour 2016-2023 data inside table G.
+Effort (Table G) comparison issue again relating days at sea and fishing hour 2016-2023 data inside table G.
 
 DTMT wording:
 -Days at sea/
@@ -57,25 +57,30 @@ or/and
 
 Now we have the issue DTMT text. Everybody could check it out..
 
-ISSUE 3)
+
+# CASE 1: TOTSEADAYS and TOTFISHDAYS exist, but others are NK (most cases)
+# CASE 2: HRSEA, KWHRSEA, GTHRSEA = "NK", but TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTKWFISHDAYS, TOTGTFISHDAYS contain data
+# CASE 3: 16 cases where TOTGTDAYSATSEA, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA are 0
+
+# ISSUE 3) ####
 
 Table A +?
 METIER - TARGET ASSAMPLE mismatch camparison
 -> DOCUMENTS ADDED
 
-ISSUE 4)
+# ISSUE 4) ####
 Table A +?
 METIER - GEAR mismatch camparison
 -> DOCUMENTS ADDED
 
-ISSUE 5)
+# ISSUE 5) ####
 
 Spatial VMS crosschecking
 -Pending
 
-ISSUE 6)
+# ISSUE 6) ####
 
-COMBINE 3 scripts: DONE
+## COMBINE 3 scripts: DONE ####
 
 # JCD suggestions:
 # 2013-2023 seems to be the most up-to-date file with the other 2 files being earlier versions.
@@ -83,23 +88,23 @@ COMBINE 3 scripts: DONE
 # perhaps we ought to rename it back to exclude the years from the script to make it more generic
 # the years could be added to the header descriptions in the script
 
-ISSUE 7)
+# ISSUE 7) ####
 
 password to DTMT-platform: DONE!
 
-ISSUE 8)
+# ISSUE 8) ####
 
 Update on exclusions -> The Salmon FILE!!
 GOT the file from Pirkko :) 
 -> DONE
 
-ISSUE 9)
+# ISSUE 9) ####
 
 Add 2024 biologival estimated to table: FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx
 TODO update script:
 -Pending
 
-ISSUE 10)
+# ISSUE 10) ####
 
 2013 - 2015 Table J. Capacity and fleet segment effort TABLE is missing all INACTIVE vessels
 
