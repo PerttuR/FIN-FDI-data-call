@@ -71,5 +71,25 @@ write.xlsx(comp.IG, file="orig/25.issue.1.xlsx")
 comp.IG |> filter(DIFF > 0) |> flextable()
 
 # ISSUE 2 ####
+# library(tidyverse)
+# library(flextable)
+# library(janitor)
+# library(officer)
+# library(openxlsx)
+# 
+# G_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/G_table_2013_2022_SAS.csv")
 
+G_table |> filter(YEAR %in% seq(2016,2024)) |> 
+  select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
+         TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
+  filter(TOTSEADAYS == "NK" | TOTKWDAYSATSEA == "NK" | TOTGTDAYSATSEA == "NK" |
+               TOTFISHDAYS == "NK" | TOTKWFISHDAYS == "NK" | TOTGTFISHDAYS == "NK" |
+           HRSEA == "NK" | KWHRSEA == "NK" | GTHRSEA == "NK") |> View()
+
+G_table |> filter(YEAR %in% seq(2016,2024)) |> 
+  select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
+         TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
+  filter(TOTSEADAYS == 0 | TOTKWDAYSATSEA == 0 | TOTGTDAYSATSEA == 0 |
+           TOTFISHDAYS == 0 | TOTKWFISHDAYS == 0 | TOTGTFISHDAYS == 0 |
+           HRSEA == 0 | KWHRSEA == 0 | GTHRSEA == 0) |> View()
 
