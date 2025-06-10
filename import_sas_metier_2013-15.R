@@ -20,7 +20,7 @@ metier_2015 <- read_sas("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo2015_met
                   mutate(KALASTUSVUOSI = 2015)                        
           
               
-# alterative path
+# alternative path
 # metier_2013 <- read_sas("orig/pvkarvo2013_metier.sas7bdat") |> 
 #                   filter(KALVYOH == "FI") |>
 #                   mutate(KALASTUSVUOSI = 2013)
@@ -33,7 +33,7 @@ metier_2015 <- read_sas("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo2015_met
 #                   filter(KALVYOH == "FI") |>
 #                 mutate(KALASTUSVUOSI = 2015)
 
-#combine into 1
+# combine into 1 table
 
 metier_2013_15 <- bind_rows(metier_2013, metier_2014, metier_2015)
 
