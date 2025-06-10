@@ -33,6 +33,10 @@ for (i in 2013:2015){
 
 metier_2013_15 <- bind_rows(metier_2013, metier_2014, metier_2015)
 
+# filter is wanted
+
+metier_2013_15_FIN <- metier_2013_15 |> filter(grepl("FIN",alus))
+
 # remove
 rm(metier_2013, metier_2014, metier_2015)
 invisible(gc())
