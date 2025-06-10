@@ -6,32 +6,29 @@
 library(tidyverse)
 library(haven)
 
-# get data from G drive
-metier_2013 <- read_sas("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo2013_metier.sas7bdat")
-                  filter(KALVYOH == "FI") |>
-                  mutate(KALASTUSVUOSI = 2013)
-
-metier_2014 <- read_sas("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo2014_metier.sas7bdat") |> 
-                  filter(KALVYOH == "FI") |>
-                  mutate(KALASTUSVUOSI = 2014)
-
-metier_2015 <- read_sas("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo2015_metier.sas7bdat") |> 
-                  filter(KALVYOH == "FI") |>
-                  mutate(KALASTUSVUOSI = 2015)                        
+# get data from G drive ####
           
-              
-# alternative path
-# metier_2013 <- read_sas("orig/pvkarvo2013_metier.sas7bdat") |> 
-#                   filter(KALVYOH == "FI") |>
-#                   mutate(KALASTUSVUOSI = 2013)
-# 
-# metier_2014 <- read_sas("orig/pvkarvo2014_metier.sas7bdat") |> 
-#                   filter(KALVYOH == "FI") |>
-#                   mutate(KALASTUSVUOSI = 2014)
-# 
-# metier_2015 <- read_sas("orig/pvkarvo2015_metier.sas7bdat") |> 
-#                   filter(KALVYOH == "FI") |>
-#                 mutate(KALASTUSVUOSI = 2015)
+for (i in 2013:2015){
+  
+  tmp <- read_sas(paste0("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo",i,"_metier.sas7bdat")) |>
+                  filter(KALVYOH == "FI") |>
+                  mutate(KALASTUSVUOSI = i)
+  
+  assign(paste0("metier_",i), tmp)
+  
+} 
+
+
+# alternative path ####
+# for (i in 2013:2015){
+#   
+#   tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
+#     filter(KALVYOH == "FI") |>
+#     mutate(KALASTUSVUOSI = i)
+#   
+#   assign(paste0("metier_",i), tmp)
+#   
+# } 
 
 # combine into 1 table
 
@@ -43,3 +40,8 @@ invisible(gc())
 
 # check column names
 names(metier_2013_15)
+
+
+
+
+
