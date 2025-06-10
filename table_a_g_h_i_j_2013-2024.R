@@ -15,7 +15,7 @@
 #-------------------------------------------------------------------------------
 
 #--------------------READ ME----------------------------------------------------
-# The following script is to prepare FDI data tables A, G, H, I and J
+# The following script is to prepare FDI data tables A, G, H, I and J       ####
 #-------------------------------------------------------------------------------
 
 
@@ -49,7 +49,7 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-#                       1. Import data for 2016-2023 A, G, H, I and J table needs                    
+#                       1. Import data for 2016-2023 A, G, H, I and J table needs   ####                 
 #-------------------------------------------------------------------------------
 
 #----------- set years ---------------
@@ -128,7 +128,7 @@ aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>%
            TRUE ~ kalastus_kk
          ))
 
-# Select and mutate all the needed variables for tables H and I
+# Select and mutate all the needed variables for tables H and I ####
 akt1 <- aktiviteetti_all %>% 
   select(YEAR = KALASTUSVUOSI,
          ULKOINENTUNNUS,
