@@ -11,7 +11,6 @@ library(haven)
 for (i in 2013:2015){
   
   tmp <- read_sas(paste0("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo",i,"_metier.sas7bdat")) |>
-                  filter(KALVYOH == "FI") |>
                   mutate(KALASTUSVUOSI = i)
   
   assign(paste0("metier_",i), tmp)
@@ -24,7 +23,6 @@ for (i in 2013:2015){
 # for (i in 2013:2015){
 #   
 #   tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
-#     filter(KALVYOH == "FI") |>
 #     mutate(KALASTUSVUOSI = i)
 #   
 #   assign(paste0("metier_",i), tmp)
