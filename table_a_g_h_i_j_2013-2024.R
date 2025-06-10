@@ -250,7 +250,7 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
 
 
 #-------------------------------------------------------------------------------
-#                   2. TABLE A (Catch summary)                       
+#                   2. TABLE A (Catch summary)                              ####                
 #-------------------------------------------------------------------------------
 
 a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
@@ -450,7 +450,7 @@ openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CA
 
 
 #-------------------------------------------------------------------------------
-#                   3. TABLE G (Effort summary)                       
+#                   3. TABLE G (Effort summary)                             ####
 #-------------------------------------------------------------------------------
 
 # Select the variables not needed and needed in G table
@@ -496,7 +496,7 @@ write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT_test.x
 
 
 #-------------------------------------------------------------------------------
-#                   4. TABLE H (Landings by rectangle)                       
+#                   4. TABLE H (Landings by rectangle)                      ####   
 #-------------------------------------------------------------------------------
 
 
@@ -558,7 +558,7 @@ table_H <- h7 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GE
 openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
 
 #-------------------------------------------------------------------------------
-#                   5. TABLE I (Effort by rectangle)                       
+#                   5. TABLE I (Effort by rectangle)                        ####
 #-------------------------------------------------------------------------------
 
 # remove variables not needed in table I (relating to catch)
@@ -581,7 +581,7 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 
 
 #-------------------------------------------------------------------------------
-#                   6. TABLE J (Capacity and fleet segment effort)                       
+#                   6. TABLE J (Capacity and fleet segment effort)          ####               
 #-------------------------------------------------------------------------------
 
 # Select variables needed for J table
