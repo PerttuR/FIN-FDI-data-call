@@ -104,7 +104,7 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 # TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
 
 # Discards excel
-discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2023_ver3.xlsx"))
+discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
 
 # Table A years 2013-2015
