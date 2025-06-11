@@ -5,7 +5,7 @@
 
 library(tidyverse)
 library(haven)
-library(openxls)
+library(openxlsx)
 
 # get data from G drive ####
           
