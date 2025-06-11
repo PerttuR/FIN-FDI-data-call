@@ -9,18 +9,18 @@ library(dplyr)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 
+# Common paths data call folders:
 
-# Paths & 2024 folder:
-path_IC_ORIG <- paste0(getwd(), .Platform$file.sep, "orig/IC_database/")
-path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
+run.year = 2025
+
+# Output folder
+path_IC_ORIG <- paste0(getwd(), .Platform$file.sep, "orig/IC_database/", .Platform$file.sep, run.year)
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep, run.year)
+path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
+path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
-# folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
 
-dir.create(path_out, showWarnings = FALSE)
-dir.create(path_der, showWarnings = FALSE, recursive = TRUE)
-
-# import IC_database csv data 2023 and before data
+# import IC_database csv data 2024 and before data
 IC_SD <- read.csv2(paste0(path_IC_ORIG,.Platform$file.sep,"InterCatch SD Finland all years.csv"), sep = "," , na.strings = "", header = TRUE) #, col.names=sd_header
 IC_SI <- read.csv2(paste0(path_IC_ORIG,.Platform$file.sep,"InterCatch SI Finland all years.csv"), sep = "," , na.strings = "", header = TRUE) #, col.names=sd_header
 IC_HI <- read.csv2(paste0(path_IC_ORIG,.Platform$file.sep,"InterCatch HI Finland all years.csv"), sep = "," , na.strings = "", header = TRUE) #, col.names=sd_header
