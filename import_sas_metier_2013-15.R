@@ -11,7 +11,7 @@ library(openxlsx)
           
 for (i in 2013:2015){
   
-  tmp <- read_sas(paste0("G:/Luke2/Stat_kala_tiedonkeruu/FDI/Data/pvkarvo",i,"_metier.sas7bdat")) |>
+  tmp <- read_sas(paste0("G:/Luke2/Stat_kala_merikalastus/Metier/Data/pvkarvo",i,"_metier.sas7bdat")) |>
                   mutate(KALASTUSVUOSI = i)
   
   assign(paste0("metier_",i), tmp)
