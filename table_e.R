@@ -40,23 +40,15 @@ library(icesVocab)
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
-# Common paths & 2024 data call folders:
+# Common paths data call folders:
 
-# Paths & 2024 folder:
-#TODO year parametres also dynamic ####
+run.year = 2025
 
-path_der <- paste0(getwd(), .Platform$file.sep, "der/2024/")
+# Output folder
+path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep, run.year)
+path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
+path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 path_rproject <- getwd() # folder where the r project is (and the source file db.R!)
-# folder where the output is saved
-path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep,"2024")
-
-
-#TO DO?
-#path_salmon <- paste0(getwd(), .Platform$file.sep, "orig/") # folder where salmon data lies (salmon.csv)
-# folder where the output is saved
-
-# create directories if missing, but ignore warnings in case they already exist
-dir.create(path_out, showWarnings = FALSE)
 
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
@@ -117,7 +109,7 @@ table_A <- table_A %>% rename_all(tolower)
 #                       1.1 create DOMAIN landing to IC data between 2013-2023                      
 #-------------------------------------------------------------------------------
 
-IC_DB1 <- IC_DB %>% filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023))
+IC_DB1 <- IC_DB %>% filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024))
 IC_DB2 <- IC_DB1 %>% filter (Species %in% c("HER","SPR"))
 
 
@@ -349,13 +341,16 @@ table_e_pre2 <- table_e_pre2 |> mutate(
        total_sampled_trips = as.integer(total_sampled_trips)
 )
 
-#-9 removal
+#-9 removal from some columns
 table_e_pre2 <- table_e_pre2 |> mutate(
        total_sampled_trips = na_if(total_sampled_trips, -9),
        no_age_measurements = na_if(no_age_measurements, -9),
        no_age = na_if(no_age, -9),
        mean_length = na_if(as.integer(mean_length), -9)
 )
+
+#-90 removal in mean_length column TESTING
+table_e_pre2$mean_length <- case_when(table_e_pre2$mean_length == "-90" ~ "NK", .default = as.character(table_e_pre2$mean_length))
 
 #NK input
 table_e_pre2 <- table_e_pre2 |> mutate(
@@ -364,6 +359,8 @@ table_e_pre2 <- table_e_pre2 |> mutate(
        no_age = replace_na(no_age, "NK"),
        mean_length = replace_na(as.character(mean_length), "NK")
 )
+
+
 
 table_E <- table_e_pre2 |> rename_all(toupper)
 
@@ -480,6 +477,9 @@ table_E_mega <- mega_E_expanded |> select(
 no_IC_DATA <- table_E_mega  %>% filter(is.na(NO_AGE)) %>% distinct(DOMAIN_LANDINGS) 
 table_E_mega <- table_E_mega  %>% filter(!is.na(NO_AGE))
 table_E_mega <-  table_E_mega %>%   mutate(NO_AGE = ifelse(is.na(NO_AGE),"NK", NO_AGE)) 
+
+# LENGTH_UNIT to NK if no length variable exists in MEAN_LENGTH
+table_E_mega$LENGTH_UNIT <- case_when(table_E_mega$MEAN_LENGTH == "NK" ~ "NK", .default = "cm")
 
 #Tällä excelissä voi selailla DOMAINEJA, joista puuttuu kappalemäärälaskennat, mutta, joista on SUomussa näytteitä:
 openxlsx::write.xlsx(no_IC_DATA, paste0(path_out,.Platform$file.sep,"no_IC_DATA.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
