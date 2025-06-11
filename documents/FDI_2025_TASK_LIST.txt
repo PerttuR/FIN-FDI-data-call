@@ -94,9 +94,11 @@ password to DTMT-platform: DONE!
 
 # ISSUE 8) ####
 
-Update on exclusions -> The Salmon FILE!!
+Update on exemptions (DISCARD kilos) -> The Salmon FILE!!
 GOT the file from Pirkko :) 
--> DONE
+DONE
+
+TO DO -> incorporate data to Script
 
 # ISSUE 9) ####
 
