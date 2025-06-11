@@ -101,8 +101,7 @@ GOT the file from Pirkko :)
 # ISSUE 9) ####
 
 Add 2024 biologival estimated to table: FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx
-TODO update script:
--Pending
+DONE
 
 # ISSUE 10) ####
 

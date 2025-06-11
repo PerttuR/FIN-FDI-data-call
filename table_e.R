@@ -349,7 +349,7 @@ table_e_pre2 <- table_e_pre2 |> mutate(
        mean_length = na_if(as.integer(mean_length), -9)
 )
 
-#-90 removal in mean_length column TESTING
+#-90 removal in mean_length column
 table_e_pre2$mean_length <- case_when(table_e_pre2$mean_length == "-90" ~ "NK", .default = as.character(table_e_pre2$mean_length))
 
 #NK input
