@@ -1,7 +1,10 @@
 # import SAS metier tables for 2013 to 2015
-# Authors: J. Demmler
+# Authors: J. Demmler, Perttu
 # Date: 10/06/2025
-# Last revision: 10/06/2025
+# Last revision: 11/06/2025
+
+#- Clear workspace
+rm(list=ls())
 
 library(tidyverse)
 library(haven)
