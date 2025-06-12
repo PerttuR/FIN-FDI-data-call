@@ -9,6 +9,7 @@ rm(list=ls())
 library(tidyverse)
 library(haven)
 library(openxlsx)
+library(stringr)
 
 # get data from G drive ####
           
@@ -23,15 +24,15 @@ for (i in 2013:2015){
 
 
 # alternative path ####
-
-for (i in 2013:2015){
-  
-  tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
-    mutate(KALASTUSVUOSI = i)
-  
-  assign(paste0("metier_",i), tmp)
-  
-} 
+# 
+# for (i in 2013:2015){
+#   
+#   tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
+#     mutate(KALASTUSVUOSI = i)
+#   
+#   assign(paste0("metier_",i), tmp)
+#   
+# } 
 
 # combine into 1 table
 
@@ -46,6 +47,134 @@ invisible(gc())
 
 # check column names
 # compare with base tables from table_a_g_h_i_j_2013-2024.R
+
+# adding variables to metier table ####
+
+metier_2013_15 <- metier_2013_15 |> 
+                  mutate(
+                    COUNTRY = "FI",
+                    YEAR	= KALASTUSVUOSI,
+                    QUARTER	= case_when(
+                      kk %in% seq(1,3) ~ "1",
+                      kk %in% seq(4,6) ~ "2",
+                      kk %in% seq(7,9) ~ "3",
+                      kk %in% seq(10,12) ~ "4"),
+                    VESSEL_LENGTH =	vessel_length,  # 7368 unknown (both vessel_length and pituus), length: 8297 unknown
+                    FISHING_TECH =	ft,
+                    GEAR_TYPE	= stringr::str_sub(metier, 1,3), 
+                    TARGET_ASSEMBLAGE	= stringr::str_sub(metier, 5,7), 
+                    MESH_SIZE_RANGE	= "",      # METIER, SILMAKOKO
+                    METIER = metier,
+                    METIER_7 = "NA",
+                    DOMAIN_DISCARDS = "",	     # later
+                    DOMAIN_LANDINGS	= "",      # later
+                    SUPRA_REGION	= "NAO",
+                    SUB_REGION	= "",          # RECTANGLE - (CHECK LOOKUP)
+                    EEZ_INDICATOR	= "NA",
+                    GEO_INDICATOR	= "NGI",
+                    NEP_SUB_REGION	= "NA",
+                    SPECON_TECH	= "NA",
+                    DEEP	= "NA",
+                    SPECIES	= "",              # FISHNAME COL 20-41
+                    TOTWGHTLANDG	= "",        # FISHNAME COL 20-41
+                    TOTVALLANDG	= "",          # H+FISHNAME COL 20-41
+                    DISCARDS	= "NA",
+                    CONFIDENTIAL	= "")
+
+
+View(metier_2013_15[,130:152])
+
+# 1: missing vessel length - could be imputed, but might be fishing on ice:
+# can be added from database, e.g. if NA - VLENGTH_FDI + VUOSI
+    # select * from "2025-04-10-dcprod".kapasiteetti_2025_05_06
+    # where "ULKOINENTUNNUS" = 'AAL-124'
+
+
+# 2: 
+
+
+# need lookup to RUUTU: ices subdivision code is not sufficient for subdivision 28
+library(sf)
+ices.regions <- st_read("orig/ices_grid.gpkg", layer="ices_areas")
+ices.sub <- st_read("orig/ices_grid.gpkg", layer="ices_sub")
+
+library(sf)
+
+areas <- seq(22,32)
+
+ewkb_to_sf <- function(data) {
+  return(st_as_sfc(structure(data, class="WKB"), EWKB=T))
+}
+
+icesRectangle <- read.dbTable(schema='rek', table='ices_rectangle', dbname = "rktl")
+icesRectangle <- icesRectangle[icesRectangle$statistical_area_name %in% areas,]
+icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
+
+icesRectangle <- st_as_sf(icesRectangle)
+ices.regions <- st_transform(ices.regions, epsg = 4326)
+
+test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
+
+
+
+# 3. create metier lookup for Finland and correct metier if possible?
+
+# 4. mesh size - can be calculated from SILMAKOKKO, but check against METIER
+# passive gears - see annex 6 
+# FPO_FWS_>0_0_0       
+# FYK_ANA_>0_0_0       
+# FYK_FWS_>0_0_0       
+# FYK_SPF_>0_0_0       
+# GNS_DEF_110-156_0_0  
+# GNS_FWS_>0_0_0       
+# GNS_SPF_16-109       
+# GNS_SPF_16-109_0_0   
+# LLD_ANA_0_0_0
+#  LLS_FWS_0_0_0 
+# MOBILE gears
+# Diamond mesh <16 mm
+# 00D16
+# Diamond mesh >=16 mm and <32 mm
+# 16D32
+# Diamond mesh >=32 mm and <90 mm
+# 32D90
+# Diamond mesh >=90 mm and <105 mm
+# 90D105
+# Diamond mesh >=105 mm and <110 mm
+# 105D110
+# Diamond mesh >=110 mm
+# 110DXX
+# PASSIVE gears
+# Diamond mesh <16 mm
+# 00D16
+# Diamond mesh >=16 mm and <32 mm
+# 16D32
+# Diamond mesh >=32 mm and <90 mm
+# 32D90
+# Diamond mesh >=90 mm and <110 mm
+# 90D110
+# Diamond mesh >=110 mm and <157 mm
+# 110D157
+# Diamond mesh >=157 mm
+# 157DXX
+# metier lookup https://github.com/ices-eg/RCGs/blob/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.xlsx      
+
+# 5. rename fish species columns
+# https://www.fao.org/fishery/en/collection/asfis
+# lookup table for Finnish fish names
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #First read in aktiviteetti and akt1 if not loaded:
 
