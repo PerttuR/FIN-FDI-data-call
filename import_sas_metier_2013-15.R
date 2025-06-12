@@ -11,8 +11,10 @@ library(haven)
 library(openxlsx)
 library(stringr)
 
+source("db.r")
+
 #-------------------------------------------------------------------------------
-#                   0. set working directories to match folder paths                      
+#                   0. set working directories to match folder paths        ####              
 #-------------------------------------------------------------------------------
 # Common paths data call folders:
 
@@ -21,7 +23,9 @@ run.year = 2025
 # Output folder
 path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
 
-
+#-------------------------------------------------------------------------------
+#                   1. get data from G or C drive                           ####              
+#-------------------------------------------------------------------------------
 # get data from G drive ####
           
 for (i in 2013:2015){
@@ -70,14 +74,13 @@ dcprodschema <- paste0(kakeTimeStamp, "-dcprod")
 invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
 
 
-# check column names
-# compare with base tables from table_a_g_h_i_j_2013-2024.R
-
-# adding variables to metier table ####
+#-------------------------------------------------------------------------------
+#                   2. add vars to 2013.-2015 metier table                  ####              
+#-------------------------------------------------------------------------------
 
 metier_2013_15 <- metier_2013_15 |> 
                   mutate(
-                    COUNTRY = "FI",
+                    COUNTRY = "FIN",
                     YEAR	= KALASTUSVUOSI,
                     QUARTER	= case_when(
                       kk %in% seq(1,3) ~ "1",
@@ -106,13 +109,42 @@ metier_2013_15 <- metier_2013_15 |>
                     DISCARDS	= "NA",
                     CONFIDENTIAL	= "")
 
+# check new columns
+# View(metier_2013_15[,130:152])
 
-View(metier_2013_15[,130:152])
+#-------------------------------------------------------------------------------
+#                   3. add missing vessel lengths                           ####              
+#-------------------------------------------------------------------------------
 
-# 1: missing vessel length - could be imputed, but might be fishing on ice:
-# can be added from database, e.g. if NA - VLENGTH_FDI + VUOSI
-    # select * from "2025-04-10-dcprod".kapasiteetti_2025_05_06
-    # where "ULKOINENTUNNUS" = 'AAL-124'
+### JCD: get newest postgres schema date ####
+table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
+table.list <- substr(table.list, 30, nchar(table.list)-3)
+table.dates <- sort(unique(substr(table.list,1,10)))
+# only keep dates
+table.dates <- grep("\\d{4}-\\d{2}-\\d{2}", table.dates, value=TRUE)
+
+# output choice here ####
+schemadate <- max(table.dates)
+message("Newest schema is from: ", schemadate)
+
+# find the correct table name and date
+tbl.list <- list.dbTable.tbl(dbname = "kake_siirto", schema=paste0(schemadate, "-dcprod"))
+# find second table
+tag <- grep("kapasiteetti", tbl.list$table)
+tablename <- tbl.list$table[tag]
+class(tablename) <- "character"
+tablename <- unlist(strsplit(tablename, '"'))
+tablename <- tablename[length(tablename)-1]
+
+message(paste("Reading table:", tablename))
+
+kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
+                             table=tablename, dbname = "kake_siirto")
+
+ship.length <- metier_2013_15 |> select(KALASTUSVUOSI, alus, alusnimi, vessel_length) |> distinct() |>
+  left_join(kapasiteetti |> select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI), 
+            by= c("KALASTUSVUOSI"="VUOSI","alus"="ULKOINENTUNNUS")) |>
+  mutate(DIFF = if_else(vessel_length != VLENGTH_FDI, 1, 0))
 
 
 # 2: 
