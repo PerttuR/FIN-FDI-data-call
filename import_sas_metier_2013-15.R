@@ -11,6 +11,17 @@ library(haven)
 library(openxlsx)
 library(stringr)
 
+#-------------------------------------------------------------------------------
+#                   0. set working directories to match folder paths                      
+#-------------------------------------------------------------------------------
+# Common paths data call folders:
+
+run.year = 2025
+
+# Output folder
+path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
+
+
 # get data from G drive ####
           
 for (i in 2013:2015){
@@ -41,9 +52,23 @@ metier_2013_15 <- bind_rows(metier_2013, metier_2014, metier_2015)
 # filter is wanted
 # metier_2013_15_FIN <- metier_2013_15 |> filter(grepl("FIN",alus))
 
-# remove
+# remove temporary files
 rm(metier_2013, metier_2014, metier_2015, tmp)
 invisible(gc())
+
+#save to der folder
+saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
+# connection and personal parameters to PG-database:
+source("db.R")
+
+# ... time stamp to latest Logbook DB source: YYYY-MM-DD
+kakeTimeStamp <- "2025-04-10"
+
+# Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
+dcprodschema <- paste0(kakeTimeStamp, "-dcprod")
+invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
+
 
 # check column names
 # compare with base tables from table_a_g_h_i_j_2013-2024.R
