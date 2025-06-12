@@ -1,17 +1,18 @@
 # import SAS metier tables for 2013 to 2015
 # Authors: J. Demmler, Perttu
 # Date: 10/06/2025
-# Last revision: 11/06/2025
+# Last revision: 12/06/2025
 
 #.------------------------------------------------------------------------------
 #                   PRE. libraries and functions                            ####              
 #.------------------------------------------------------------------------------
 rm(list=ls())
 
-library(tidyverse)
-library(haven)
-library(openxlsx)
-library(stringr)
+library(tidyverse) # tidy data science
+library(haven)     # import SAS files
+library(openxlsx)  # read from/to Excel
+library(stringr)   # string operations
+library(RCurl)     # get data from Github
 
 source("db.r")
 
@@ -168,6 +169,9 @@ metier_2013_15 |> count(VESSEL_LENGTH) |> flextable() |>
   set_caption("Check VESSEL_LENGTH classes in metier_2013_15")
 # metier_2013_15 |> select(c(1,2,130:152)) |> View()
 
+rm(ship.length, kapasiteetti)
+invisible(gc())
+
 #.------------------------------------------------------------------------------
 #                   4. TO DO                                                ####    
 #.------------------------------------------------------------------------------
@@ -198,7 +202,14 @@ sf_use_s2(FALSE)
 test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
 
 
-# 3. create metier lookup for Finland and correct metier if possible?
+#.------------------------------------------------------------------------------
+#                   5. metier lookup                                        ####    
+#.------------------------------------------------------------------------------
+
+metier.lookup <- read.csv2(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
+
+metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB)) |>
+                       select(!(X:X.17))
 
 # 4. mesh size - can be calculated from SILMAKOKKO, but check against METIER
 # passive gears - see annex 6 
@@ -211,7 +222,8 @@ test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
 # GNS_SPF_16-109       
 # GNS_SPF_16-109_0_0   
 # LLD_ANA_0_0_0
-#  LLS_FWS_0_0_0 
+# LLS_FWS_0_0_0 
+
 # MOBILE gears
 # Diamond mesh <16 mm
 # 00D16
@@ -239,6 +251,8 @@ test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
 # Diamond mesh >=157 mm
 # 157DXX
 # metier lookup https://github.com/ices-eg/RCGs/blob/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.xlsx      
+
+
 
 # 5. rename fish species columns
 # https://www.fao.org/fishery/en/collection/asfis
