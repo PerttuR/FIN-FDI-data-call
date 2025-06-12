@@ -3,7 +3,9 @@
 # Date: 10/06/2025
 # Last revision: 11/06/2025
 
-#- Clear workspace
+#.------------------------------------------------------------------------------
+#                   PRE. libraries and functions                            ####              
+#.------------------------------------------------------------------------------
 rm(list=ls())
 
 library(tidyverse)
@@ -13,9 +15,9 @@ library(stringr)
 
 source("db.r")
 
-#-------------------------------------------------------------------------------
+#.------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths        ####              
-#-------------------------------------------------------------------------------
+#.------------------------------------------------------------------------------
 # Common paths data call folders:
 
 run.year = 2025
@@ -23,11 +25,10 @@ run.year = 2025
 # Output folder
 path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
 
-#-------------------------------------------------------------------------------
+#.------------------------------------------------------------------------------
 #                   1. get data from G or C drive                           ####              
-#-------------------------------------------------------------------------------
-# get data from G drive ####
-          
+#.------------------------------------------------------------------------------
+
 for (i in 2013:2015){
   
   tmp <- read_sas(paste0("G:/Luke2/Stat_kala_merikalastus/Metier/Data/pvkarvo",i,"_metier.sas7bdat")) |>
@@ -38,7 +39,7 @@ for (i in 2013:2015){
 } 
 
 
-# alternative path ####
+## alternative path
 # 
 # for (i in 2013:2015){
 #   
@@ -74,9 +75,9 @@ dcprodschema <- paste0(kakeTimeStamp, "-dcprod")
 invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
 
 
-#-------------------------------------------------------------------------------
+#.------------------------------------------------------------------------------
 #                   2. add vars to 2013.-2015 metier table                  ####              
-#-------------------------------------------------------------------------------
+#.------------------------------------------------------------------------------
 
 metier_2013_15 <- metier_2013_15 |> 
                   mutate(
@@ -87,7 +88,7 @@ metier_2013_15 <- metier_2013_15 |>
                       kk %in% seq(4,6) ~ "2",
                       kk %in% seq(7,9) ~ "3",
                       kk %in% seq(10,12) ~ "4"),
-                    VESSEL_LENGTH =	vessel_length,  # 7368 unknown (both vessel_length and pituus), length: 8297 unknown
+                    # VESSEL_LENGTH HERE!
                     FISHING_TECH =	ft,
                     GEAR_TYPE	= stringr::str_sub(metier, 1,3), 
                     TARGET_ASSEMBLAGE	= stringr::str_sub(metier, 5,7), 
@@ -112,18 +113,20 @@ metier_2013_15 <- metier_2013_15 |>
 # check new columns
 # View(metier_2013_15[,130:152])
 
-#-------------------------------------------------------------------------------
-#                   3. add missing vessel lengths                           ####              
-#-------------------------------------------------------------------------------
+#.------------------------------------------------------------------------------
+#                   3. correct vessel lengths                               ####              
+#.------------------------------------------------------------------------------
 
-### JCD: get newest postgres schema date ####
+# vessel GOLDEN ROSE CHANGED OWNER 2014, BUT WRONG IN KAPASITEETI (only has one registration number)
+
+### JCD: get newest postgres schema date
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
 table.list <- substr(table.list, 30, nchar(table.list)-3)
 table.dates <- sort(unique(substr(table.list,1,10)))
 # only keep dates
 table.dates <- grep("\\d{4}-\\d{2}-\\d{2}", table.dates, value=TRUE)
 
-# output choice here ####
+# output choice here
 schemadate <- max(table.dates)
 message("Newest schema is from: ", schemadate)
 
@@ -144,10 +147,30 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 ship.length <- metier_2013_15 |> select(KALASTUSVUOSI, alus, alusnimi, vessel_length) |> distinct() |>
   left_join(kapasiteetti |> select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI), 
             by= c("KALASTUSVUOSI"="VUOSI","alus"="ULKOINENTUNNUS")) |>
-  mutate(DIFF = if_else(vessel_length != VLENGTH_FDI, 1, 0))
+  mutate(DIFF = if_else(vessel_length != VLENGTH_FDI, 1, 0),
+         VESSEL_LENGTH = case_when(
+           is.na(vessel_length) ~ VLENGTH_FDI,
+           vessel_length != VLENGTH_FDI ~ VLENGTH_FDI, # to test after kapasiteetti has been rerun
+           .default = vessel_length
+         )) 
 
+# check 2014 GOLDEN ROSE - should now be NA, but vessel_length is correct
 
-# 2: 
+# link ship length lookup to table
+metier_2013_15 <- metier_2013_15 |>
+                    left_join(ship.length |> select(KALASTUSVUOSI, alus, VESSEL_LENGTH), 
+                              by=c("KALASTUSVUOSI"="KALASTUSVUOSI",
+                                   "alus"="alus")) |>
+                    relocate(VESSEL_LENGTH, .after = QUARTER)
+
+# checking records
+metier_2013_15 |> count(VESSEL_LENGTH) |> flextable() |> 
+  set_caption("Check VESSEL_LENGTH classes in metier_2013_15")
+# metier_2013_15 |> select(c(1,2,130:152)) |> View()
+
+#.------------------------------------------------------------------------------
+#                   4. TO DO                                                ####    
+#.------------------------------------------------------------------------------
 
 
 # need lookup to RUUTU: ices subdivision code is not sufficient for subdivision 28
@@ -167,11 +190,12 @@ icesRectangle <- read.dbTable(schema='rek', table='ices_rectangle', dbname = "rk
 icesRectangle <- icesRectangle[icesRectangle$statistical_area_name %in% areas,]
 icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
 
-icesRectangle <- st_as_sf(icesRectangle)
+icesRectangle <- st_as_sf(icesRectangle) |> st_transform(epsg = 4326)
 ices.regions <- st_transform(ices.regions, epsg = 4326)
 
-test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
+sf_use_s2(FALSE)
 
+test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
 
 
 # 3. create metier lookup for Finland and correct metier if possible?
