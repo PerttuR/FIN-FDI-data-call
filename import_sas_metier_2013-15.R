@@ -193,6 +193,15 @@ invisible(gc())
 
 metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
 
+
+metier.lookup[metier.lookup$Metier_level6 == "PTM_SPF_16-31_0_0" & metier.lookup$RCG == "BALT",] <- 
+
+# correct missing FIN tag in lookup table
+metier.lookup <- metier.lookup |> 
+              mutate(Used_by_country_in_RDB = case_when(
+                Metier_level6 == "PTM_SPF_16-31_0_0" & RCG == "BALT" ~ paste0(Used_by_country_in_RDB,", FIN"),
+                .default = as.character(Used_by_country_in_RDB)))
+
 metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB)) |>
                        select(!X:X.17)
 
@@ -202,86 +211,88 @@ metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB
 #  kable(caption="Official metier classes for Finland")
 
 # save to DB
-# invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
+invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
+
+# overwrite MISSING metier for tag for one single vessel with one missing metier
+metier_2013_15 <- metier_2013_15 |> 
+  mutate(metier = if_else(metier == "MISSING", "GNS_FWS_>0_0_0", metier))
 
 # compare metier classes
 metier_2013_15 |> select(YEAR, QUARTER, alus, alusnimi, metier) |> 
   mutate(METIER5 = stringr::str_sub(metier, 1,7))  |> 
   left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |> 
   mutate(check = if_else(metier != Metier_level6, 1,0)) |> 
-  filter(check == 1) |>
+  filter(check == 1 | is.na(check)) |>
   select(metier, Metier_level6) |> distinct() |> 
   flextable() |> autofit() |>
-  set_caption("Differences between SAS METIER and official metier level 6 names")
+  set_caption("Differences between SAS METIER and official metier level 6 names") |>
+  add_footer_lines("*`PTM_SPF_16-31_0_0` is missing in the tags for Finland")
 
-# I am testing here
-tmp <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(metier, 1,7)) |>
+
+# join against lookup to produce METIER6
+metier_2013_15 <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(metier, 1,7)) |>
   left_join(metier.lookup.fin |> select(Metier_level5, Metier_level6), 
             by=c("METIER5"="Metier_level5")) |> 
   rename(METIER6 = Metier_level6) |>
   relocate(METIER6, .after = TARGET_ASSEMBLAGE)
 
-tmp |> count(METIER6) |> flextable() |> autofit() |>
+metier_2013_15 |> count(METIER6) |> flextable() |> autofit() |>
   set_caption("Metier 6 classes in metier_2013_15")
 
-tmp |> filter(is.na(METIER6)) |> select(metier, METIER6) |> 
-  count(metier) |> flextable() |> autofit() |>
-  set_caption("not assigned metier classes")
-
-tmp |> filter(metier == "MISSING") |> View()
-
-metier.lookup |> filter(Metier_level5 == "PTM_SPF" & RCG == "BALT") |> 
-  select(Metier_level6, Used_by_country_in_RDB) |> flextable() |> autofit() |>
-  set_caption("PTM_SPF classes in the lookup")
+#save to der folder
+saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 #.------------------------------------------------------------------------------
 #                   5. mesh size lookup                                     ####    
 #.------------------------------------------------------------------------------
 
+# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
+
+metier_2013_15 <- metier_2013_15 |> mutate(METIER4 = stringr::str_sub(METIER5, 1,3))
+
+active.passive <- data.frame(TYPE = c(rep("passive",5), rep("active", 4)),
+           METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"))
+
+active.passive |> flextable() |> autofit() |> set_caption("METIER4 lookup for active and passive gears")
+
+mesh.sizes <- data.frame(TYPE = c(rep("passive",6), rep("active", 6)),
+                         GEARS = c("Diamond mesh <16 mm",
+                                   "Diamond mesh >=16 mm and <32 mm",
+                                   "Diamond mesh >=32 mm and <90 mm",
+                                   "Diamond mesh >=90 mm and <110 mm",
+                                   "Diamond mesh >=110 mm and <157 mm",
+                                   "Diamond mesh >=157 mm",
+                                   "Diamond mesh <16 mm",
+                                   "Diamond mesh >=16 mm and <32 mm",
+                                   "Diamond mesh >=32 mm and <90 mm",
+                                   "Diamond mesh >=90 mm and <105 mm",
+                                   "Diamond mesh >=105 mm and <110 mm",
+                                   "Diamond mesh >=110 mm"),
+                          TO   = c( 0,16,32,90,110,157, 0,16,32,90,105,110),
+                          FROM = c(16,32,90,110,157,Inf,16,32,90,105,110,Inf),
+                          CODE = c("00D16", "16D32", "32D90", "90D110", "110D157", "157DXX",
+                                   "00D16", "16D32", "32D90", "90D105", "105D110", "110DXX"))
+
+mesh.sizes |> flextable() |> autofit() |> hline(i=6) |> set_caption("Mesh size ranges for Baltic")
+
+mesh.lookup <- active.passive |> left_join(mesh.sizes, by="TYPE")
+
+mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size combinations")
+
+# save to DB
+invisible(write.dbTable(dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE))
+
 # 4. mesh size - can be calculated from SILMAKOKKO, but check against METIER
-# passive gears - see annex 6 
-# FPO_FWS_>0_0_0       
-# FYK_ANA_>0_0_0       
-# FYK_FWS_>0_0_0       
-# FYK_SPF_>0_0_0       
-# GNS_DEF_110-156_0_0  
-# GNS_FWS_>0_0_0       
-# GNS_SPF_16-109       
-# GNS_SPF_16-109_0_0   
-# LLD_ANA_0_0_0
-# LLS_FWS_0_0_0 
 
-# MOBILE gears
-# Diamond mesh <16 mm
-# 00D16
-# Diamond mesh >=16 mm and <32 mm
-# 16D32
-# Diamond mesh >=32 mm and <90 mm
-# 32D90
-# Diamond mesh >=90 mm and <105 mm
-# 90D105
-# Diamond mesh >=105 mm and <110 mm
-# 105D110
-# Diamond mesh >=110 mm
-# 110DXX
-# PASSIVE gears
-# Diamond mesh <16 mm
-# 00D16
-# Diamond mesh >=16 mm and <32 mm
-# 16D32
-# Diamond mesh >=32 mm and <90 mm
-# 32D90
-# Diamond mesh >=90 mm and <110 mm
-# 90D110
-# Diamond mesh >=110 mm and <157 mm
-# 110D157
-# Diamond mesh >=157 mm
-# 157DXX
-# metier lookup https://github.com/ices-eg/RCGs/blob/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.xlsx      
+metier_2013_15 |> select(SILMAKOKO, METIER6, METIER5, METIER4) |> 
+  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
+  distinct() |> View()
 
 
+#.------------------------------------------------------------------------------
+#                   6. fish column names                                   ####    
+#.------------------------------------------------------------------------------
 
-# 5. rename fish species columns
 # https://www.fao.org/fishery/en/collection/asfis
 # lookup table for Finnish fish names
 
