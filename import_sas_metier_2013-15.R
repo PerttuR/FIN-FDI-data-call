@@ -13,6 +13,7 @@ library(haven)     # import SAS files
 library(openxlsx)  # read from/to Excel
 library(stringr)   # string operations
 library(RCurl)     # get data from Github
+library(flextable) # html table in Viewer window
 
 source("db.r")
 
@@ -100,23 +101,24 @@ metier_2013_15 <- metier_2013_15 |>
                     FISHING_TECH =	ft,
                     GEAR_TYPE	= stringr::str_sub(metier, 1,3), 
                     TARGET_ASSEMBLAGE	= stringr::str_sub(metier, 5,7), 
-                    MESH_SIZE_RANGE	= "",      # METIER, SILMAKOKO
+                    # MESH_SIZE_RANGE	HERE!
                     # METIER HERE!       
                     METIER_7 = "NA",
-                    DOMAIN_DISCARDS = "",	     # later
-                    DOMAIN_LANDINGS	= "",      # later
+                    # DOMAIN_DISCARDS HERE!
+                    # DOMAIN_LANDINGS	HERE!
                     SUPRA_REGION	= "NAO",
-                    SUB_REGION	= "",          # RECTANGLE - (CHECK LOOKUP)
+                    # SUB_REGION HERE!
                     EEZ_INDICATOR	= "NA",
                     GEO_INDICATOR	= "NGI",
                     NEP_SUB_REGION	= "NA",
                     SPECON_TECH	= "NA",
                     DEEP	= "NA",
-                    SPECIES	= "",              # FISHNAME COL 20-41
-                    TOTWGHTLANDG	= "",        # FISHNAME COL 20-41
-                    TOTVALLANDG	= "",          # H+FISHNAME COL 20-41
+                    # SPECIES	= "",              # FISHNAME COL 20-41
+                    # TOTWGHTLANDG	= "",        # FISHNAME COL 20-41
+                    # TOTVALLANDG	= "",          # H+FISHNAME COL 20-41
                     DISCARDS	= "NA",
-                    CONFIDENTIAL	= "")
+                    #CONFIDENTIAL HERE!
+                    )
 
 # check new columns
 # View(metier_2013_15[,130:152])
@@ -147,7 +149,7 @@ ship.length <- metier_2013_15 |> select(KALASTUSVUOSI, alus, alusnimi, vessel_le
   mutate(DIFF = if_else(vessel_length != VLENGTH_FDI, 1, 0),
          VESSEL_LENGTH = case_when(
            is.na(vessel_length) ~ VLENGTH_FDI,
-           vessel_length != VLENGTH_FDI ~ VLENGTH_FDI, # to test after kapasiteetti has been rerun
+           vessel_length != VLENGTH_FDI ~ VLENGTH_FDI,
            .default = vessel_length
          )) 
 
@@ -168,38 +170,9 @@ metier_2013_15 |> count(VESSEL_LENGTH) |> flextable() |>
 rm(ship.length, kapasiteetti)
 invisible(gc())
 
-#.------------------------------------------------------------------------------
-#                   4. TO DO                                                ####    
-#.------------------------------------------------------------------------------
-
-
-# need lookup to RUUTU: ices subdivision code is not sufficient for subdivision 28
-library(sf)
-ices.regions <- st_read("orig/ices_grid.gpkg", layer="ices_areas")
-ices.sub <- st_read("orig/ices_grid.gpkg", layer="ices_sub")
-
-library(sf)
-
-areas <- seq(22,32)
-
-ewkb_to_sf <- function(data) {
-  return(st_as_sfc(structure(data, class="WKB"), EWKB=T))
-}
-
-icesRectangle <- read.dbTable(schema='rek', table='ices_rectangle', dbname = "rktl")
-icesRectangle <- icesRectangle[icesRectangle$statistical_area_name %in% areas,]
-icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
-
-icesRectangle <- st_as_sf(icesRectangle) |> st_transform(epsg = 4326)
-ices.regions <- st_transform(ices.regions, epsg = 4326)
-
-sf_use_s2(FALSE)
-
-test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
-
 
 #.------------------------------------------------------------------------------
-#                   5. metier lookup                                        ####    
+#                   4. metier lookup                                        ####    
 #.------------------------------------------------------------------------------
 
 metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
@@ -208,22 +181,31 @@ metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB
                        select(!X:X.17)
 
 # save to DB
-invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
+# invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
 
-metier_2013_15 |> select(YEAR, QUARTER, alus, alusnimi, METIER) |> 
-  mutate(METIER5 = stringr::str_sub(METIER, 1,7))  |> 
+# compare metier classes
+metier_2013_15 |> select(YEAR, QUARTER, alus, alusnimi, metier) |> 
+  mutate(METIER5 = stringr::str_sub(metier, 1,7))  |> 
   left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |> 
-  mutate(check = if_else(METIER != Metier_level6, 1,0)) |> 
+  mutate(check = if_else(metier != Metier_level6, 1,0)) |> 
   filter(check == 1) |>
-  select(METIER, Metier_level6) |> distinct() |> 
+  select(metier, Metier_level6) |> distinct() |> 
   flextable() |> autofit() |>
   set_caption("Differences between SAS METIER and official metier level 6 names")
 
-metier_2013_15 <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(METIER, 1,7)) |>
-  left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |>
-  rename(Metier_level6 = METIER) |>
-  relocate(METIER, .after = MESH_SIZE_RANGE)
+# I am testing here
+tmp <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(metier, 1,7)) |>
+  left_join(metier.lookup.fin |> select(Metier_level5, Metier_level6), 
+            by=c("METIER5"="Metier_level5")) |> 
+  rename(METIER6 = Metier_level6) |>
+  relocate(METIER6, .after = TARGET_ASSEMBLAGE)
 
+tmp |> count(METIER6) |> flextable() |> autofit() |>
+  set_caption("Metier 6 classes in metier_2013_15")
+
+#.------------------------------------------------------------------------------
+#                   5. mesh size lookup                                     ####    
+#.------------------------------------------------------------------------------
 
 # 4. mesh size - can be calculated from SILMAKOKKO, but check against METIER
 # passive gears - see annex 6 
@@ -285,27 +267,31 @@ metier_2013_15 <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(METIER, 1,
 
 
 
-#First read in aktiviteetti and akt1 if not loaded:
+#.------------------------------------------------------------------------------
+#                   XX. TO DO                                                ####    
+#.------------------------------------------------------------------------------
 
 
-lookup1 <- data.frame(COL_NO = seq(1:length(names(aktiviteetti))),
-                     COLUMN_NAME = names(aktiviteetti),
-                     DESCRIPTON = NA)
+# need lookup to RUUTU: ices subdivision code is not sufficient for subdivision 28
+library(sf)
+ices.regions <- st_read("orig/ices_grid.gpkg", layer="ices_areas")
+ices.sub <- st_read("orig/ices_grid.gpkg", layer="ices_sub")
 
-lookup2 <- data.frame(COL_NO = seq(1:length(names(akt1))),
-                      COLUMN_NAME = names(akt1),
-                      DESCRIPTON = NA)
+library(sf)
 
-lookup3 <- data.frame(COL_NO= seq(1:length(names(metier_2013_15))),
-                      COLUMN_NAME = names(metier_2013_15),
-                      DESCRIPTON = NA)
+areas <- seq(22,32)
 
-# save to Excel
-wb <- createWorkbook()
-addWorksheet(wb, sheetName = "aktiviteetti")
-addWorksheet(wb, sheetName = "akt1")
-addWorksheet(wb, sheetName = "SAS_metier")
-writeDataTable(wb, sheet = 1, lookup1)
-writeDataTable(wb, sheet = 2, lookup2)
-writeDataTable(wb, sheet = 3, lookup3)
-saveWorkbook(wb, "orig/lookup.xlsx")
+ewkb_to_sf <- function(data) {
+  return(st_as_sfc(structure(data, class="WKB"), EWKB=T))
+}
+
+icesRectangle <- read.dbTable(schema='rek', table='ices_rectangle', dbname = "rktl")
+icesRectangle <- icesRectangle[icesRectangle$statistical_area_name %in% areas,]
+icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
+
+icesRectangle <- st_as_sf(icesRectangle) |> st_transform(epsg = 4326)
+ices.regions <- st_transform(ices.regions, epsg = 4326)
+
+sf_use_s2(FALSE)
+
+test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
