@@ -180,6 +180,11 @@ metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg
 metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB)) |>
                        select(!X:X.17)
 
+# metier class PTM_SPF is missing
+# reported issue on Github https://github.com/ices-eg/RCGs/issues/184
+# metier.lookup.fin |> select(RCG, Metier_level5, Metier_level6, Used_by_country_in_RDB) |> 
+#  kable(caption="Official metier classes for Finland")
+
 # save to DB
 # invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
 
@@ -202,6 +207,16 @@ tmp <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(metier, 1,7)) |>
 
 tmp |> count(METIER6) |> flextable() |> autofit() |>
   set_caption("Metier 6 classes in metier_2013_15")
+
+tmp |> filter(is.na(METIER6)) |> select(metier, METIER6) |> 
+  count(metier) |> flextable() |> autofit() |>
+  set_caption("not assigned metier classes")
+
+tmp |> filter(metier == "MISSING") |> View()
+
+metier.lookup |> filter(Metier_level5 == "PTM_SPF" & RCG == "BALT") |> 
+  select(Metier_level6, Used_by_country_in_RDB) |> flextable() |> autofit() |>
+  set_caption("PTM_SPF classes in the lookup")
 
 #.------------------------------------------------------------------------------
 #                   5. mesh size lookup                                     ####    
