@@ -65,20 +65,27 @@ invisible(gc())
 #save to der folder
 saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
-# connection and personal parameters to PG-database:
-source("db.R")
-
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
-kakeTimeStamp <- "2025-04-10"
+table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
+table.list <- substr(table.list, 30, nchar(table.list)-3)
+table.dates <- sort(unique(substr(table.list,1,10)))
+# only keep dates
+table.dates <- grep("\\d{4}-\\d{2}-\\d{2}", table.dates, value=TRUE)
+
+# output choice here
+schemadate <- max(table.dates)
+message("Newest schema is from: ", schemadate)
 
 # Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
-dcprodschema <- paste0(kakeTimeStamp, "-dcprod")
+dcprodschema <- paste0(schemadate, "-dcprod")
 invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
 
 
 #.------------------------------------------------------------------------------
 #                   2. add vars to 2013.-2015 metier table                  ####              
 #.------------------------------------------------------------------------------
+
+# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
 metier_2013_15 <- metier_2013_15 |> 
                   mutate(
@@ -94,7 +101,7 @@ metier_2013_15 <- metier_2013_15 |>
                     GEAR_TYPE	= stringr::str_sub(metier, 1,3), 
                     TARGET_ASSEMBLAGE	= stringr::str_sub(metier, 5,7), 
                     MESH_SIZE_RANGE	= "",      # METIER, SILMAKOKO
-                    METIER = metier,
+                    # METIER HERE!       
                     METIER_7 = "NA",
                     DOMAIN_DISCARDS = "",	     # later
                     DOMAIN_LANDINGS	= "",      # later
@@ -119,17 +126,6 @@ metier_2013_15 <- metier_2013_15 |>
 #.------------------------------------------------------------------------------
 
 # vessel GOLDEN ROSE CHANGED OWNER 2014, BUT WRONG IN KAPASITEETI (only has one registration number)
-
-### JCD: get newest postgres schema date
-table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
-table.list <- substr(table.list, 30, nchar(table.list)-3)
-table.dates <- sort(unique(substr(table.list,1,10)))
-# only keep dates
-table.dates <- grep("\\d{4}-\\d{2}-\\d{2}", table.dates, value=TRUE)
-
-# output choice here
-schemadate <- max(table.dates)
-message("Newest schema is from: ", schemadate)
 
 # find the correct table name and date
 tbl.list <- list.dbTable.tbl(dbname = "kake_siirto", schema=paste0(schemadate, "-dcprod"))
@@ -206,10 +202,28 @@ test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
 #                   5. metier lookup                                        ####    
 #.------------------------------------------------------------------------------
 
-metier.lookup <- read.csv2(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
+metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
 
 metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB)) |>
-                       select(!(X:X.17))
+                       select(!X:X.17)
+
+# save to DB
+invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
+
+metier_2013_15 |> select(YEAR, QUARTER, alus, alusnimi, METIER) |> 
+  mutate(METIER5 = stringr::str_sub(METIER, 1,7))  |> 
+  left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |> 
+  mutate(check = if_else(METIER != Metier_level6, 1,0)) |> 
+  filter(check == 1) |>
+  select(METIER, Metier_level6) |> distinct() |> 
+  flextable() |> autofit() |>
+  set_caption("Differences between SAS METIER and official metier level 6 names")
+
+metier_2013_15 <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(METIER, 1,7)) |>
+  left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |>
+  rename(Metier_level6 = METIER) |>
+  relocate(METIER, .after = MESH_SIZE_RANGE)
+
 
 # 4. mesh size - can be calculated from SILMAKOKKO, but check against METIER
 # passive gears - see annex 6 
