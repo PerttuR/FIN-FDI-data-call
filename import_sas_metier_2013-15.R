@@ -445,19 +445,78 @@ saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
 # https://www.fao.org/fishery/en/collection/asfis
 # lookup table for Finnish fish names
 
+# grab table from database
+
+### !!! JCD is HERE !!! ####
+
+#.------------------------------------------------------------------------------
+#                   9. calculate fishing days                               ####    
+#.------------------------------------------------------------------------------
+
+# proc sort data=effort out=alus_saalis_sort;
+# by alus pvmday descending saalis_yht;
+# run;
+# 
+# data alus_saalis;
+# set alus_saalis_sort;
+# by alus pvmday;
+# 
+# if first.pvmday;
+# run;
+# 
+# 
+# PROC SUMMARY missing nway data=alus_saalis;
+# class alus quarter length ft gear metier level5 ices specon_tech meshsizerange;
+# var pyyntipv;
+# output out=paivat2 sum=TOTFISHDAYS;
+# run;
+
+
+#.------------------------------------------------------------------------------
+#                   10. calculate sea days                               ####    
+#.------------------------------------------------------------------------------
+
+# DATA meripv;
+# set alus_saalis;
+# meripaiva=(paluupvm-lahtopvm)/86400;
+# run;
+# 
+# 
+# DATA meripv;
+# set meripv;
+# if meripaiva=0 then do;
+# meripaiva=1;
+# end;
+# keep alus lahtopvm paluupvm quarter length ft gear metier level5 ices specon_tech meshsizerange meripaiva;
+# 
+# PROC SORT nodupkey data=meripv out=meripaivat;
+# by alus lahtopvm paluupvm quarter length ft gear metier level5 ices specon_tech meshsizerange meripaiva;
+# run;
+# 
+# PROC SUMMARY missing nway data=meripaivat;
+# class alus quarter length ft gear metier level5 ices specon_tech meshsizerange;
+# var meripaiva;
+# output out=meripaivat2 sum=TOTSEADAYS;
+# run;
+
+
+#.------------------------------------------------------------------------------
+#                   11. matching akt1 column names                          ####    
+#.------------------------------------------------------------------------------
+
 # column names to match
-> names(akt1)
- [1] "YEAR"              "ULKOINENTUNNUS"    "KALASTUSPAIVAT"    "MERIPAIVAT"        "PAAKONETEHO"       "VETOISUUS"        
- [7] "KALASTUSAIKAHH"    "FT_REF"            "VESSEL_LENGTH"     "FISHING_TECH"      "GEAR_TYPE"         "TARGET_ASSEMBLAGE"
-[13] "METIER"            "SVT_KG_HER"        "SVT_KG_SPR"        "SVT_KG_COD"        "SVT_KG_FLE"        "SVT_KG_TUR"       
-[19] "SVT_KG_PLN"        "SVT_KG_SAL"        "SVT_KG_TRS"        "SVT_KG_SME"        "SVT_KG_FBM"        "SVT_KG_FID"       
-[25] "SVT_KG_FRO"        "SVT_KG_FPI"        "SVT_KG_FPE"        "SVT_KG_FPP"        "SVT_KG_FBU"        "SVT_KG_TRR"       
-[31] "SVT_KG_FVE"        "SVT_KG_ELE"        "SVT_KG_FIN"        "SVT_KG_TOTAL"      "SVT_VALUE_HER"     "SVT_VALUE_SPR"    
-[37] "SVT_VALUE_COD"     "SVT_VALUE_FLE"     "SVT_VALUE_TUR"     "SVT_VALUE_PLN"     "SVT_VALUE_SAL"     "SVT_VALUE_TRS"    
-[43] "SVT_VALUE_SME"     "SVT_VALUE_FBM"     "SVT_VALUE_FID"     "SVT_VALUE_FRO"     "SVT_VALUE_FPI"     "SVT_VALUE_FPE"    
-[49] "SVT_VALUE_FPP"     "SVT_VALUE_FBU"     "SVT_VALUE_TRR"     "SVT_VALUE_FVE"     "SVT_VALUE_ELE"     "SVT_VALUE_FIN"    
-[55] "RECTANGLE"         "COUNTRY"           "QUARTER"           "MESH_SIZE_RANGE"   "METIER_7"          "SUPRA_REGION"     
-[61] "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "SPECON_TECH"       "DEEP"              "RECTANGLE_TYPE"   
-[67] "C_SQUARE"          "LATITUDE"          "LONGITUDE"
+# > names(akt1)
+# [1] "YEAR"              "ULKOINENTUNNUS"    "KALASTUSPAIVAT"    "MERIPAIVAT"        "PAAKONETEHO"       "VETOISUUS"        
+# [7] "KALASTUSAIKAHH"    "FT_REF"            "VESSEL_LENGTH"     "FISHING_TECH"      "GEAR_TYPE"         "TARGET_ASSEMBLAGE"
+# [13] "METIER"            "SVT_KG_HER"        "SVT_KG_SPR"        "SVT_KG_COD"        "SVT_KG_FLE"        "SVT_KG_TUR"       
+# [19] "SVT_KG_PLN"        "SVT_KG_SAL"        "SVT_KG_TRS"        "SVT_KG_SME"        "SVT_KG_FBM"        "SVT_KG_FID"       
+# [25] "SVT_KG_FRO"        "SVT_KG_FPI"        "SVT_KG_FPE"        "SVT_KG_FPP"        "SVT_KG_FBU"        "SVT_KG_TRR"       
+# [31] "SVT_KG_FVE"        "SVT_KG_ELE"        "SVT_KG_FIN"        "SVT_KG_TOTAL"      "SVT_VALUE_HER"     "SVT_VALUE_SPR"    
+# [37] "SVT_VALUE_COD"     "SVT_VALUE_FLE"     "SVT_VALUE_TUR"     "SVT_VALUE_PLN"     "SVT_VALUE_SAL"     "SVT_VALUE_TRS"    
+# [43] "SVT_VALUE_SME"     "SVT_VALUE_FBM"     "SVT_VALUE_FID"     "SVT_VALUE_FRO"     "SVT_VALUE_FPI"     "SVT_VALUE_FPE"    
+# [49] "SVT_VALUE_FPP"     "SVT_VALUE_FBU"     "SVT_VALUE_TRR"     "SVT_VALUE_FVE"     "SVT_VALUE_ELE"     "SVT_VALUE_FIN"    
+# [55] "RECTANGLE"         "COUNTRY"           "QUARTER"           "MESH_SIZE_RANGE"   "METIER_7"          "SUPRA_REGION"     
+# [61] "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "SPECON_TECH"       "DEEP"              "RECTANGLE_TYPE"   
+# [67] "C_SQUARE"          "LATITUDE"          "LONGITUDE"# 
 
 
