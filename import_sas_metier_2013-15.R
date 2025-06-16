@@ -1,7 +1,7 @@
 # import SAS metier tables for 2013 to 2015
 # Authors: J. Demmler, Perttu
 # Date: 10/06/2025
-# Last revision: 12/06/2025
+# Last revision: 16/06/2025
 
 #.------------------------------------------------------------------------------
 #                   PRE. libraries and functions                            ####              
@@ -14,6 +14,7 @@ library(openxlsx)  # read from/to Excel
 library(stringr)   # string operations
 library(RCurl)     # get data from Github
 library(flextable) # html table in Viewer window
+library(sf)        # simple spatial features
 
 source("db.r")
 
@@ -123,9 +124,14 @@ metier_2013_15 <- metier_2013_15 |>
 # check new columns
 # View(metier_2013_15[,130:152])
 
+# save to der folder
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
 #.------------------------------------------------------------------------------
 #                   3. correct vessel lengths                               ####              
 #.------------------------------------------------------------------------------
+
+# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
 # vessel GOLDEN ROSE CHANGED OWNER 2014, BUT WRONG IN KAPASITEETI (only has one registration number)
 
@@ -170,15 +176,14 @@ metier_2013_15 |> count(VESSEL_LENGTH) |> flextable() |>
 rm(ship.length, kapasiteetti)
 invisible(gc())
 
+# save to der folder
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 #.------------------------------------------------------------------------------
 #                   4. metier lookup                                        ####    
 #.------------------------------------------------------------------------------
 
 metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
-
-
-metier.lookup[metier.lookup$Metier_level6 == "PTM_SPF_16-31_0_0" & metier.lookup$RCG == "BALT",] <- 
 
 # correct missing FIN tag in lookup table
 metier.lookup <- metier.lookup |> 
@@ -195,7 +200,7 @@ metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB
 #  kable(caption="Official metier classes for Finland")
 
 # save to DB
-invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE))
+invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE)) # !!! PETRI TO ADD ####
 
 # overwrite MISSING metier for tag for one single vessel with one missing metier
 metier_2013_15 <- metier_2013_15 |> 
@@ -224,7 +229,7 @@ metier_2013_15 |> count(METIER6) |> flextable() |> autofit() |>
   set_caption("Metier 6 classes in metier_2013_15")
 
 #save to der folder
-saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 #.------------------------------------------------------------------------------
 #                   5. mesh size lookup                                     ####    
@@ -235,7 +240,8 @@ saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 metier_2013_15 <- metier_2013_15 |> mutate(METIER4 = stringr::str_sub(METIER5, 1,3))
 
 active.passive <- data.frame(TYPE = c(rep("passive",5), rep("active", 4)),
-           METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"))
+           METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"),
+           MESH    = c("YES", "YES", "YES", "NO", "NO", "PERHAPS", "YES", "YES", "YES"))
 
 active.passive |> flextable() |> autofit() |> set_caption("METIER4 lookup for active and passive gears")
 
@@ -252,60 +258,84 @@ mesh.sizes <- data.frame(TYPE = c(rep("passive",6), rep("active", 6)),
                                    "Diamond mesh >=90 mm and <105 mm",
                                    "Diamond mesh >=105 mm and <110 mm",
                                    "Diamond mesh >=110 mm"),
-                          TO   = c( 0,16,32,90,110,157, 0,16,32,90,105,110),
-                          FROM = c(16,32,90,110,157,Inf,16,32,90,105,110,Inf),
+                          FROM  = c( 0,16,32,90,110,157, 0,16,32,90,105,110),
+                          TO   = c(16,32,90,110,157,Inf,16,32,90,105,110,Inf),
                           CODE = c("00D16", "16D32", "32D90", "90D110", "110D157", "157DXX",
                                    "00D16", "16D32", "32D90", "90D105", "105D110", "110DXX"))
 
 mesh.sizes |> flextable() |> autofit() |> hline(i=6) |> set_caption("Mesh size ranges for Baltic")
 
-mesh.lookup <- active.passive |> left_join(mesh.sizes, by="TYPE")
+mesh.lookup <- active.passive |> filter(MESH != "NO") |> left_join(mesh.sizes, by=c("TYPE"="TYPE"))
 
 mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size combinations")
 
 # save to DB
-invisible(write.dbTable(dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE))
+invisible(write.dbTable(dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE)) # !!! PETRI TO ADD ####
 
-# 4. mesh size - can be calculated from SILMAKOKKO, but check against METIER
+# checking for LINE metiers with mesh sizes
+metier_2013_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
+  select(YEAR, alus, alusnimi, SILMAKOKO, metier, METIER6) |> 
+  flextable() |> autofit() |> set_caption("Enties for lines but giving mesh size")
 
-metier_2013_15 |> select(SILMAKOKO, METIER6, METIER5, METIER4) |> 
-  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
-  distinct() |> View()
+# correct data - remove mesh size if line metier
+metier_2013_15 <- metier_2013_15 |> mutate(SILMAKOKO = case_when(
+  METIER4 %in% c("LLD","LLS") ~ NA,
+  .default = as.numeric(SILMAKOKO)
+))
 
+# check missing mesh sizes in SAS data
+metier_2013_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
+  select(YEAR, PVM, alus, alusnimi, SILMAKOKO, METIER6, METIER5, METIER4) |> 
+  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,FROM,TO))) |> 
+  filter(is.na(CODE)) |>
+  distinct() |> select(-c(METIER5,METIER4,TYPE,MESH,GEARS,TO,FROM)) |> 
+  arrange(alus,YEAR,PVM, METIER6) |>
+  flextable() |> autofit() |> set_caption("ships with missing net sizes")
+
+# join mesh size range codes
+metier_2013_15 <- metier_2013_15 |> left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,FROM,TO)))
+
+# assign CODE if KOKOSILMA IS NA
+metier_2013_15 <- metier_2013_15 |> mutate(CODE = case_when(
+  is.na(SILMAKOKO) & METIER6 == "FPO_FWS_>0_0_0" ~ "16D32",
+  is.na(SILMAKOKO) & METIER6 == "FYK_ANA_>0_0_0" ~ "32D90",
+  is.na(SILMAKOKO) & METIER6 == "FYK_FWS_>0_0_0" ~ "16D32",
+  is.na(SILMAKOKO) & METIER6 == "FYK_SPF_>0_0_0" ~ "16D32",
+  is.na(SILMAKOKO) & METIER6 == "GNS_DEF_110-156_0_0" ~ "110D157",
+  is.na(SILMAKOKO) & METIER6 == "GNS_FWS_>0_0_0" ~ "32D90",
+  is.na(SILMAKOKO) & METIER6 == "OTM_FWS_>0_0_0" ~ "16D32",
+  is.na(SILMAKOKO) & METIER6 == "PTM_SPF_16-31_0_0" ~ "16D32",
+  .default = as.character(CODE)
+))
+
+# FPO_FWS_>0_0_0      --> 16D32 # DONE
+# FYK_ANA_>0_0_0      --> 32D90 # DONE
+# FYK_FWS_>0_0_0      --> 16D32 # DONE
+# FYK_SPF_>0_0_0      --> 16D32 # DONE
+# GNS_DEF_110-156_0_0 --> 110D157 # DONE
+# GNS_FWS_>0_0_0      --> 32D90 # DONE
+# OTM_FWS_>0_0_0      --> 16D32 # DONE
+# PTM_SPF_16-31_0_0   --> 16D32 # DONE
+
+# check missing mesh sizes in SAS data
+metier_2013_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
+  select(YEAR, alus, alusnimi, SILMAKOKO, METIER6, CODE) |> 
+  filter(is.na(SILMAKOKO)) |> 
+  arrange(alus,YEAR,METIER6) |>
+  flextable() |> autofit() |> set_caption("ships with missing net sizes")
+
+# save to der folder
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
+rm(mesh.sizes, mesh.lookup, active.passive)
+invisible(gc())
 
 #.------------------------------------------------------------------------------
-#                   6. fish column names                                   ####    
+#                   6. ADD ICES AREAS                                       ####    
 #.------------------------------------------------------------------------------
 
-# https://www.fao.org/fishery/en/collection/asfis
-# lookup table for Finnish fish names
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#.------------------------------------------------------------------------------
-#                   XX. TO DO                                                ####    
-#.------------------------------------------------------------------------------
-
-
-# need lookup to RUUTU: ices subdivision code is not sufficient for subdivision 28
-library(sf)
-ices.regions <- st_read("orig/ices_grid.gpkg", layer="ices_areas")
-ices.sub <- st_read("orig/ices_grid.gpkg", layer="ices_sub")
-
-library(sf)
-
-areas <- seq(22,32)
+# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
+areas <- seq(23,32)
 
 ewkb_to_sf <- function(data) {
   return(st_as_sfc(structure(data, class="WKB"), EWKB=T))
@@ -316,8 +346,35 @@ icesRectangle <- icesRectangle[icesRectangle$statistical_area_name %in% areas,]
 icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
 
 icesRectangle <- st_as_sf(icesRectangle) |> st_transform(epsg = 4326)
-ices.regions <- st_transform(ices.regions, epsg = 4326)
 
-sf_use_s2(FALSE)
+# test statistical areas
+plot(icesRectangle["statistical_area_name"])
 
-test <- ices.regions |> st_join(icesRectangle, join=st_intersects)
+# fix ices full area codes for region 28
+icesRectangle <- icesRectangle |> mutate(area_code_full = case_when(
+  ices_name %in% c("45H2","45H3","45H4","44H2","44H3","44H4","43H2","43H3","43H4","42H3") ~ "27.3.d.28.1",
+  rdb_area_code == "27.3.d.28" & !ices_name %in% c("45H2","45H3","45H4","44H2","44H3","44H4","43H2","43H3","43H4","42H3") ~ "27.3.d.28.2",
+  .default = as.character(rdb_area_code)
+))
+
+icesRectangle$rktl_name <- as.numeric(icesRectangle$rktl_name)
+
+# test full area
+plot(icesRectangle["area_code_full"])
+
+# join to sas data
+metier_2013_15 <- metier_2013_15 |> 
+  left_join(icesRectangle |> 
+              select(rktl_name, area_code_full) |> st_drop_geometry(), 
+            by=c("ruutu"="rktl_name"))
+
+# save to der folder
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
+#.------------------------------------------------------------------------------
+#                   7. fish column names                                   ####    
+#.------------------------------------------------------------------------------
+
+# https://www.fao.org/fishery/en/collection/asfis
+# lookup table for Finnish fish names
+
