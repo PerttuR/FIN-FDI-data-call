@@ -27,6 +27,8 @@ run.year = 2025
 
 # Output folder
 path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
+# Orig folder
+path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
 #.------------------------------------------------------------------------------
 #                   1. get data from G or C drive                           ####              
@@ -67,6 +69,16 @@ invisible(gc())
 #save to der folder
 saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
+#import species lookup table ASFIS_sp_2024.xlsx
+
+species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
+head(species_lookup)
+
+# save it as .rds
+saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
+
+source("db.r")
+
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
 table.list <- substr(table.list, 30, nchar(table.list)-3)
@@ -81,6 +93,10 @@ message("Newest schema is from: ", schemadate)
 # Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
 dcprodschema <- paste0(schemadate, "-dcprod")
 invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
+
+# Write species lookup table to Luke LOGBOOK database
+dcprodschema <- paste0(schemadate, "-dcprod")
+invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = TRUE))
 
 
 #.------------------------------------------------------------------------------
