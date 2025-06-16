@@ -446,8 +446,21 @@ saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
 # lookup table for Finnish fish names
 
 # grab table from database
+# data is not in the newest schema!
 
-### !!! JCD is HERE !!! ####
+fish.lookup <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""), 
+                             table="species_lookup", dbname = "kake_siirto")
+
+fish.lookup <- fish.lookup |> filter(!is.na(Finnish_name)) |> 
+  arrange(Alpha3_Code) |> select(Alpha3_Code, Scientific_Name, Finnish_name, SAS_name)
+
+# create column names
+
+fish.lookup <- fish.lookup |> mutate(KG_LABEL = paste0("SVT_KG_",Alpha3_Code),
+                      VALUE_LABEL = paste0("SVT_VALUE_",Alpha3_Code),
+                      IN_DCPROD = case_when(
+                      # !!! I AM HERE JCD ####  
+                      )) 
 
 #.------------------------------------------------------------------------------
 #                   9. calculate fishing days                               ####    
