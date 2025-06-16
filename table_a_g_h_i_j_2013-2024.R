@@ -107,13 +107,13 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
 
-# Table A years 2013-2015
-tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
-tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
-tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
-
-tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
-names(tableA1315) <- toupper(names(tableA1315))
+# Table A years 2013-2015 - see import_sas_metier_2013-15.R
+# tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
+# tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
+# tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
+# 
+# tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
+# names(tableA1315) <- toupper(names(tableA1315))
 
 
 #--------------------------
@@ -227,7 +227,6 @@ akt1 <- left_join(akt1, midpoints,copy = TRUE)
 
 akt1 <- akt1 %>% rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) %>% select(-ID, RECTANGLE)
 
-
 # Extract valid level 6 metiers 
 valid_metiers <<- data.table::fread("https://raw.githubusercontent.com/ices-eg/RCGs/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv")$Metier_level6
 valid_metiers <<- as.data.frame(valid_metiers)
@@ -240,12 +239,12 @@ print(missing)
 
 # Change the needed metiers into new format
 akt1 <- akt1 %>%  mutate(METIER = case_when(
-  METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0",
-  METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_>=16_0_0",
-  METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_>0_0_0",
-  METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_>0_0_0",
-  METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_100-119_0_0",
-  METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_100-119_0_0",
+  METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0",         # typo
+  METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0", # old code
+  METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0", # old code
+  METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0", # old code
+  METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120", # old code
+  METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120", # old code
   TRUE ~ METIER))  # All other values remain unchanged
 
 # AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
