@@ -248,10 +248,13 @@ akt1 <- akt1 %>%  mutate(METIER = case_when(
   METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_100-119_0_0",
   TRUE ~ METIER))  # All other values remain unchanged
 
+# AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
 
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
 #-------------------------------------------------------------------------------
+
+# add new 2013-15 table here
 
 a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
