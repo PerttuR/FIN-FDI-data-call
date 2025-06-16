@@ -69,13 +69,7 @@ invisible(gc())
 #save to der folder
 saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
-#import species lookup table ASFIS_sp_2024.xlsx
-
-species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
-head(species_lookup)
-
-# save it as .rds
-saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
+dim(metier_2013_15)
 
 source("db.r")
 
@@ -167,21 +161,22 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 
 ship.length <- metier_2013_15 |> select(KALASTUSVUOSI, alus, alusnimi, vessel_length) |> distinct() |>
   left_join(kapasiteetti |> select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI), 
-            by= c("KALASTUSVUOSI"="VUOSI","alus"="ULKOINENTUNNUS")) |>
+            by= c("KALASTUSVUOSI"="VUOSI","alus"="ULKOINENTUNNUS","alusnimi"="NIMI")) |>
   mutate(DIFF = if_else(vessel_length != VLENGTH_FDI, 1, 0),
          VESSEL_LENGTH = case_when(
            is.na(vessel_length) ~ VLENGTH_FDI,
            vessel_length != VLENGTH_FDI ~ VLENGTH_FDI,
            .default = vessel_length
-         )) 
+         )) |> distinct()
 
 # check 2014 GOLDEN ROSE - should now be NA, but vessel_length is correct
 
 # link ship length lookup to table
 metier_2013_15 <- metier_2013_15 |>
-                    left_join(ship.length |> select(KALASTUSVUOSI, alus, VESSEL_LENGTH), 
+                    left_join(ship.length |> select(KALASTUSVUOSI, alus, alusnimi, VESSEL_LENGTH), 
                               by=c("KALASTUSVUOSI"="KALASTUSVUOSI",
-                                   "alus"="alus")) |>
+                                   "alus"="alus",
+                                   "alusnimi"="alusnimi")) |>
                     relocate(VESSEL_LENGTH, .after = QUARTER)
 
 # checking records
@@ -205,29 +200,46 @@ metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg
 metier.lookup <- metier.lookup |> 
               mutate(Used_by_country_in_RDB = case_when(
                 Metier_level6 == "PTM_SPF_16-31_0_0" & RCG == "BALT" ~ paste0(Used_by_country_in_RDB,", FIN"),
-                .default = as.character(Used_by_country_in_RDB)))
+                .default = as.character(Used_by_country_in_RDB))) |> 
+              select(RCG,Metier_level6,Old_code,Used_by_country_in_RDB,Metier_level5,Description)
 
-metier.lookup.fin <- metier.lookup |> filter(grepl("FIN", Used_by_country_in_RDB)) |>
-                       select(!X:X.17)
+metier.lookup.fin <- metier.lookup |> filter(grepl("FIN",Used_by_country_in_RDB))
 
 # metier class PTM_SPF is missing
 # reported issue on Github https://github.com/ices-eg/RCGs/issues/184
 # metier.lookup.fin |> select(RCG, Metier_level5, Metier_level6, Used_by_country_in_RDB) |> 
 #  kable(caption="Official metier classes for Finland")
 
+metier_check <- metier_2013_15 |> 
+  select(metier) |> distinct() |> 
+  left_join(metier.lookup |> filter(RCG == "BALT"), by = c("metier" = "Metier_level6"), keep = T) |>
+  filter(is.na(Metier_level6))
+
+metier_check |> flextable()
+
 # save to DB
 invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE)) # !!! PETRI TO ADD ####
 
 # overwrite MISSING metier for tag for one single vessel with one missing metier
+# replace old codes with new ones
+
 metier_2013_15 <- metier_2013_15 |> 
-  mutate(metier = if_else(metier == "MISSING", "GNS_FWS_>0_0_0", metier))
+  mutate(metier = case_when(
+    metier == "MISSING" ~ "GNS_FWS_>0_0_0",
+    metier == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120",
+    metier == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0",
+    metier == "GNS_SPF_16-109" ~ "GNS_SPF_32-89_0_0",
+    metier == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0",
+    metier == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0",
+    metier == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120",
+    TRUE ~ metier))    
 
 # compare metier classes
 metier_2013_15 |> select(YEAR, QUARTER, alus, alusnimi, metier) |> 
   mutate(METIER5 = stringr::str_sub(metier, 1,7))  |> 
   left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |> 
   mutate(check = if_else(metier != Metier_level6, 1,0)) |> 
-  filter(check == 1 | is.na(check)) |>
+  #filter(check == 1 | is.na(check)) |>
   select(metier, Metier_level6) |> distinct() |> 
   flextable() |> autofit() |>
   set_caption("Differences between SAS METIER and official metier level 6 names") |>
@@ -244,7 +256,7 @@ metier_2013_15 <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(metier, 1,
 metier_2013_15 |> count(METIER6) |> flextable() |> autofit() |>
   set_caption("Metier 6 classes in metier_2013_15")
 
-#save to der folder
+# save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 #.------------------------------------------------------------------------------
@@ -302,14 +314,14 @@ metier_2013_15 <- metier_2013_15 |> mutate(SILMAKOKO = case_when(
 # check missing mesh sizes in SAS data
 metier_2013_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
   select(YEAR, PVM, alus, alusnimi, SILMAKOKO, METIER6, METIER5, METIER4) |> 
-  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,FROM,TO))) |> 
+  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
   filter(is.na(CODE)) |>
   distinct() |> select(-c(METIER5,METIER4,TYPE,MESH,GEARS,TO,FROM)) |> 
   arrange(alus,YEAR,PVM, METIER6) |>
   flextable() |> autofit() |> set_caption("ships with missing net sizes")
 
 # join mesh size range codes
-metier_2013_15 <- metier_2013_15 |> left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,FROM,TO)))
+metier_2013_15 <- metier_2013_15 |> left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM)))
 
 # assign CODE if KOKOSILMA IS NA
 metier_2013_15 <- metier_2013_15 |> mutate(CODE = case_when(
@@ -338,12 +350,12 @@ metier_2013_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
   select(YEAR, alus, alusnimi, SILMAKOKO, METIER6, CODE) |> 
   filter(is.na(SILMAKOKO)) |> 
   arrange(alus,YEAR,METIER6) |>
-  flextable() |> autofit() |> set_caption("ships with missing net sizes")
+  flextable() |> autofit() |> set_caption("imputed codes for ships with missing net sizes")
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
-rm(mesh.sizes, mesh.lookup, active.passive)
+rm(mesh.sizes, mesh.lookup, active.passive, metier_check, metier.lookup, metier.lookup.fin)
 invisible(gc())
 
 #.------------------------------------------------------------------------------
@@ -351,6 +363,7 @@ invisible(gc())
 #.------------------------------------------------------------------------------
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
+
 areas <- seq(23,32)
 
 ewkb_to_sf <- function(data) {
@@ -381,16 +394,70 @@ plot(icesRectangle["area_code_full"])
 # join to sas data
 metier_2013_15 <- metier_2013_15 |> 
   left_join(icesRectangle |> 
-              select(rktl_name, area_code_full) |> st_drop_geometry(), 
+              select(rktl_name, ices_name, area_code_full) |> st_drop_geometry(), 
             by=c("ruutu"="rktl_name"))
+
+# testing
+metier_2013_15 |> count(area_code_full,ices_name) |> flextable()
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
+rm(icesRectangle,areas,ewkb_to_sf)
+invisible(gc())
+
 #.------------------------------------------------------------------------------
-#                   7. fish column names                                   ####    
+#                   7. longitude / latitude                                 ####    
 #.------------------------------------------------------------------------------
+
+# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
+
+source("spatial.R")
+
+midpoints <- latlon(metier_2013_15$ices_name, midpoint=TRUE)
+
+metier_2013_15 <- tibble::rowid_to_column(metier_2013_15, "ID")
+midpoints <- tibble::rowid_to_column(midpoints, "ID")
+
+metier_2013_15 <- left_join(metier_2013_15, midpoints, copy = TRUE)
+
+metier_2013_15 <- metier_2013_15 |> rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) |> 
+  select(-ID)
+
+# save to der folder
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
+rm(midpoints)
+invisible(gc())
+
+#.------------------------------------------------------------------------------
+#                   8. fish column names                                   ####    
+#.------------------------------------------------------------------------------
+
+#import species lookup table ASFIS_sp_2024.xlsx
+
+species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
+head(species_lookup)
+
+# save it as .rds
+saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
 
 # https://www.fao.org/fishery/en/collection/asfis
 # lookup table for Finnish fish names
+
+# column names to match
+> names(akt1)
+ [1] "YEAR"              "ULKOINENTUNNUS"    "KALASTUSPAIVAT"    "MERIPAIVAT"        "PAAKONETEHO"       "VETOISUUS"        
+ [7] "KALASTUSAIKAHH"    "FT_REF"            "VESSEL_LENGTH"     "FISHING_TECH"      "GEAR_TYPE"         "TARGET_ASSEMBLAGE"
+[13] "METIER"            "SVT_KG_HER"        "SVT_KG_SPR"        "SVT_KG_COD"        "SVT_KG_FLE"        "SVT_KG_TUR"       
+[19] "SVT_KG_PLN"        "SVT_KG_SAL"        "SVT_KG_TRS"        "SVT_KG_SME"        "SVT_KG_FBM"        "SVT_KG_FID"       
+[25] "SVT_KG_FRO"        "SVT_KG_FPI"        "SVT_KG_FPE"        "SVT_KG_FPP"        "SVT_KG_FBU"        "SVT_KG_TRR"       
+[31] "SVT_KG_FVE"        "SVT_KG_ELE"        "SVT_KG_FIN"        "SVT_KG_TOTAL"      "SVT_VALUE_HER"     "SVT_VALUE_SPR"    
+[37] "SVT_VALUE_COD"     "SVT_VALUE_FLE"     "SVT_VALUE_TUR"     "SVT_VALUE_PLN"     "SVT_VALUE_SAL"     "SVT_VALUE_TRS"    
+[43] "SVT_VALUE_SME"     "SVT_VALUE_FBM"     "SVT_VALUE_FID"     "SVT_VALUE_FRO"     "SVT_VALUE_FPI"     "SVT_VALUE_FPE"    
+[49] "SVT_VALUE_FPP"     "SVT_VALUE_FBU"     "SVT_VALUE_TRR"     "SVT_VALUE_FVE"     "SVT_VALUE_ELE"     "SVT_VALUE_FIN"    
+[55] "RECTANGLE"         "COUNTRY"           "QUARTER"           "MESH_SIZE_RANGE"   "METIER_7"          "SUPRA_REGION"     
+[61] "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "SPECON_TECH"       "DEEP"              "RECTANGLE_TYPE"   
+[67] "C_SQUARE"          "LATITUDE"          "LONGITUDE"
+
 
