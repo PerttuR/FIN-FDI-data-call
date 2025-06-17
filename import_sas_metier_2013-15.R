@@ -544,6 +544,9 @@ metier.fish <- metier.fish |> mutate(VALUE = case_when(
           TRUE ~ -999
 ))
 
+# any weird ones?
+# metier.fish |> filter(VALUE == -999) |> count(YEAR,SPECIES)
+
 metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES) |>
   adorn_totals("row") |> flextable() |> 
   set_caption("fish species without commercial value in certain year")
