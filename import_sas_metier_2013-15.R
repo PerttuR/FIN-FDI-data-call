@@ -452,15 +452,104 @@ fish.lookup <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""),
                              table="species_lookup", dbname = "kake_siirto")
 
 fish.lookup <- fish.lookup |> filter(!is.na(Finnish_name)) |> 
-  arrange(Alpha3_Code) |> select(Alpha3_Code, Scientific_Name, Finnish_name, SAS_name)
+  arrange(Alpha3_Code) |> select(Alpha3_Code, Scientific_Name, English_name, Finnish_name, SAS_name)
 
 # create column names
 
 fish.lookup <- fish.lookup |> mutate(KG_LABEL = paste0("SVT_KG_",Alpha3_Code),
                       VALUE_LABEL = paste0("SVT_VALUE_",Alpha3_Code),
                       IN_DCPROD = case_when(
-                      # !!! I AM HERE JCD ####  
+                        Alpha3_Code == "HER" ~ "Y",
+                        Alpha3_Code == "SPR" ~ "Y",
+                        Alpha3_Code == "COD" ~ "Y",
+                        Alpha3_Code == "FLE" ~ "Y",
+                        Alpha3_Code == "TUR" ~ "Y",
+                        Alpha3_Code == "PLN" ~ "Y",
+                        Alpha3_Code == "SAL" ~ "Y",
+                        Alpha3_Code == "TRS" ~ "Y",
+                        Alpha3_Code == "SME" ~ "Y",
+                        Alpha3_Code == "FBM" ~ "Y",
+                        Alpha3_Code == "FID" ~ "Y",
+                        Alpha3_Code == "FRO" ~ "Y",
+                        Alpha3_Code == "FPI" ~ "Y",
+                        Alpha3_Code == "FPE" ~ "Y",
+                        Alpha3_Code == "FPP" ~ "Y",
+                        Alpha3_Code == "FBU" ~ "Y",
+                        Alpha3_Code == "TRR" ~ "Y",
+                        Alpha3_Code == "FVE" ~ "Y",
+                        Alpha3_Code == "ELE" ~ "Y",
+                        Alpha3_Code == "FIN" ~ "Y",
+                        .default = as.character("NO")
                       )) 
+
+# metier_2013_15 |> filter(Punakampela != 0) |> View()
+# metier_2013_15 |> filter(Valkoturska != 0) |> View()
+
+# rename fish columns (add as duplicate)
+
+metier_2013_15 <- metier_2013_15 |> mutate(
+                        SVT_KG_COD = if_else(is.na(Turska),0,Turska),
+                        SVT_KG_ELE = if_else(is.na(Ankerias),0,Ankerias),   
+                        SVT_KG_FBM = if_else(is.na(Lahna),0,Lahna),
+                        SVT_KG_FBU = if_else(is.na(Made),0,Made),
+                        SVT_KG_FID = if_else(is.na(Sayne),0,Sayne),
+                        SVT_KG_FIN = if_else(is.na(muu_kala),0,muu_kala),
+                        SVT_KG_FLE = if_else(is.na(Kampela),0,Kampela),
+                        SVT_KG_FPE = if_else(is.na(Ahven),0,Ahven),
+                        SVT_KG_FPI = if_else(is.na(Hauki),0,Hauki),
+                        SVT_KG_FPP = if_else(is.na(Kuha),0,Kuha),
+                        SVT_KG_FRO = if_else(is.na(Sarki),0,Sarki),
+                        SVT_KG_FVE = if_else(is.na(Muikku),0,Muikku),
+                        SVT_KG_HER = if_else(is.na(Silakka),0,Silakka),
+                        SVT_KG_PLE = if_else(is.na(Punakampela),0,Punakampela),
+                        SVT_KG_PLN = if_else(is.na(Siika),0,Siika),
+                        SVT_KG_SAL = if_else(is.na(Lohi_kg),0,Lohi_kg),
+                        SVT_KG_SME = if_else(is.na(Kuore),0,Kuore),
+                        SVT_KG_SPR = if_else(is.na(Kilohail),0,Kilohail),
+                        SVT_KG_TRR = if_else(is.na(kirjoloh),0,kirjoloh),
+                        SVT_KG_TRS = if_else(is.na(Taimen),0,Taimen),
+                        SVT_KG_TUR = if_else(is.na(Pkamp),0,Pkamp),
+                        SVT_KG_WHG = if_else(is.na(Valkoturska),0,Valkoturska),
+                        SVT_KG_TOTAL = SVT_KG_COD+SVT_KG_ELE+SVT_KG_FBM+SVT_KG_FBU+
+                          SVT_KG_FID+SVT_KG_FIN+SVT_KG_FLE+SVT_KG_FPE+SVT_KG_FPI+
+                          SVT_KG_FPP+SVT_KG_FRO+SVT_KG_FVE+SVT_KG_HER+SVT_KG_PLE+
+                          SVT_KG_PLN+SVT_KG_SAL+SVT_KG_SME+SVT_KG_SPR+SVT_KG_TRR+
+                          SVT_KG_TRS+SVT_KG_TUR+SVT_KG_WHG)
+
+# dim(metier_2013_15)
+
+# wide to long table
+metier_2013_15 <- tibble::rowid_to_column(metier_2013_15, "ID")
+
+metier.fish <- metier_2013_15 |> select(ID, YEAR, ices, SVT_KG_COD:SVT_KG_WHG) |>
+                rename_with(~gsub("SVT_KG_", "", .x)) |>
+                pivot_longer(!ID:ices, names_to = "SPECIES", values_to = "KG")
+
+# dim(metier.fish)
+
+# get commercial value from DCPROD lookup table
+commerical.value <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""), 
+                            table="keskihinnat_2025_05_06", dbname = "kake_siirto")
+
+# join area specific price
+metier.fish <- metier.fish |> left_join(commerical.value |> select(-KLAJI,-HUOM), 
+                            by=c("YEAR"="VUOSI", "ices"="ICES_ALUE", "SPECIES"="FAO_KOODI"))
+
+# calculate value
+metier.fish <- metier.fish |> mutate(VALUE = case_when(
+          KG > 0 & !is.na(KESKIHINTA) ~ KG*KESKIHINTA,
+          KG > 0 & is.na(KESKIHINTA) ~ KG*KESKIHINTA_KOKO_MERIALUE,
+          KG > 0 & is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE) ~ NA,
+          KG == 0 ~ 0,
+          TRUE ~ -999
+))
+
+metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES) |>
+  adorn_totals("row") |> flextable() |> 
+  set_caption("fish species without commercial value in certain year")
+
+
+
 
 #.------------------------------------------------------------------------------
 #                   9. calculate fishing days                               ####    
