@@ -549,7 +549,8 @@ metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES) |>
   set_caption("fish species without commercial value in certain year")
 
 
-
+# save to der folder
+# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 #.------------------------------------------------------------------------------
 #                   9. calculate fishing days                               ####    
