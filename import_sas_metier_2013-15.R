@@ -436,11 +436,11 @@ invisible(gc())
 
 #import species lookup table ASFIS_sp_2024.xlsx
 
-species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
-head(species_lookup)
-
-# save it as .rds
-saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
+# species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
+# head(species_lookup)
+# 
+# # save it as .rds
+# saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
 
 # https://www.fao.org/fishery/en/collection/asfis
 # lookup table for Finnish fish names
@@ -528,19 +528,33 @@ metier.fish <- metier_2013_15 |> select(ID, YEAR, ices, SVT_KG_COD:SVT_KG_WHG) |
 # dim(metier.fish)
 
 # get commercial value from DCPROD lookup table
-commerical.value <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""), 
+commercial.value <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""), 
                             table="keskihinnat_2025_05_06", dbname = "kake_siirto")
 
+commercial.value <- commercial.value |> select(FAO_KOODI,VUOSI,ICES_ALUE,KESKIHINTA,KESKIHINTA_KOKO_MERIALUE) |>
+                      filter(FAO_KOODI %in% c("COD", "ELE", "FBM", "FBU", "FID", "FIN", "FLE", "FPE",
+                                              "FPI", "FPP", "FRO", "FVE", "HER", "PLE", "PLN", "SAL",
+                                              "SME", "SPR", "TRR", "TRS", "TUR", "WHG")) |> 
+                      arrange(FAO_KOODI,VUOSI,ICES_ALUE)
+
+# create lookup of all combination years, ices, fish
+# outer join to commericial.value
+# fill in empty rows
+# for eel use €10/kg as expert judgment for all years
+
+# check
+commercial.value |> filter(is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE)) |> View()
+commercial.value |> filter(FAO_KOODI == "ELE") |> fill(VUOSI,ICES_ALUE) |> View()
+
 # join area specific price
-metier.fish <- metier.fish |> left_join(commerical.value |> select(-KLAJI,-HUOM), 
+metier.fish <- metier.fish |> left_join(commercial.value,  
                             by=c("YEAR"="VUOSI", "ices"="ICES_ALUE", "SPECIES"="FAO_KOODI"))
 
 # calculate value
 metier.fish <- metier.fish |> mutate(VALUE = case_when(
-          KG > 0 & !is.na(KESKIHINTA) ~ KG*KESKIHINTA,
-          KG > 0 & is.na(KESKIHINTA) ~ KG*KESKIHINTA_KOKO_MERIALUE,
-          KG > 0 & is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE) ~ NA,
-          KG == 0 ~ 0,
+          !is.na(KESKIHINTA) ~ KG*KESKIHINTA,
+          is.na(KESKIHINTA) ~ KG*KESKIHINTA_KOKO_MERIALUE,
+          is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE) ~ NA,
           TRUE ~ -999
 ))
 
@@ -551,7 +565,12 @@ metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES) |>
   adorn_totals("row") |> flextable() |> 
   set_caption("fish species without commercial value in certain year")
 
+tag <- metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES)
 
+test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR), max(tag$YEAR)+1) &
+                        FAO_KOODI %in% tag$SPECIES) |> arrange(FAO_KOODI,VUOSI, ICES_ALUE)
+  
+  
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
