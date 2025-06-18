@@ -554,6 +554,7 @@ write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx")
 #                   4. TABLE H (Landings by rectangle)                      ####   
 #-------------------------------------------------------------------------------
 
+# some TOTAL in SPECIES need to be removed
 
 h <- akt1 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF) #not needed in table H
 
