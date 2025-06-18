@@ -496,6 +496,8 @@ g2 <- g %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_T
       across(c(TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA),~ replace_na(., "NK")))
 
 # 0's in HRSEA, GTHRSEA or KWHRSEA
+# missing hours and engine variables
+
 tmp <- g2 |> filter(HRSEA == "0" | GTHRSEA == "0" | KWHRSEA == "0") |> tally() |> pull()
 message(paste("0's in HRSEA, GTHRSEA or KWHRSEA: ",tmp))
 
@@ -510,7 +512,7 @@ message(paste("0's in HRSEA, GTHRSEA or KWHRSEA: ",tmp))
 # HRSEA, GTHRSEA or KWHRSEA exist, but other values are 0
 tmp <- g3 |> filter(YEAR %in% seq(2016,2024)) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
-         TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
+         TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, CONFIDENTIAL) |> 
   filter((TOTSEADAYS == "0" | TOTKWDAYSATSEA == "0" | TOTGTDAYSATSEA == "0" |
             TOTFISHDAYS == "0" | TOTKWFISHDAYS == "0" | TOTGTFISHDAYS == "0") & 
            ((HRSEA != "0" | GTHRSEA != "0" | KWHRSEA != "0") & 
@@ -519,14 +521,33 @@ tmp <- g3 |> filter(YEAR %in% seq(2016,2024)) |>
 message(paste("Mismatches in TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, 
             TOTFISHDAYS, TOTKWFISHDAYS or TOTGTFISHDAYS: ",tmp))
 
-# fix mismatches ????
+# fix mismatches
+# 0's from logbook fec.R script ?
+g4 <- g3 |> mutate(TOTSEADAYS     = if_else(TOTSEADAYS == "0", "NK", TOTSEADAYS), 
+                   TOTKWDAYSATSEA = if_else(TOTKWDAYSATSEA == "0", "NK", TOTKWDAYSATSEA), 
+                   TOTGTDAYSATSEA = if_else(TOTGTDAYSATSEA == "0", "NK", TOTGTDAYSATSEA),
+                   TOTFISHDAYS    = if_else(TOTFISHDAYS == "0", "NK", TOTFISHDAYS), 
+                   TOTKWFISHDAYS  = if_else(TOTKWFISHDAYS == "0", "NK", TOTKWFISHDAYS), 
+                   TOTGTFISHDAYS  = if_else(TOTGTFISHDAYS == "0", "NK", TOTGTFISHDAYS))
+
+# check
+tmp <- g4 |> filter(YEAR %in% seq(2016,2024)) |> 
+  select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
+         TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, CONFIDENTIAL) |> 
+  filter((TOTSEADAYS == "0" | TOTKWDAYSATSEA == "0" | TOTGTDAYSATSEA == "0" |
+            TOTFISHDAYS == "0" | TOTKWFISHDAYS == "0" | TOTGTFISHDAYS == "0") & 
+           ((HRSEA != "0" | GTHRSEA != "0" | KWHRSEA != "0") & 
+              (HRSEA != "NK" | GTHRSEA != "NK" | KWHRSEA != "NK"))) |> tally() |> pull()
+
+message(paste("Mismatches in TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, 
+            TOTFISHDAYS, TOTKWFISHDAYS or TOTGTFISHDAYS: ",tmp))
 
 # Put the variables in the correct order:
-table_G <- g3 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, TOTVES, CONFIDENTIAL)
+table_G <- g4 %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, TOTVES, CONFIDENTIAL)
 
 
 # Write the resulting table G
-write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT_test.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
+write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
 
 
 #-------------------------------------------------------------------------------
