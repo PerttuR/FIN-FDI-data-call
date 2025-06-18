@@ -62,6 +62,12 @@ Now we have the issue DTMT text. Everybody could check it out..
 # CASE 2: HRSEA, KWHRSEA, GTHRSEA = "NK", but TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTKWFISHDAYS, TOTGTFISHDAYS contain data
 # CASE 3: 16 cases where TOTGTDAYSATSEA, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA are 0
 
+SOLUTION in FDI: 0 values mismatching other variables are set to "NK" which is ok in FDI specs.
+
+TO DO: Track down in DCPROD: WHY missing values occurr and why they are set to 0? (Bad dates used perhaps in fec.R)
+TO Do: Make imputation /or correction rules if possible in DCPROD to tackle 0 values or other missing variables
+
+
 # ISSUE 3) ####
 
 Table A +?
