@@ -79,17 +79,36 @@ comp.IG |> filter(DIFF > 0) |> flextable()
 # 
 # G_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/G_table_2013_2022_SAS.csv")
 
-G_table |> filter(YEAR %in% seq(2016,2024)) |> 
+# Days at sea/
+#   gtdaysatsea/
+#   kwdaysatsea
+# 
+# or/and
+# 
+# fishing days/
+#   gtfishdays/
+#   kwfishdays
+# 
+# reported as "0" value
+# 
+# while
+# 
+# hours at sea/
+#   gthrsea/
+#   kwhrsea
+# 
+# reported
+
+g2 |> filter(YEAR %in% seq(2016,2024)) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
          TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
-  filter(TOTSEADAYS == "NK" | TOTKWDAYSATSEA == "NK" | TOTGTDAYSATSEA == "NK" |
-               TOTFISHDAYS == "NK" | TOTKWFISHDAYS == "NK" | TOTGTFISHDAYS == "NK" |
-           HRSEA == "NK" | KWHRSEA == "NK" | GTHRSEA == "NK") |> View()
+  filter((TOTSEADAYS == "0" | TOTKWDAYSATSEA == "0" | TOTGTDAYSATSEA == "0" |
+           TOTFISHDAYS == "0" | TOTKWFISHDAYS == "0" | TOTGTFISHDAYS == "0") & 
+          (HRSEA != "0" | GTHRSEA != "0" | KWHRSEA != "0")) |> View()
 
-G_table |> filter(YEAR %in% seq(2016,2024)) |> 
+# 114 entries
+
+g2 |> filter(YEAR %in% seq(2016,2024)) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
          TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
-  filter(TOTSEADAYS == 0 | TOTKWDAYSATSEA == 0 | TOTGTDAYSATSEA == 0 |
-           TOTFISHDAYS == 0 | TOTKWFISHDAYS == 0 | TOTGTFISHDAYS == 0 |
-           HRSEA == 0 | KWHRSEA == 0 | GTHRSEA == 0) |> View()
-
+  filter(HRSEA == "0" | GTHRSEA == "0" | KWHRSEA == "0") |> View()
