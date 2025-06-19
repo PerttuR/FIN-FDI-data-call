@@ -107,13 +107,13 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
 
-# Table A years 2013-2015 - see import_sas_metier_2013-15.R
-# tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
-# tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
-# tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
-# 
-# tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
-# names(tableA1315) <- toupper(names(tableA1315))
+#Table A years 2013-2015 - see import_sas_metier_2013-15.R
+tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
+tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
+tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
+
+tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
+names(tableA1315) <- toupper(names(tableA1315))
 
 
 #--------------------------
