@@ -8,8 +8,8 @@ library(janitor)
 library(officer)
 library(openxlsx)
 
-G_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/G_table_2013_2022_SAS.csv")
-I_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/I_table_2013_2022_SAS.csv")
+# G_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/G_table_2013_2022_SAS.csv")
+# I_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/I_table_2013_2022_SAS.csv")
 
 run.year = 2025
 # Folders
@@ -17,10 +17,11 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep, ru
 path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
 path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
-G_table <- read.csv(paste0(path_orig,"G_table_2013_2022_SAS.csv"))
-I_table <- read.csv(paste0(path_orig,"I_table_2013_2022_SAS.csv"))
+G_table.13 <- read.csv(paste0(path_orig,"G_table_2013_2022_SAS.csv")) |> filter(YEAR==2013)
+I_table.13 <- read.csv(paste0(path_orig,"I_table_2013_2022_SAS.csv")) |> filter(YEAR==2013)
 
 ## check metiers where I bigger G ####
+
 sum.G <- G_table |> filter(YEAR == 2013) |> 
   group_by(METIER) |> 
   summarise(TOTFISHDAYS.G = sum(TOTFISHDAYS, na.rm=TRUE)) |> 
