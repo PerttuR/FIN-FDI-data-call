@@ -54,7 +54,7 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
 #----------- set years ---------------
 
-years <- c(2016:run.year-1)
+years <- seq(2016, run.year-1)
 
 
 #----------- get data ---------------
