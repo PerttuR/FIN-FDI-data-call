@@ -640,8 +640,21 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 #                   6. TABLE J (Capacity and fleet segment effort)          ####               
 #-------------------------------------------------------------------------------
 
-# Select variables needed for J table
+#add 2023-2025 sas data
+
+j_sas <- readRDS(paste0(path_der,"metier_2013_15_for_J.rds"))
+
+j_sas <- j_sas %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
+
+#j_sas <- j_sas %>% select("YEAR","ULKOINENTUNNUS"="alus","KALASTUSPAIVAT","MERIPAIVAT","PAAKONETEHO","VETOISUUS","KALASTUSAIKAHH",
+#                          "FT_REF","VESSEL_LENGTH","FISHING_TECH","GEAR_TYPE","TARGET_ASSEMBLAGE","METIER","COUNTRY","QUARTER",
+#                          "MESH_SIZE_RANGE","METIER_7","SUPRA_REGION","SUB_REGION","EEZ_INDICATOR","GEO_INDICATOR","SPECON_TECH","DEEP")
+
+
+# Select variables needed for J table from akt1 (DCPROD active vessels 2016 onwards):
 j <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
+
+# Select variables needed for J table from metier_sas (2013-2015 active vessels 2013-2015):
 
 # from capacity table some needed variables
 kap <- kapasiteetti %>% filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) %>% select(

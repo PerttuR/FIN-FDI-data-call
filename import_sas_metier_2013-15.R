@@ -34,26 +34,26 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #                   1. get data from G or C drive                           ####              
 #.------------------------------------------------------------------------------
 
-for (i in 2013:2015){
-  
-  tmp <- read_sas(paste0("G:/Luke2/Stat_kala_merikalastus/Metier/Data/pvkarvo",i,"_metier.sas7bdat")) |>
-                  mutate(KALASTUSVUOSI = i)
-  
-  assign(paste0("metier_",i), tmp)
-  
-} 
+#for (i in 2013:2015){
+#  
+#  tmp <- read_sas(paste0("G:/Luke2/Stat_kala_merikalastus/Metier/Data/pvkarvo",i,"_metier.sas7bdat")) |>
+#                  mutate(KALASTUSVUOSI = i)
+#  
+#  assign(paste0("metier_",i), tmp)
+#  
+#} 
 
 
-## alternative path
-# 
-# for (i in 2013:2015){
-#   
-#   tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
-#     mutate(KALASTUSVUOSI = i)
-#   
-#   assign(paste0("metier_",i), tmp)
-#   
-# } 
+# alternative path
+ 
+ for (i in 2013:2015){
+   
+   tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
+     mutate(KALASTUSVUOSI = i)
+   
+   assign(paste0("metier_",i), tmp)
+   
+ } 
 
 # combine into 1 table
 
@@ -84,13 +84,16 @@ table.dates <- grep("\\d{4}-\\d{2}-\\d{2}", table.dates, value=TRUE)
 schemadate <- max(table.dates)
 message("Newest schema is from: ", schemadate)
 
-# Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
-dcprodschema <- paste0(schemadate, "-dcprod")
-invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
+#NEED to write to DB only once. uncomment if needed
+#
+## Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
+#
+#dcprodschema <- paste0(schemadate, "-dcprod")
+#invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
 
-# Write species lookup table to Luke LOGBOOK database
-dcprodschema <- paste0(schemadate, "-dcprod")
-invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = TRUE))
+## Write species lookup table to Luke LOGBOOK database
+#dcprodschema <- paste0(schemadate, "-dcprod")
+#invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = TRUE))
 
 
 #.------------------------------------------------------------------------------
@@ -217,8 +220,8 @@ metier_check <- metier_2013_15 |>
 
 metier_check |> flextable()
 
-# save to DB
-invisible(write.dbTable(dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE)) # !!! PETRI TO ADD ####
+# save to DB if renewed
+#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "fin_metier_DC2024", metier.lookup.fin, overwrite = FALSE)) # added to DB by Perttu 19-6-2025 ####
 
 # overwrite MISSING metier for tag for one single vessel with one missing metier
 # replace old codes with new ones
@@ -297,8 +300,8 @@ mesh.lookup <- active.passive |> filter(MESH != "NO") |> left_join(mesh.sizes, b
 
 mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size combinations")
 
-# save to DB
-invisible(write.dbTable(dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE)) # !!! PETRI TO ADD ####
+# save to DB if needed
+#invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE)) # added to DB by Perttu 19-06-2025 ####
 
 # checking for LINE metiers with mesh sizes
 metier_2013_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
@@ -517,6 +520,10 @@ metier_2013_15 <- metier_2013_15 |> mutate(
                           SVT_KG_TRS+SVT_KG_TUR+SVT_KG_WHG)
 
 # dim(metier_2013_15)
+
+#Save this for J aktive vessels:
+metier_2013_15_for_J <- metier_2013_15
+saveRDS(metier_2013_15_for_J, file = paste0(path_der,"metier_2013_15_for_J.rds"))
 
 # wide to long table
 metier_2013_15 <- tibble::rowid_to_column(metier_2013_15, "ID")
