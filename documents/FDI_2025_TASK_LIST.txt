@@ -113,7 +113,7 @@ DONE
 
 # ISSUE 10) ####
 
-2013 - 2015 Table J. Capacity and fleet segment effort TABLE is missing all INACTIVE vessels
+2013 - 2015 Table J. Capacity and fleet capasity TABLE is missing all INACTIVE vessels 2013 - 2015
 
 TO DO: import needed data from 2013-2015 sas datasets 
 
