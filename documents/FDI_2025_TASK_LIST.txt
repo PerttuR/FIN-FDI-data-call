@@ -1,5 +1,29 @@
 TODO and FIX in 2025 FDI data:
 
+# After Datacall timatable for corrections ####
+
+We will reopen the upload tool on the 7th of July and it will remain open until the operational deadline of 22nd August 2025 12:00 CET. During this period, you can resubmit the data. 
+Please bear in mind that we will only refresh the data checks on the following dates:
+
+•	14th of July
+•	28th of July
+•	11th of August
+•	18th of August
+•	20th of August
+•	21st of August
+
+# Link ####
+
+The data checks for submissions to the 2025 FDI Data Call are now available at 
+https://dcf.ec.europa.eu/data-experts_en#fdi 
+Please check the following sections:
+ 
+•	Upload Monitor
+•	Data_check_general.
+•	Data_Checks_Spatial.
+
+
+
 # ISSUE 0) ####
 
 Decision: we use the file: table_a_g_h_i_j_2013-2024.R for A, G , H, I and J :) DONE
