@@ -1,6 +1,6 @@
 TODO and FIX in 2025 FDI data:
 
-# After Datacall timatable for corrections ####
+# After Datacall timetable for corrections ####
 
 We will reopen the upload tool on the 7th of July and it will remain open until the operational deadline of 22nd August 2025 12:00 CET. During this period, you can resubmit the data. 
 Please bear in mind that we will only refresh the data checks on the following dates:
@@ -22,7 +22,37 @@ Please check the following sections:
 •	Data_check_general.
 •	Data_Checks_Spatial.
 
+# Data Check ISSUES 2025 ####
 
+# DC1 ###
+
+Table A / Table G: no effort in G fishing days /nor seadays in certain Domains, but catches occurr in A
+
+# DC2 ###
+
+Table A: no value (zero) on some small catches (could be natural)
+
+# DC3 ###
+
+Table A some Salmon discards are higher than landings (could be natural)
+
+# Spatial Checks ####
+
+# DC4 ###
+
+Table H landing values are higher than in TAble A (seems like mostly rounding?)
+
+# DC5 ###
+
+Total fishing days in Table I is higher than in Table G
+
+# DC6 ###
+
+Table H without corresponding Totfishdays in Table I
+
+
+
+# GENERIC ISSUES
 
 # ISSUE 0) ####
 
