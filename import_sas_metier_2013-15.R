@@ -15,6 +15,7 @@ library(stringr)   # string operations
 library(RCurl)     # get data from Github
 library(flextable) # html table in Viewer window
 library(sf)        # simple spatial features
+library(labelled)  # remove sas imported column labels
 
 source("db.r")
 
@@ -53,6 +54,98 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
    assign(paste0("metier_",i), tmp)
    
  } 
+
+# !!! ERROR!!!: differently labelled columns are not joined - need to fix this manually ####
+# change all column names to upper case
+
+names(metier_2013) <- toupper(names(metier_2013))
+names(metier_2014) <- toupper(names(metier_2014))
+names(metier_2015) <- toupper(names(metier_2015))
+
+# remove column labels
+var_label(metier_2013) <- NULL
+var_label(metier_2014) <- NULL
+var_label(metier_2015) <- NULL
+
+# match column names
+metier_2013 <- metier_2013 |> 
+                  select(ALUS, ALUSNIMI, KALASTUSKERTATUNNUS, PAIVAKIRJANRO, SIVUNRO, 
+                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, 
+                         PYYDYS, KALVYOH, PYYDLKM, PVM, VETOAIKA, 
+                         AIKAMIN, RUUTU, TE, TE_PAL, SILMAKOKO, 
+                         HUOM, "_NAME_", "_LABEL_", TURSKA, KAMPELA, 
+                         SILAKKA, KILOHAIL, VALKOTURSKA, MUU_KALA, LOHI_KG, 
+                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, 
+                         KUORE, PKAMP, HAUKI, MADE, TAIMEN, 
+                         LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
+                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI,
+                         OMISTAJA=NIMI, KUNTA, RAKENTAMISAIKA, PITUUS, ALUE=NA, 
+                         PYYDYS1, PYYDYS2, PYYDYS3, PYYDYS4, TEHO, 
+                         VETOISUUS, ASTUNNUS=NA, ALUSKOODI, MIEHISTO=NA, FT,
+                         GEAR, KIRJOLOH, KIISKI, LEVEL4, ALL, 
+                         DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
+                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH=LENGTH,
+                         METIER, KUNTA_KNRO=NA, SATAMA_NIMI=NA, PURKU_KUNTA=NA, LOCODE=NA,
+                         PURKUMAA=NA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
+                         HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, HMUU_KALA, HHAUKI,
+                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE,
+                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN,
+                         HKUHA, HANKERIAS=NA, HMUIKKU, HYHT, SATAMAKUNTA=NA,
+                         RECTANGLE=NA, ICES, AMMATTI=NA, KALASTUSVUOSI,
+                         ALRYH_ALUSRYHMATUNNUS, ASIAKASTUNNUS)
+
+
+metier_2014 <- metier_2014 |> 
+                  select(ALUS, ALUSNIMI, KALASTUSKERTATUNNUS, PAIVAKIRJANRO, SIVUNRO, 
+                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, 
+                         PYYDYS, KALVYOH, PYYDLKM, PVM, VETOAIKA, 
+                         AIKAMIN, RUUTU, TE, TE_PAL=NA, SILMAKOKO, 
+                         HUOM, "_NAME_"=NA, "_LABEL_"=NA,TURSKA, KAMPELA, 
+                         SILAKKA, KILOHAIL, VALKOTURSKA, MUU_KALA, LOHI_KG, 
+                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, 
+                         KUORE, PKAMP, HAUKI, MADE, TAIMEN, 
+                         LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
+                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, 
+                         OMISTAJA, KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, 
+                         PYYDYS1, PYYDYS2, PYYDYS3, PYYDYS4, TEHO, 
+                         VETOISUUS, ASTUNNUS=NA, ALUSKOODI, MIEHISTO, FT, 
+                         GEAR, KIRJOLOH, KIISKI, LEVEL4, ALL, 
+                         DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
+                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, 
+                         METIER, KUNTA_KNRO, SATAMA_NIMI, PURKU_KUNTA, LOCODE, 
+                         PURKUMAA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
+                         HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, HMUU_KALA, HHAUKI, 
+                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, 
+                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN, 
+                         HKUHA, HANKERIAS, HMUIKKU, HYHT, SATAMAKUNTA=NA, 
+                         RECTANGLE=NA, ICES, AMMATTI, KALASTUSVUOSI,
+                         ALRYH_ALUSRYHMATUNNUS=NA, ASIAKASTUNNUS=NA)
+  
+metier_2015 <- metier_2015 |> 
+                  select(ALUS, ALUSNIMI, KALASTUSKERTATUNNUS, PAIVAKIRJANRO, SIVUNRO, 
+                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, 
+                         PYYDYS, KALVYOH, PYYDLKM, PVM, VETOAIKA, 
+                         AIKAMIN, RUUTU, TE, TE_PAL=NA, SILMAKOKO, 
+                         HUOM, "_NAME_", "_LABEL_", TURSKA, KAMPELA, 
+                         SILAKKA, KILOHAIL, VALKOTURSKA, MUU_KALA, LOHI_KG, 
+                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, 
+                         KUORE, PKAMP, HAUKI, MADE, TAIMEN, 
+                         LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS,
+                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, 
+                         OMISTAJA, KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, 
+                         PYYDYS1, PYYDYS2, PYYDYS3, PYYDYS4, TEHO, 
+                         VETOISUUS, ASTUNNUS, ALUSKOODI, MIEHISTO, FT,
+                         GEAR, KIRJOLOH,  KIISKI, LEVEL4, ALL,
+                         DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
+                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, 
+                         METIER, KUNTA_KNRO=NA, SATAMA_NIMI=SATAMA, PURKU_KUNTA=NA, LOCODE, 
+                         PURKUMAA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
+                         HPKAMP, HVALKOTURSKA, HPUNAKAMPELA=NA, HMUU_KALA, HHAUKI, 
+                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, 
+                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN, 
+                         HKUHA, HANKERIAS, HMUIKKU, HYHT, SATAMAKUNTA, 
+                         RECTANGLE, ICES, AMMATTI, KALASTUSVUOSI,
+                         ALRYH_ALUSRYHMATUNNUS, ASIAKASTUNNUS)   # LENGTH=VESSEL_LENGTH ???
 
 # combine into 1 table
 metier_2013_15 <- bind_rows(metier_2013, metier_2014, metier_2015)
