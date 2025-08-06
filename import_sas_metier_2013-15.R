@@ -69,6 +69,11 @@ saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 dim(metier_2013_15)
 
+# check
+# tmp <- data.frame(metier=names(metier_2013_15)) |> rowid_to_column()
+# tmp <- tmp[order(tmp$metier),]
+# write.table(tmp, "clipboard", row.names = FALSE, sep=";")
+
 ## shore data ####
 for (i in 2013:2015){
   
@@ -80,9 +85,9 @@ for (i in 2013:2015){
 } 
 
 # check column names in EXCEL
-write.table(data.frame(shore_2013=sort(names(shore_2013))), "clipboard", row.names = FALSE)
-write.table(data.frame(shore_2014=sort(names(shore_2014))), "clipboard", row.names = FALSE)
-write.table(data.frame(shore_2015=sort(names(shore_2015))), "clipboard", row.names = FALSE)
+# write.table(data.frame(shore_2013=sort(names(shore_2013))), "clipboard", row.names = FALSE)
+# write.table(data.frame(shore_2014=sort(names(shore_2014))), "clipboard", row.names = FALSE)
+# write.table(data.frame(shore_2015=sort(names(shore_2015))), "clipboard", row.names = FALSE)
 
 # combine into 1 table
 shore_2013_15 <- bind_rows(shore_2013, shore_2014, shore_2015)
