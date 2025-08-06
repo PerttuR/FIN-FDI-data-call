@@ -44,8 +44,7 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #} 
 
 
-# alternative path
- 
+## metier data ####
  for (i in 2013:2015){
    
    tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
@@ -56,10 +55,9 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
  } 
 
 # combine into 1 table
-
 metier_2013_15 <- bind_rows(metier_2013, metier_2014, metier_2015)
 
-# filter is wanted
+# filter if wanted
 # metier_2013_15_FIN <- metier_2013_15 |> filter(grepl("FIN",alus))
 
 # remove temporary files
@@ -71,7 +69,33 @@ saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 dim(metier_2013_15)
 
-source("db.r")
+## shore data ####
+for (i in 2013:2015){
+  
+  tmp <- read_sas(paste0("orig/rkarvo",i,"_metier.sas7bdat")) |>
+    mutate(KALASTUSVUOSI = i)
+  
+  assign(paste0("shore_",i), tmp)
+  
+} 
+
+# check column names in EXCEL
+write.table(data.frame(shore_2013=sort(names(shore_2013))), "clipboard", row.names = FALSE)
+write.table(data.frame(shore_2014=sort(names(shore_2014))), "clipboard", row.names = FALSE)
+write.table(data.frame(shore_2015=sort(names(shore_2015))), "clipboard", row.names = FALSE)
+
+# combine into 1 table
+shore_2013_15 <- bind_rows(shore_2013, shore_2014, shore_2015)
+
+# remove temporary files
+rm(shore_2013, shore_2014, shore_2015, tmp)
+invisible(gc())
+
+#save to der folder
+saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15.rds"))
+
+dim(shore_2013_15)
+
 
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
