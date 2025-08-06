@@ -30,7 +30,7 @@ Table A / Table G: no effort in G fishing days /nor seadays in certain Domains, 
 
 # DC2 ###
 
-Table A: no value (zero) on some small catches (could be natural)
+Table A: no value (zero) on some small catches (could be natural / general average value missing?)
 
 # DC3 ###
 
@@ -44,11 +44,14 @@ Table H landing values are higher than in TAble A (seems like mostly rounding?)
 
 # DC5 ###
 
-Total fishing days in Table I is higher than in Table G
+(SAS issue 2013-2015) Total fishing days in some Table I rows is higher than in Table G
+Path to SAS data:
+G:\Luke2\Stat_kala_merikalastus\Metier\data
 
 # DC6 ###
 
 Table H without corresponding Totfishdays in Table I
+
 
 
 
@@ -166,6 +169,9 @@ Add 2024 biologival estimated to table: FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx
 DONE
 
 # ISSUE 10) ####
+
+Path to SAS data:
+G:\Luke2\Stat_kala_merikalastus\Metier\data
 
 2013 - 2015 Table J. Capacity and fleet capasity TABLE is missing all INACTIVE vessels 2013 - 2015
 
