@@ -17,8 +17,48 @@ path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep, ru
 path_der <- paste0(getwd(), .Platform$file.sep, "der/", run.year,"/")
 path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
+
+#### COPY SCRIPT FROM HERE ####
+
 G_table.13 <- read.csv(paste0(path_orig,"G_table_2013_2022_SAS.csv")) |> filter(YEAR==2013)
 I_table.13 <- read.csv(paste0(path_orig,"I_table_2013_2022_SAS.csv")) |> filter(YEAR==2013)
+
+G_table.13 <- G_table.13 |> mutate(METIER_7 = NA)
+G_table.13 <- G_table.13 |> relocate(METIER_7, .after = METIER)
+
+I_table.13 <- I_table.13 |> mutate(METIER_7 = NA,
+                                   C_SQUARE = NA, 
+                                   RECTANGLE_TYPE = "05*1")
+
+source("spatial.R")
+
+midpoints <- latlon(I_table.13$RECTANGLE, midpoint=TRUE)
+
+I_table.13 <- tibble::rowid_to_column(I_table.13, "ID")
+midpoints <- tibble::rowid_to_column(midpoints, "ID")
+
+I_table.13 <- left_join(I_table.13, midpoints, copy = TRUE)
+
+I_table.13 <- I_table.13 |> rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) |> 
+  select(-ID, -RECTANGLE)
+
+
+I_table.13 <- I_table.13 |> relocate(METIER_7, .after = METIER) |>
+      relocate(RECTANGLE_TYPE, .after = DEEP) |>
+      relocate(LONGITUDE, .after = RECTANGLE_TYPE) |>
+      relocate(LATITUDE, .after = LONGITUDE) |>
+      relocate(C_SQUARE, .after = LATITUDE) 
+
+
+########################################
+
+
+
+
+
+
+
+
 
 ## check metiers where I bigger G ####
 
