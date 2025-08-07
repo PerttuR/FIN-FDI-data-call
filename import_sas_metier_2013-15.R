@@ -16,6 +16,7 @@ library(RCurl)     # get data from Github
 library(flextable) # html table in Viewer window
 library(sf)        # simple spatial features
 library(labelled)  # remove sas imported column labels
+library(janitor)
 
 source("db.r")
 
@@ -45,7 +46,7 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #} 
 
 
-## metier data ####
+## 1.1 metier data ####
  for (i in 2013:2015){
    
    tmp <- read_sas(paste0("orig/pvkarvo",i,"_metier.sas7bdat")) |>
@@ -55,9 +56,7 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
    
  } 
 
-# !!! ERROR!!!: differently labelled columns are not joined - need to fix this manually ####
 # change all column names to upper case
-
 names(metier_2013) <- toupper(names(metier_2013))
 names(metier_2014) <- toupper(names(metier_2014))
 names(metier_2015) <- toupper(names(metier_2015))
@@ -68,97 +67,98 @@ var_label(metier_2014) <- NULL
 var_label(metier_2015) <- NULL
 
 # match column names
-metier_2013 <- metier_2013 |> 
+metier_2013.2 <- metier_2013 |> 
+                  add_column(ALUE="NA", MIEHISTO=NA, VESSEL_LENGTH="NA", KUNTA_KNRO="NA", 
+                             SATAMA="NA", PURKU_KUNTA="NA", LOCODE=NA, PURKUMAA="NA", 
+                             HANKERIAS=NA, SATAMAKUNTA="NA", RECTANGLE="NA", AMMATTI=NA) |>
+                  mutate(KUNTA = as.character(KUNTA)) |>
                   select(ALUS, ALUSNIMI, KALASTUSKERTATUNNUS, PAIVAKIRJANRO, SIVUNRO, 
-                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, 
-                         PYYDYS, KALVYOH, PYYDLKM, PVM, VETOAIKA, 
-                         AIKAMIN, RUUTU, TE, TE_PAL, SILMAKOKO, 
-                         HUOM, "_NAME_", "_LABEL_", TURSKA, KAMPELA, 
+                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, PYYDYS, 
+                         KALVYOH, PYYDLKM, PVM, VETOAIKA, AIKAMIN, RUUTU, TE, TE_PAL, 
+                         SILMAKOKO, HUOM, LABEL="_LABEL_", TURSKA, KAMPELA, 
                          SILAKKA, KILOHAIL, VALKOTURSKA, MUU_KALA, LOHI_KG, 
-                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, 
-                         KUORE, PKAMP, HAUKI, MADE, TAIMEN, 
-                         LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
-                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI,
-                         OMISTAJA=NIMI, KUNTA, RAKENTAMISAIKA, PITUUS, ALUE=NA, 
-                         PYYDYS1, PYYDYS2, PYYDYS3, PYYDYS4, TEHO, 
-                         VETOISUUS, ASTUNNUS=NA, ALUSKOODI, MIEHISTO=NA, FT,
-                         GEAR, KIRJOLOH, KIISKI, LEVEL4, ALL, 
-                         DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
-                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH=LENGTH,
-                         METIER, KUNTA_KNRO=NA, SATAMA_NIMI=NA, PURKU_KUNTA=NA, LOCODE=NA,
-                         PURKUMAA=NA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
+                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, KUORE, PKAMP, HAUKI, 
+                         MADE, TAIMEN, LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
+                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, OMISTAJA=NIMI, 
+                         KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, PYYDYS1, PYYDYS2, 
+                         PYYDYS3, PYYDYS4, TEHO, VETOISUUS, ASTUNNUS=ASIAKASTUNNUS, 
+                         ALUSKOODI, MIEHISTO, FT, GEAR, KIRJOLOH, KIISKI,
+                         LEVEL4, ALL, DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
+                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, LENGTH,
+                         METIER, KUNTA_KNRO, SATAMA, PURKU_KUNTA, LOCODE,
+                         PURKUMAA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
                          HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, HMUU_KALA, HHAUKI,
-                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE,
-                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN,
-                         HKUHA, HANKERIAS=NA, HMUIKKU, HYHT, SATAMAKUNTA=NA,
-                         RECTANGLE=NA, ICES, AMMATTI=NA, KALASTUSVUOSI,
-                         ALRYH_ALUSRYHMATUNNUS, ASIAKASTUNNUS)
+                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, HLAHNA,
+                         HSAYNE, HSARKI, HMADE, HAHVEN, HKUHA, HANKERIAS, 
+                         HMUIKKU, HYHT, SATAMAKUNTA, RECTANGLE, ICES, 
+                         AMMATTI, KALASTUSVUOSI, ALRYH_ALUSRYHMATUNNUS)
 
 
-metier_2014 <- metier_2014 |> 
+metier_2014.2 <- metier_2014 |> 
+                  add_column(TE_PAL="NA", LABEL="NA", LENGTH="NA", SATAMAKUNTA="NA",
+                             RECTANGLE="NA", ALRYH_ALUSRYHMATUNNUS=NA) |>
                   select(ALUS, ALUSNIMI, KALASTUSKERTATUNNUS, PAIVAKIRJANRO, SIVUNRO, 
-                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, 
-                         PYYDYS, KALVYOH, PYYDLKM, PVM, VETOAIKA, 
-                         AIKAMIN, RUUTU, TE, TE_PAL=NA, SILMAKOKO, 
-                         HUOM, "_NAME_"=NA, "_LABEL_"=NA,TURSKA, KAMPELA, 
+                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, PYYDYS, 
+                         KALVYOH, PYYDLKM, PVM, VETOAIKA, AIKAMIN, RUUTU, TE, TE_PAL, 
+                         SILMAKOKO, HUOM, LABEL, TURSKA, KAMPELA,
                          SILAKKA, KILOHAIL, VALKOTURSKA, MUU_KALA, LOHI_KG, 
-                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, 
-                         KUORE, PKAMP, HAUKI, MADE, TAIMEN, 
-                         LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
-                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, 
-                         OMISTAJA, KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, 
-                         PYYDYS1, PYYDYS2, PYYDYS3, PYYDYS4, TEHO, 
-                         VETOISUUS, ASTUNNUS=NA, ALUSKOODI, MIEHISTO, FT, 
-                         GEAR, KIRJOLOH, KIISKI, LEVEL4, ALL, 
-                         DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
-                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, 
-                         METIER, KUNTA_KNRO, SATAMA_NIMI, PURKU_KUNTA, LOCODE, 
+                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, KUORE, PKAMP, HAUKI, 
+                         MADE, TAIMEN, LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
+                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, OMISTAJA, 
+                         KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, PYYDYS1, PYYDYS2, 
+                         PYYDYS3, PYYDYS4, TEHO, VETOISUUS, ASTUNNUS, 
+                         ALUSKOODI, MIEHISTO, FT, GEAR, KIRJOLOH, KIISKI, 
+                         LEVEL4, ALL, DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
+                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, LENGTH,
+                         METIER, KUNTA_KNRO, SATAMA=SATAMA_NIMI, PURKU_KUNTA, LOCODE, 
                          PURKUMAA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
                          HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, HMUU_KALA, HHAUKI, 
-                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, 
-                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN, 
-                         HKUHA, HANKERIAS, HMUIKKU, HYHT, SATAMAKUNTA=NA, 
-                         RECTANGLE=NA, ICES, AMMATTI, KALASTUSVUOSI,
-                         ALRYH_ALUSRYHMATUNNUS=NA, ASIAKASTUNNUS=NA)
-  
-metier_2015 <- metier_2015 |> 
+                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, HLAHNA, 
+                         HSAYNE, HSARKI, HMADE, HAHVEN, HKUHA, HANKERIAS, 
+                         HMUIKKU, HYHT, SATAMAKUNTA, RECTANGLE, ICES, 
+                         AMMATTI, KALASTUSVUOSI, ALRYH_ALUSRYHMATUNNUS)
+
+
+
+metier_2015.2 <- metier_2015 |> 
+                  add_column(TE_PAL="NA", KUNTA_KNRO="NA", PURKU_KUNTA="NA", 
+                             HPUNAKAMPELA=NA, ALRYH_ALUSRYHMATUNNUS=NA) |>
                   select(ALUS, ALUSNIMI, KALASTUSKERTATUNNUS, PAIVAKIRJANRO, SIVUNRO, 
-                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, 
-                         PYYDYS, KALVYOH, PYYDLKM, PVM, VETOAIKA, 
-                         AIKAMIN, RUUTU, TE, TE_PAL=NA, SILMAKOKO, 
-                         HUOM, "_NAME_", "_LABEL_", TURSKA, KAMPELA, 
+                         PARI, PARINIMI, LAHTOPVM, PALUUPVM, PURKUPVM, PYYDYS, 
+                         KALVYOH, PYYDLKM, PVM, VETOAIKA, AIKAMIN, RUUTU, TE, TE_PAL, 
+                         SILMAKOKO, HUOM, LABEL="_LABEL_", TURSKA, KAMPELA, 
                          SILAKKA, KILOHAIL, VALKOTURSKA, MUU_KALA, LOHI_KG, 
-                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, 
-                         KUORE, PKAMP, HAUKI, MADE, TAIMEN, 
-                         LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS,
-                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, 
-                         OMISTAJA, KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, 
-                         PYYDYS1, PYYDYS2, PYYDYS3, PYYDYS4, TEHO, 
-                         VETOISUUS, ASTUNNUS, ALUSKOODI, MIEHISTO, FT,
-                         GEAR, KIRJOLOH,  KIISKI, LEVEL4, ALL,
-                         DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
-                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, 
-                         METIER, KUNTA_KNRO=NA, SATAMA_NIMI=SATAMA, PURKU_KUNTA=NA, LOCODE, 
+                         SIIKA, MUIKKU, AHVEN, KUHA, SARKI, KUORE, PKAMP, HAUKI, 
+                         MADE, TAIMEN, LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS,
+                         KK, PAINO, PYYNTIPV, PARITRO, TYYPPI, OMISTAJA, 
+                         KUNTA, RAKENTAMISAIKA, PITUUS, ALUE, PYYDYS1, PYYDYS2, 
+                         PYYDYS3, PYYDYS4, TEHO, VETOISUUS, ASTUNNUS, 
+                         ALUSKOODI, MIEHISTO, FT, GEAR, KIRJOLOH,  KIISKI, 
+                         LEVEL4, ALL, DEMERSAL, FRESH, SMALLPELAGIC, ANADR, PV, 
+                         LEVEL5, LEVEL6, GROUND, GROUND2, VESSEL_LENGTH, LENGTH,
+                         METIER, KUNTA_KNRO, SATAMA, PURKU_KUNTA, LOCODE, 
                          PURKUMAA, HSILAKKA, HKILOHAIL, HTURSKA, HKAMPELA, 
-                         HPKAMP, HVALKOTURSKA, HPUNAKAMPELA=NA, HMUU_KALA, HHAUKI, 
-                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, 
-                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN, 
-                         HKUHA, HANKERIAS, HMUIKKU, HYHT, SATAMAKUNTA, 
-                         RECTANGLE, ICES, AMMATTI, KALASTUSVUOSI,
-                         ALRYH_ALUSRYHMATUNNUS, ASIAKASTUNNUS)   # LENGTH=VESSEL_LENGTH ???
+                         HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, HMUU_KALA, HHAUKI, 
+                         HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, HLAHNA, 
+                         HSAYNE, HSARKI, HMADE, HAHVEN, HKUHA, HANKERIAS, 
+                         HMUIKKU, HYHT, SATAMAKUNTA, RECTANGLE, ICES, 
+                         AMMATTI, KALASTUSVUOSI, ALRYH_ALUSRYHMATUNNUS)
 
 # combine into 1 table
-metier_2013_15 <- bind_rows(metier_2013, metier_2014, metier_2015)
+metier_2013_15 <- bind_rows(metier_2013.2, metier_2014.2, metier_2015.2)
 
 # filter if wanted
 # metier_2013_15_FIN <- metier_2013_15 |> filter(grepl("FIN",alus))
 
 # remove temporary files
-rm(metier_2013, metier_2014, metier_2015, tmp)
+rm(metier_2013, metier_2014, metier_2015, metier_2013.2, metier_2014.2, metier_2015.2, tmp)
 invisible(gc())
 
 #save to der folder
 saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
+# !!!HERE!!! ####
+# save to database!
 
 dim(metier_2013_15)
 
@@ -167,7 +167,7 @@ dim(metier_2013_15)
 # tmp <- tmp[order(tmp$metier),]
 # write.table(tmp, "clipboard", row.names = FALSE, sep=";")
 
-## shore data ####
+## 1.2 shore data ####
 for (i in 2013:2015){
   
   tmp <- read_sas(paste0("orig/rkarvo",i,"_metier.sas7bdat")) |>
@@ -177,16 +177,88 @@ for (i in 2013:2015){
   
 } 
 
-# check column names in EXCEL
-# write.table(data.frame(shore_2013=sort(names(shore_2013))), "clipboard", row.names = FALSE)
-# write.table(data.frame(shore_2014=sort(names(shore_2014))), "clipboard", row.names = FALSE)
-# write.table(data.frame(shore_2015=sort(names(shore_2015))), "clipboard", row.names = FALSE)
+# change all column names to upper case
+names(shore_2013) <- toupper(names(shore_2013))
+names(shore_2014) <- toupper(names(shore_2014))
+names(shore_2015) <- toupper(names(shore_2015))
+
+# remove column labels
+var_label(shore_2013) <- NULL
+var_label(shore_2014) <- NULL
+var_label(shore_2015) <- NULL
+
+# match column names
+shore_2013.2 <- shore_2013 |>
+                  add_column(AMMATTI=NA, HANKERIAS=NA, LIOTUSAIKA=NA, LOCODE="NA", 
+                             LOHIALUS="NA", PLE=NA, PURKU_KUNTA="NA", PURKUMAA="NA", 
+                             PYYNTIAIKA=NA, SATAMA="NA", VESSEL_LENGTH="NA", RECTANGLE="NA", 
+                             SATAMAKUNTA="NA", SATAMATIETO="NA") |>
+                  mutate(PURKUPVM= as.character(PURKUPVM)) |>
+                  select(LABEL="_LABEL_", AHVEN, ALL, ALUS, AMMATTI, ANADR, ANKERIAS, 
+                         ASIAKASTUNNUS, DEMERSAL, FRESH, FT, GEAR, GROUND, GROUND2, 
+                         HAHVEN, HANKERIAS, HAUKI, HHAUKI, HKAMPELA, HKILOHAIL, 
+                         HKIRJOLOH, HKUHA, HKUORE, HLAHNA, HLOHI_KG, HMADE, HMUIKKU, 
+                         HMUU_KALA, HPKAMP, HPUNAKAMPELA, HSARKI, HSAYNE, HSIIKA, 
+                         HSILAKKA, HTAIMEN, HTURSKA, HUOM, HVALKOTURSKA, HYHT, ICES, 
+                         KALASTUSTA, KALASTUSVUOSI, KAMPELA, KIISKI, KILOHAIL, 
+                         KIRJOLOH, KK, KNO, KUHA, KUORE, LAHNA, LENGTH, LEVEL4, 
+                         LEVEL5, LEVEL6, LIOTUSAIKA, LOCODE, LOHI_KG, LOHI_KPL, 
+                         LOHIALUS, LONRO, MADE, METIER, MUIKKU, MUU_KALA, NIMI, 
+                         PAINO, PITUUS, PKAMP, PLE, PUNAKAMPELA, PURKU_KUNTA, 
+                         PURKUMAA, PURKUPV, PURKUPVM, PYYDLKM, PYYDYS, PYYNTIAIKA, 
+                         PYYNTIPV, RAKENTAMISAIKA, RANNIKKOPYYNTITUNNUS, RECTANGLE, 
+                         RUUTU, SARKI, SATAMA, SATAMAKUNTA, SATAMATIETO, SAYNE, 
+                         SELITE, SIIKA, SILAKKA, SMALLPELAGIC, TAIMEN, TE, TEHO, 
+                         TULOLUOKKA, TURSKA, VALKOTURSKA, VESSEL_LENGTH, VETOISUUS, VUOSI)
+
+shore_2014.2 <- shore_2014 |>
+                  add_column(HUOM="NA", PURKUPVM="NA", LIOTUSAIKA=NA, LOHIALUS="NA",
+                             RECTANGLE="NA", SATAMAKUNTA="NA", SATAMATIETO="NA") |>
+                  #mutate(PURKUPVM= as.POSIXct(PURKUPVM)) |>
+                  select(LABEL="_LABEL_", AHVEN, ALL, ALUS, AMMATTI, ANADR, ANKERIAS, 
+                         ASIAKASTUNNUS, DEMERSAL, FRESH, FT, GEAR, GROUND, GROUND2, 
+                         HAHVEN, HANKERIAS, HAUKI, HHAUKI, HKAMPELA, HKILOHAIL, 
+                         HKIRJOLOH, HKUHA, HKUORE, HLAHNA, HLOHI_KG, HMADE, HMUIKKU, 
+                         HMUU_KALA, HPKAMP, HPUNAKAMPELA, HSARKI, HSAYNE, HSIIKA, 
+                         HSILAKKA, HTAIMEN, HTURSKA, HUOM, HVALKOTURSKA, HYHT, ICES, 
+                         KALASTUSTA, KALASTUSVUOSI, KAMPELA, KIISKI, KILOHAIL, 
+                         KIRJOLOH, KK, KNO, KUHA, KUORE, LAHNA, LENGTH, LEVEL4, 
+                         LEVEL5, LEVEL6, LIOTUSAIKA, LOCODE, LOHI_KG, LOHI_KPL, 
+                         LOHIALUS, LONRO, MADE, METIER, MUIKKU, MUU_KALA, NIMI, 
+                         PAINO, PITUUS, PKAMP, PLE, PUNAKAMPELA, PURKU_KUNTA, 
+                         PURKUMAA, PURKUPV, PURKUPVM, PYYDLKM, PYYDYS, PYYNTIAIKA, 
+                         PYYNTIPV, RAKENTAMISAIKA, RANNIKKOPYYNTITUNNUS, RECTANGLE, 
+                         RUUTU, SARKI, SATAMA, SATAMAKUNTA, SATAMATIETO, SAYNE, 
+                         SELITE, SIIKA, SILAKKA, SMALLPELAGIC, TAIMEN, TE, TEHO, 
+                         TULOLUOKKA, TURSKA, VALKOTURSKA, VESSEL_LENGTH, VETOISUUS, VUOSI)
+
+shore_2015.2 <- shore_2015 |>
+                  add_column(HPUNAKAMPELA=NA, PAINO=NA, PLE=NA, PUNAKAMPELA=NA, 
+                             PURKU_KUNTA="NA",  PURKUPVM="NA", PYYNTIAIKA=NA) |>
+                  #mutate(PURKUPVM= as.POSIXct(PURKUPVM)) |>
+                  select(LABEL="_LABEL_", AHVEN, ALL, ALUS, AMMATTI, ANADR, ANKERIAS, 
+                         ASIAKASTUNNUS, DEMERSAL, FRESH, FT, GEAR, GROUND, GROUND2, 
+                         HAHVEN, HANKERIAS, HAUKI, HHAUKI, HKAMPELA, HKILOHAIL, 
+                         HKIRJOLOH, HKUHA, HKUORE, HLAHNA, HLOHI_KG, HMADE, HMUIKKU, 
+                         HMUU_KALA, HPKAMP, HPUNAKAMPELA, HSARKI, HSAYNE, HSIIKA, 
+                         HSILAKKA, HTAIMEN, HTURSKA, HUOM, HVALKOTURSKA, HYHT, ICES, 
+                         KALASTUSTA, KALASTUSVUOSI, KAMPELA, KIISKI, KILOHAIL, 
+                         KIRJOLOH, KK, KNO, KUHA, KUORE, LAHNA, LENGTH, LEVEL4, 
+                         LEVEL5, LEVEL6, LIOTUSAIKA, LOCODE, LOHI_KG, LOHI_KPL, 
+                         LOHIALUS, LONRO, MADE, METIER, MUIKKU, MUU_KALA, NIMI, 
+                         PAINO, PITUUS, PKAMP, PLE, PUNAKAMPELA, PURKU_KUNTA, 
+                         PURKUMAA, PURKUPV,  PURKUPVM, PYYDLKM, PYYDYS, PYYNTIAIKA, 
+                         PYYNTIPV, RAKENTAMISAIKA, RANNIKKOPYYNTITUNNUS, RECTANGLE, 
+                         RUUTU, SARKI, SATAMA, SATAMAKUNTA, SATAMATIETO, SAYNE, 
+                         SELITE, SIIKA, SILAKKA, SMALLPELAGIC, TAIMEN, TE, TEHO, 
+                         TULOLUOKKA, TURSKA, VALKOTURSKA, VESSEL_LENGTH, VETOISUUS, VUOSI)
+
 
 # combine into 1 table
-shore_2013_15 <- bind_rows(shore_2013, shore_2014, shore_2015)
+shore_2013_15 <- bind_rows(shore_2013.2, shore_2014.2, shore_2015.2)
 
 # remove temporary files
-rm(shore_2013, shore_2014, shore_2015, tmp)
+rm(shore_2013, shore_2014, shore_2015, shore_2013.2, shore_2014.2, shore_2015.2, tmp)
 invisible(gc())
 
 #save to der folder
@@ -224,19 +296,19 @@ message("Newest schema is from: ", schemadate)
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
-metier_2013_15 <- metier_2013_15 |> 
+logbook_13_15 <- metier_2013_15 |> 
                   mutate(
                     COUNTRY = "FIN",
                     YEAR	= KALASTUSVUOSI,
                     QUARTER	= case_when(
-                      kk %in% seq(1,3) ~ "1",
-                      kk %in% seq(4,6) ~ "2",
-                      kk %in% seq(7,9) ~ "3",
-                      kk %in% seq(10,12) ~ "4"),
-                    # VESSEL_LENGTH HERE!
-                    FISHING_TECH =	ft,
-                    GEAR_TYPE	= stringr::str_sub(metier, 1,3), 
-                    TARGET_ASSEMBLAGE	= stringr::str_sub(metier, 5,7), 
+                      KK %in% seq(1,3) ~ "1",
+                      KK %in% seq(4,6) ~ "2",
+                      KK %in% seq(7,9) ~ "3",
+                      KK %in% seq(10,12) ~ "4"),
+                    VESSEL_LENGTH,
+                    FISHING_TECH =	FT,
+                    GEAR_TYPE	= stringr::str_sub(METIER, 1,3), 
+                    TARGET_ASSEMBLAGE	= stringr::str_sub(METIER, 5,7), 
                     # MESH_SIZE_RANGE	HERE!
                     # METIER HERE!       
                     METIER_7 = "NA",
@@ -266,6 +338,9 @@ metier_2013_15 <- metier_2013_15 |>
 #                   3. correct vessel lengths                               ####              
 #.------------------------------------------------------------------------------
 
+# we are cross-validation the capacity length categories - if they are different use the
+# ones in kapasiteetti table instead
+
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
 # vessel GOLDEN ROSE CHANGED OWNER 2014, BUT WRONG IN KAPASITEETI (only has one registration number)
@@ -284,28 +359,29 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
-ship.length <- metier_2013_15 |> select(KALASTUSVUOSI, alus, alusnimi, vessel_length) |> distinct() |>
+ship.length <- logbook_13_15 |> select(KALASTUSVUOSI, ALUS, ALUSNIMI, VESSEL_LENGTH) |> distinct() |>
   left_join(kapasiteetti |> select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI), 
-            by= c("KALASTUSVUOSI"="VUOSI","alus"="ULKOINENTUNNUS","alusnimi"="NIMI")) |>
-  mutate(DIFF = if_else(vessel_length != VLENGTH_FDI, 1, 0),
+            by= c("KALASTUSVUOSI"="VUOSI","ALUS"="ULKOINENTUNNUS")) |>
+  mutate(DIFF = if_else(VESSEL_LENGTH != VLENGTH_FDI, 1, 0),
          VESSEL_LENGTH = case_when(
-           is.na(vessel_length) ~ VLENGTH_FDI,
-           vessel_length != VLENGTH_FDI ~ VLENGTH_FDI,
-           .default = vessel_length
+           is.na(VESSEL_LENGTH) ~ VLENGTH_FDI,
+           VESSEL_LENGTH != VLENGTH_FDI ~ VLENGTH_FDI,
+           .default = VESSEL_LENGTH
          )) |> distinct()
 
 # check 2014 GOLDEN ROSE - should now be NA, but vessel_length is correct
 
 # link ship length lookup to table
-metier_2013_15 <- metier_2013_15 |>
-                    left_join(ship.length |> select(KALASTUSVUOSI, alus, alusnimi, VESSEL_LENGTH), 
+# remove lofbok vessel length and use cross-validated one instead
+logbook_13_15 <- logbook_13_15 |> rename(check_length=VESSEL_LENGTH) |> 
+                    left_join(ship.length |> select(KALASTUSVUOSI, ALUS, ALUSNIMI, VESSEL_LENGTH), 
                               by=c("KALASTUSVUOSI"="KALASTUSVUOSI",
-                                   "alus"="alus",
-                                   "alusnimi"="alusnimi")) |>
+                                   "ALUS"="ALUS",
+                                   "ALUSNIMI"="ALUSNIMI")) |>
                     relocate(VESSEL_LENGTH, .after = QUARTER)
 
 # checking records
-metier_2013_15 |> count(VESSEL_LENGTH) |> flextable() |> 
+logbook_13_15 |> count(VESSEL_LENGTH) |> flextable() |> 
   set_caption("Check VESSEL_LENGTH classes in metier_2013_15")
 # metier_2013_15 |> select(c(1,2,130:152)) |> View()
 
@@ -328,16 +404,13 @@ metier.lookup <- metier.lookup |>
                 .default = as.character(Used_by_country_in_RDB))) |> 
               select(RCG,Metier_level6,Old_code,Used_by_country_in_RDB,Metier_level5,Description)
 
-metier.lookup.fin <- metier.lookup |> filter(grepl("FIN",Used_by_country_in_RDB))
-
-# metier class PTM_SPF is missing
-# reported issue on Github https://github.com/ices-eg/RCGs/issues/184
+metier.lookup.fin <- metier.lookup |> filter(Used_by_country_in_RDB == "FIN")
 # metier.lookup.fin |> select(RCG, Metier_level5, Metier_level6, Used_by_country_in_RDB) |> 
 #  kable(caption="Official metier classes for Finland")
 
 metier_check <- metier_2013_15 |> 
-  select(metier) |> distinct() |> 
-  left_join(metier.lookup |> filter(RCG == "BALT"), by = c("metier" = "Metier_level6"), keep = T) |>
+  select(METIER, SILMAKOKO) |> distinct() |> 
+  left_join(metier.lookup |> filter(RCG == "BALT"), by = c("METIER" = "Metier_level6"), keep = T) |>
   filter(is.na(Metier_level6))
 
 metier_check |> flextable()
@@ -348,41 +421,46 @@ metier_check |> flextable()
 # overwrite MISSING metier for tag for one single vessel with one missing metier
 # replace old codes with new ones
 
-metier_2013_15 <- metier_2013_15 |> 
-  mutate(metier = case_when(
-    metier == "MISSING" ~ "GNS_FWS_>0_0_0",
-    metier == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120",
-    metier == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0",
-    metier == "GNS_SPF_16-109" ~ "GNS_SPF_32-89_0_0",
-    metier == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0",
-    metier == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0",
-    metier == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120",
-    TRUE ~ metier))    
+logbook_13_15 <- logbook_13_15 |> 
+  mutate(METIER = case_when(
+    METIER == "MISSING" ~ "GNS_FWS_>0_0_0",
+    METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120",
+    METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0",
+    METIER == "GNS_SPF_16-109" ~ "GNS_SPF_32-89_0_0",
+    METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0",
+    METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0",
+    METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120",
+    TRUE ~ METIER))    
 
 # compare metier classes
-metier_2013_15 |> select(YEAR, QUARTER, alus, alusnimi, metier) |> 
-  mutate(METIER5 = stringr::str_sub(metier, 1,7))  |> 
+logbook_13_15 |> select(YEAR, QUARTER, ALUS, ALUSNIMI, METIER) |> 
+  mutate(METIER5 = stringr::str_sub(METIER, 1,7))  |> 
   left_join(metier.lookup.fin, by=c("METIER5"="Metier_level5")) |> 
-  mutate(check = if_else(metier != Metier_level6, 1,0)) |> 
+  mutate(check = if_else(METIER != Metier_level6, 1,0)) |> 
   #filter(check == 1 | is.na(check)) |>
-  select(metier, Metier_level6) |> distinct() |> 
+  select(METIER, Metier_level6) |> distinct() |> 
   flextable() |> autofit() |>
   set_caption("Differences between SAS METIER and official metier level 6 names") |>
   add_footer_lines("*`PTM_SPF_16-31_0_0` is missing in the tags for Finland")
 
 
 # join against lookup to produce METIER6
-metier_2013_15 <- metier_2013_15 |> mutate(METIER5 = stringr::str_sub(metier, 1,7)) |>
+logbook_13_15 <- logbook_13_15 |> mutate(METIER5 = stringr::str_sub(METIER, 1,7)) |>
   left_join(metier.lookup.fin |> select(Metier_level5, Metier_level6), 
             by=c("METIER5"="Metier_level5")) |> 
   rename(METIER6 = Metier_level6) |>
   relocate(METIER6, .after = TARGET_ASSEMBLAGE)
 
-metier_2013_15 |> count(METIER6) |> flextable() |> autofit() |>
+logbook_13_15 |> count(METIER6) |> flextable() |> autofit() |>
   set_caption("Metier 6 classes in metier_2013_15")
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+
+# !!!HERE!!!! ####
+# - need to add check for mesh sizes and adjust metier accordingly
+# - need to get complete lookup for Finland ??? the provided lookup only gives 
+#   the base _0_0_0 codes for some categories
 
 #.------------------------------------------------------------------------------
 #                   5. mesh size lookup                                     ####    
@@ -390,7 +468,7 @@ metier_2013_15 |> count(METIER6) |> flextable() |> autofit() |>
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
-metier_2013_15 <- metier_2013_15 |> mutate(METIER4 = stringr::str_sub(METIER5, 1,3))
+logbook_13_15 <- logbook_13_15 |> mutate(METIER4 = stringr::str_sub(METIER5, 1,3))
 
 active.passive <- data.frame(TYPE = c(rep("passive",5), rep("active", 4)),
            METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"),
@@ -426,30 +504,30 @@ mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size c
 #invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE)) # added to DB by Perttu 19-06-2025 ####
 
 # checking for LINE metiers with mesh sizes
-metier_2013_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
-  select(YEAR, alus, alusnimi, SILMAKOKO, metier, METIER6) |> 
+logbook_13_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
+  select(YEAR, ALUS, ALUSNIMI, SILMAKOKO, METIER, METIER6) |> 
   flextable() |> autofit() |> set_caption("Enties for lines but giving mesh size")
 
 # correct data - remove mesh size if line metier
-metier_2013_15 <- metier_2013_15 |> mutate(SILMAKOKO = case_when(
+logbook_13_15 <- logbook_13_15 |> mutate(SILMAKOKO = case_when(
   METIER4 %in% c("LLD","LLS") ~ NA,
   .default = as.numeric(SILMAKOKO)
 ))
 
 # check missing mesh sizes in SAS data
-metier_2013_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
-  select(YEAR, PVM, alus, alusnimi, SILMAKOKO, METIER6, METIER5, METIER4) |> 
+logbook_13_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
+  select(YEAR, PVM, ALUS, ALUSNIMI, SILMAKOKO, METIER6, METIER5, METIER4) |> 
   left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
   filter(is.na(CODE)) |>
   distinct() |> select(-c(METIER5,METIER4,TYPE,MESH,GEARS,TO,FROM)) |> 
-  arrange(alus,YEAR,PVM, METIER6) |>
+  arrange(ALUS,YEAR,PVM, METIER6) |>
   flextable() |> autofit() |> set_caption("ships with missing net sizes")
 
 # join mesh size range codes
-metier_2013_15 <- metier_2013_15 |> left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM)))
+logbook_13_15 <- logbook_13_15 |> left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM)))
 
 # assign CODE if KOKOSILMA IS NA
-metier_2013_15 <- metier_2013_15 |> mutate(CODE = case_when(
+logbook_13_15 <- logbook_13_15 |> mutate(CODE = case_when(
   is.na(SILMAKOKO) & METIER6 == "FPO_FWS_>0_0_0" ~ "16D32",
   is.na(SILMAKOKO) & METIER6 == "FYK_ANA_>0_0_0" ~ "32D90",
   is.na(SILMAKOKO) & METIER6 == "FYK_FWS_>0_0_0" ~ "16D32",
@@ -471,10 +549,10 @@ metier_2013_15 <- metier_2013_15 |> mutate(CODE = case_when(
 # PTM_SPF_16-31_0_0   --> 16D32 # DONE
 
 # check missing mesh sizes in SAS data
-metier_2013_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
-  select(YEAR, alus, alusnimi, SILMAKOKO, METIER6, CODE) |> 
+logbook_13_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
+  select(YEAR, ALUS, ALUSNIMI, SILMAKOKO, METIER6, CODE) |> 
   filter(is.na(SILMAKOKO)) |> 
-  arrange(alus,YEAR,METIER6) |>
+  arrange(ALUS,YEAR,METIER6) |>
   flextable() |> autofit() |> set_caption("imputed codes for ships with missing net sizes")
 
 # save to der folder
@@ -502,7 +580,7 @@ icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
 icesRectangle <- st_as_sf(icesRectangle) |> st_transform(epsg = 4326)
 
 # test statistical areas
-plot(icesRectangle["statistical_area_name"])
+# plot(icesRectangle["statistical_area_name"])
 
 # fix ices full area codes for region 28
 icesRectangle <- icesRectangle |> mutate(area_code_full = case_when(
@@ -514,16 +592,16 @@ icesRectangle <- icesRectangle |> mutate(area_code_full = case_when(
 icesRectangle$rktl_name <- as.numeric(icesRectangle$rktl_name)
 
 # test full area
-plot(icesRectangle["area_code_full"])
+# plot(icesRectangle["area_code_full"])
 
 # join to sas data
-metier_2013_15 <- metier_2013_15 |> 
+logbook_13_15 <- logbook_13_15 |> 
   left_join(icesRectangle |> 
               select(rktl_name, ices_name, area_code_full) |> st_drop_geometry(), 
-            by=c("ruutu"="rktl_name"))
+            by=c("RUUTU"="rktl_name"))
 
 # testing
-metier_2013_15 |> count(area_code_full,ices_name) |> flextable()
+logbook_13_15 |> count(area_code_full,ices_name) |> flextable()
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
@@ -541,12 +619,12 @@ source("spatial.R")
 
 midpoints <- latlon(metier_2013_15$ices_name, midpoint=TRUE)
 
-metier_2013_15 <- tibble::rowid_to_column(metier_2013_15, "ID")
+logbook_13_15 <- tibble::rowid_to_column(logbook_13_15, "ID")
 midpoints <- tibble::rowid_to_column(midpoints, "ID")
 
-metier_2013_15 <- left_join(metier_2013_15, midpoints, copy = TRUE)
+logbook_13_15 <- left_join(logbook_13_15, midpoints, copy = TRUE)
 
-metier_2013_15 <- metier_2013_15 |> rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) |> 
+logbook_13_15 <- logbook_13_15 |> rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) |> 
   select(-ID)
 
 # save to der folder
@@ -612,29 +690,29 @@ fish.lookup <- fish.lookup |> mutate(KG_LABEL = paste0("SVT_KG_",Alpha3_Code),
 
 # rename fish columns (add as duplicate)
 
-metier_2013_15 <- metier_2013_15 |> mutate(
-                        SVT_KG_COD = if_else(is.na(Turska),0,Turska),
-                        SVT_KG_ELE = if_else(is.na(Ankerias),0,Ankerias),   
-                        SVT_KG_FBM = if_else(is.na(Lahna),0,Lahna),
-                        SVT_KG_FBU = if_else(is.na(Made),0,Made),
-                        SVT_KG_FID = if_else(is.na(Sayne),0,Sayne),
-                        SVT_KG_FIN = if_else(is.na(muu_kala),0,muu_kala),
-                        SVT_KG_FLE = if_else(is.na(Kampela),0,Kampela),
-                        SVT_KG_FPE = if_else(is.na(Ahven),0,Ahven),
-                        SVT_KG_FPI = if_else(is.na(Hauki),0,Hauki),
-                        SVT_KG_FPP = if_else(is.na(Kuha),0,Kuha),
-                        SVT_KG_FRO = if_else(is.na(Sarki),0,Sarki),
-                        SVT_KG_FVE = if_else(is.na(Muikku),0,Muikku),
-                        SVT_KG_HER = if_else(is.na(Silakka),0,Silakka),
-                        SVT_KG_PLE = if_else(is.na(Punakampela),0,Punakampela),
-                        SVT_KG_PLN = if_else(is.na(Siika),0,Siika),
-                        SVT_KG_SAL = if_else(is.na(Lohi_kg),0,Lohi_kg),
-                        SVT_KG_SME = if_else(is.na(Kuore),0,Kuore),
-                        SVT_KG_SPR = if_else(is.na(Kilohail),0,Kilohail),
-                        SVT_KG_TRR = if_else(is.na(kirjoloh),0,kirjoloh),
-                        SVT_KG_TRS = if_else(is.na(Taimen),0,Taimen),
-                        SVT_KG_TUR = if_else(is.na(Pkamp),0,Pkamp),
-                        SVT_KG_WHG = if_else(is.na(Valkoturska),0,Valkoturska),
+logbook_13_15 <- logbook_13_15 |> mutate(
+                        SVT_KG_COD = if_else(is.na(TURSKA),0,TURSKA),
+                        SVT_KG_ELE = if_else(is.na(ANKERIAS),0,ANKERIAS),   
+                        SVT_KG_FBM = if_else(is.na(LAHNA),0,LAHNA),
+                        SVT_KG_FBU = if_else(is.na(MADE),0,MADE),
+                        SVT_KG_FID = if_else(is.na(SAYNE),0,SAYNE),
+                        SVT_KG_FIN = if_else(is.na(MUU_KALA),0,MUU_KALA),
+                        SVT_KG_FLE = if_else(is.na(KAMPELA),0,KAMPELA),
+                        SVT_KG_FPE = if_else(is.na(AHVEN),0,AHVEN),
+                        SVT_KG_FPI = if_else(is.na(HAUKI),0,HAUKI),
+                        SVT_KG_FPP = if_else(is.na(KUHA),0,KUHA),
+                        SVT_KG_FRO = if_else(is.na(SARKI),0,SARKI),
+                        SVT_KG_FVE = if_else(is.na(MUIKKU),0,MUIKKU),
+                        SVT_KG_HER = if_else(is.na(SILAKKA),0,SILAKKA),
+                        SVT_KG_PLE = if_else(is.na(PUNAKAMPELA),0,PUNAKAMPELA),
+                        SVT_KG_PLN = if_else(is.na(SIIKA),0,SIIKA),
+                        SVT_KG_SAL = if_else(is.na(LOHI_KG),0,LOHI_KG),
+                        SVT_KG_SME = if_else(is.na(KUORE),0,KUORE),
+                        SVT_KG_SPR = if_else(is.na(KILOHAIL),0,KILOHAIL),
+                        SVT_KG_TRR = if_else(is.na(KIRJOLOH),0,KIRJOLOH),
+                        SVT_KG_TRS = if_else(is.na(TAIMEN),0,TAIMEN),
+                        SVT_KG_TUR = if_else(is.na(PKAMP),0,PKAMP),
+                        SVT_KG_WHG = if_else(is.na(VALKOTURSKA),0,VALKOTURSKA),
                         SVT_KG_TOTAL = SVT_KG_COD+SVT_KG_ELE+SVT_KG_FBM+SVT_KG_FBU+
                           SVT_KG_FID+SVT_KG_FIN+SVT_KG_FLE+SVT_KG_FPE+SVT_KG_FPI+
                           SVT_KG_FPP+SVT_KG_FRO+SVT_KG_FVE+SVT_KG_HER+SVT_KG_PLE+
@@ -644,15 +722,15 @@ metier_2013_15 <- metier_2013_15 |> mutate(
 # dim(metier_2013_15)
 
 #Save this for J aktive vessels:
-metier_2013_15_for_J <- metier_2013_15
-saveRDS(metier_2013_15_for_J, file = paste0(path_der,"metier_2013_15_for_J.rds"))
+logbook_13_15_for_J <- logbook_13_15
+# saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 # wide to long table
-metier_2013_15 <- tibble::rowid_to_column(metier_2013_15, "ID")
+logbook_13_15 <- tibble::rowid_to_column(logbook_13_15, "ID")
 
-metier.fish <- metier_2013_15 |> select(ID, YEAR, ices, SVT_KG_COD:SVT_KG_WHG) |>
+metier.fish <- logbook_13_15 |> select(ID, YEAR, ICES, SVT_KG_COD:SVT_KG_WHG) |>
                 rename_with(~gsub("SVT_KG_", "", .x)) |>
-                pivot_longer(!ID:ices, names_to = "SPECIES", values_to = "KG")
+                pivot_longer(!ID:ICES, names_to = "SPECIES", values_to = "KG")
 
 # dim(metier.fish)
 
@@ -661,36 +739,42 @@ commercial.value <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = "")
                             table="keskihinnat_2025_05_06", dbname = "kake_siirto")
 
 commercial.value <- commercial.value |> select(FAO_KOODI,VUOSI,ICES_ALUE,KESKIHINTA,KESKIHINTA_KOKO_MERIALUE) |>
+                      mutate(FAO_KOODI = if_else(FAO_KOODI == "GAR", "PLE", FAO_KOODI)) |>
                       filter(FAO_KOODI %in% c("COD", "ELE", "FBM", "FBU", "FID", "FIN", "FLE", "FPE",
                                               "FPI", "FPP", "FRO", "FVE", "HER", "PLE", "PLN", "SAL",
                                               "SME", "SPR", "TRR", "TRS", "TUR", "WHG")) |> 
                       arrange(FAO_KOODI,VUOSI,ICES_ALUE)
 
+commercial.value$KESKIHINTA[commercial.value$FAO_KOODI == "ELE" & 
+                              (commercial.value$KESKIHINTA < 2 | is.na(commercial.value$KESKIHINTA)) ] <- 10
+
 # create lookup of all combination years, ices, fish
 # outer join to commericial.value
 # fill in empty rows
-# for eel use €10/kg as expert judgment for all years
-
-# check
-commercial.value |> filter(is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE)) |> View()
-commercial.value |> filter(FAO_KOODI == "ELE") |> fill(VUOSI,ICES_ALUE) |> View()
 
 # join area specific price
 metier.fish <- metier.fish |> left_join(commercial.value,  
-                            by=c("YEAR"="VUOSI", "ices"="ICES_ALUE", "SPECIES"="FAO_KOODI"))
+                            by=c("YEAR"="VUOSI", "ICES"="ICES_ALUE", "SPECIES"="FAO_KOODI"))
+
+# average yearly prices (all ices)
+tmp <- metier.fish |> group_by(YEAR,SPECIES) |> summarise(YEAR_AVG = mean(KESKIHINTA, na.rm=TRUE))
+
+metier.fish <- metier.fish |> left_join(tmp, by=c("YEAR","SPECIES"))
 
 # calculate value
 metier.fish <- metier.fish |> mutate(VALUE = case_when(
           !is.na(KESKIHINTA) ~ KG*KESKIHINTA,
           is.na(KESKIHINTA) ~ KG*KESKIHINTA_KOKO_MERIALUE,
-          is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE) ~ NA,
+          is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE) ~ KG*YEAR_AVG,
           TRUE ~ -999
 ))
 
-# any weird ones?
 # metier.fish |> filter(VALUE == -999) |> count(YEAR,SPECIES)
 
-metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES) |>
+# !!!HERE!!!
+# majority of catches don't have KG
+
+metier.fish |> filter(is.na(VALUE)) |> count(YEAR,ICES, SPECIES) |>
   adorn_totals("row") |> flextable() |> 
   set_caption("fish species without commercial value in certain year")
 
