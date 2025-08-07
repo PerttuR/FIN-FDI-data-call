@@ -1,3 +1,8 @@
+JCD TODO 07/08/2025
+
+* SAS LOGBOOKS: check if correct tables were used (orig metier vs logbooks)
+* SAS SHORE DATA: data cleaning and validation
+
 TODO and FIX in 2025 FDI data:
 
 # After Datacall timetable for corrections ####
