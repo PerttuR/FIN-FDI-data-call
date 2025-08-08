@@ -17,6 +17,7 @@ library(flextable) # html table in Viewer window
 library(sf)        # simple spatial features
 library(labelled)  # remove sas imported column labels
 library(janitor)
+library(readxl)
 
 source("db.r")
 
@@ -155,12 +156,13 @@ rm(metier_2013, metier_2014, metier_2015, metier_2013.2, metier_2014.2, metier_2
 invisible(gc())
 
 #save to der folder
-saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+saveRDS(metier_2013_15, file = paste0(path_der,"sas_logbook_2013_15_raw.rds"))
 
-# !!!HERE!!! ####
-# save to database!
+### !!!HERE!!! ####
+# save to DB if renewed
+#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_logbook_raw_2013_15", metier_2013_15, overwrite = FALSE))
 
-dim(metier_2013_15)
+# dim(metier_2013_15)
 
 # check
 # tmp <- data.frame(metier=names(metier_2013_15)) |> rowid_to_column()
@@ -235,7 +237,6 @@ shore_2014.2 <- shore_2014 |>
 shore_2015.2 <- shore_2015 |>
                   add_column(HPUNAKAMPELA=NA, PAINO=NA, PLE=NA, PUNAKAMPELA=NA, 
                              PURKU_KUNTA="NA",  PURKUPVM="NA", PYYNTIAIKA=NA) |>
-                  #mutate(PURKUPVM= as.POSIXct(PURKUPVM)) |>
                   select(LABEL="_LABEL_", AHVEN, ALL, ALUS, AMMATTI, ANADR, ANKERIAS, 
                          ASIAKASTUNNUS, DEMERSAL, FRESH, FT, GEAR, GROUND, GROUND2, 
                          HAHVEN, HANKERIAS, HAUKI, HHAUKI, HKAMPELA, HKILOHAIL, 
@@ -262,11 +263,15 @@ rm(shore_2013, shore_2014, shore_2015, shore_2013.2, shore_2014.2, shore_2015.2,
 invisible(gc())
 
 #save to der folder
-saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15.rds"))
+saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15_raw.rds"))
 
-dim(shore_2013_15)
+### !!!HERE!!! ####
+# save to DB if renewed
+#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shore_raw_2013_15", shore_2013_15, overwrite = FALSE))
 
+# dim(shore_2013_15)
 
+### find newest db schema ####
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
 table.list <- substr(table.list, 30, nchar(table.list)-3)
@@ -328,6 +333,38 @@ logbook_13_15 <- metier_2013_15 |>
                     #CONFIDENTIAL HERE!
                     )
 
+shorelogs_13_15 <- shore_2013_15 |> 
+                  mutate(
+                    COUNTRY = "FIN",
+                    YEAR	= KALASTUSVUOSI,
+                    QUARTER	= case_when(
+                      KK %in% seq(1,3) ~ "1",
+                      KK %in% seq(4,6) ~ "2",
+                      KK %in% seq(7,9) ~ "3",
+                      KK %in% seq(10,12) ~ "4"),
+                    VESSEL_LENGTH,
+                    FISHING_TECH =	FT,
+                    GEAR_TYPE	= stringr::str_sub(METIER, 1,3), 
+                    TARGET_ASSEMBLAGE	= stringr::str_sub(METIER, 5,7), 
+                    # MESH_SIZE_RANGE	HERE!
+                    # METIER HERE!       
+                    METIER_7 = "NA",
+                    # DOMAIN_DISCARDS HERE!
+                    # DOMAIN_LANDINGS	HERE!
+                    SUPRA_REGION	= "NAO",
+                    # SUB_REGION HERE!
+                    EEZ_INDICATOR	= "NA",
+                    GEO_INDICATOR	= "NGI",
+                    NEP_SUB_REGION	= "NA",
+                    SPECON_TECH	= "NA",
+                    DEEP	= "NA",
+                    # SPECIES	= "",              # FISHNAME COL 20-41
+                    # TOTWGHTLANDG	= "",        # FISHNAME COL 20-41
+                    # TOTVALLANDG	= "",          # H+FISHNAME COL 20-41
+                    DISCARDS	= "NA",
+                    #CONFIDENTIAL HERE!
+                  )
+
 # check new columns
 # View(metier_2013_15[,130:152])
 
@@ -359,6 +396,7 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
+### 3.1 clean logbook ####
 ship.length <- logbook_13_15 |> select(KALASTUSVUOSI, ALUS, ALUSNIMI, VESSEL_LENGTH) |> distinct() |>
   left_join(kapasiteetti |> select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI), 
             by= c("KALASTUSVUOSI"="VUOSI","ALUS"="ULKOINENTUNNUS")) |>
@@ -372,44 +410,258 @@ ship.length <- logbook_13_15 |> select(KALASTUSVUOSI, ALUS, ALUSNIMI, VESSEL_LEN
 # check 2014 GOLDEN ROSE - should now be NA, but vessel_length is correct
 
 # link ship length lookup to table
-# remove lofbok vessel length and use cross-validated one instead
-logbook_13_15 <- logbook_13_15 |> rename(check_length=VESSEL_LENGTH) |> 
-                    left_join(ship.length |> select(KALASTUSVUOSI, ALUS, ALUSNIMI, VESSEL_LENGTH), 
+# remove logbook vessel length and use cross-validated one instead
+logbook_13_15 <- logbook_13_15 |> rename(length_orig=VESSEL_LENGTH) |> 
+                    left_join(ship.length |> select(KALASTUSVUOSI, ALUS, VESSEL_LENGTH), 
                               by=c("KALASTUSVUOSI"="KALASTUSVUOSI",
-                                   "ALUS"="ALUS",
-                                   "ALUSNIMI"="ALUSNIMI")) |>
+                                   "ALUS"="ALUS")) |>
                     relocate(VESSEL_LENGTH, .after = QUARTER)
 
 # checking records
-logbook_13_15 |> count(VESSEL_LENGTH) |> flextable() |> 
-  set_caption("Check VESSEL_LENGTH classes in metier_2013_15")
-# metier_2013_15 |> select(c(1,2,130:152)) |> View()
+logbook_13_15 |> count(length_orig) |> flextable() |> 
+  set_caption("Check length_orig classes in logbook_13_15")
 
-rm(ship.length, kapasiteetti)
-invisible(gc())
+logbook_13_15 |> count(VESSEL_LENGTH) |> flextable() |> 
+  set_caption("Check VESSEL_LENGTH classes in logbook_13_15")
+
+### 3.2 clean shorelogs ####
+# missing vessel identifiers
+# only owners can be identified, but there's no way to link to capacity table
+#shorelogs_13_15 |> filter(ALUS == "") |> select(NIMI) |> distinct() |> pull(NIMI) -> tmp
+
+ship.length <- shorelogs_13_15 |> select(KALASTUSVUOSI, ALUS, NIMI, VESSEL_LENGTH) |> distinct() |>
+  left_join(kapasiteetti |> select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI), 
+            by= c("KALASTUSVUOSI"="VUOSI","ALUS"="ULKOINENTUNNUS")) |>
+  mutate(DIFF = if_else(VESSEL_LENGTH != VLENGTH_FDI, 1, 0),
+         VESSEL_LENGTH = case_when(
+           is.na(VESSEL_LENGTH) ~ VLENGTH_FDI,
+           VESSEL_LENGTH != VLENGTH_FDI ~ VLENGTH_FDI,
+           .default = VESSEL_LENGTH
+         )) |> distinct()
+
+# link ship length lookup to table
+# remove logbook vessel length and use cross-validated one instead
+shorelogs_13_15 <- shorelogs_13_15 |> rename(length_orig=VESSEL_LENGTH) |> 
+  left_join(ship.length |> select(KALASTUSVUOSI, ALUS, VESSEL_LENGTH), 
+            by=c("KALASTUSVUOSI"="KALASTUSVUOSI",
+                 "ALUS"="ALUS")) |>
+  relocate(VESSEL_LENGTH, .after = QUARTER) |>
+  mutate(VESSEL_LENGTH = if_else(VESSEL_LENGTH == "NA", "NK", VESSEL_LENGTH))
+
+# checking records
+shorelogs_13_15 |> count(length_orig) |> flextable() |> 
+  set_caption("Check length_orig classes in shorelogs_13_15")
+
+shorelogs_13_15 |> count(VESSEL_LENGTH) |> flextable() |> 
+  set_caption("Check VESSEL_LENGTH classes in shorelogs_13_15")
+
+#.------------------------------------------------------------------------------
+#                   4. mesh size lookup                                     ####    
+#.------------------------------------------------------------------------------
+
+active.passive <- data.frame(TYPE = c(rep("passive",5), rep("active", 4)),
+                             METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"),
+                             MESH    = c("YES", "YES", "YES", "NO", "NO", "PERHAPS", "YES", "YES", "YES"))
+
+active.passive |> flextable() |> autofit() |> set_caption("METIER4 lookup for active and passive gears")
+
+mesh.sizes <- data.frame(TYPE = c(rep("passive",6), rep("active", 6)),
+                         GEARS = c("Diamond mesh <16 mm",
+                                   "Diamond mesh >=16 mm and <32 mm",
+                                   "Diamond mesh >=32 mm and <90 mm",
+                                   "Diamond mesh >=90 mm and <110 mm",
+                                   "Diamond mesh >=110 mm and <157 mm",
+                                   "Diamond mesh >=157 mm",
+                                   "Diamond mesh <16 mm",
+                                   "Diamond mesh >=16 mm and <32 mm",
+                                   "Diamond mesh >=32 mm and <90 mm",
+                                   "Diamond mesh >=90 mm and <105 mm",
+                                   "Diamond mesh >=105 mm and <110 mm",
+                                   "Diamond mesh >=110 mm"),
+                         FROM  = c( 0,16,32,90,110,157, 0,16,32,90,105,110),
+                         TO   = c(16,32,90,110,157,Inf,16,32,90,105,110,Inf),
+                         CODE = c("00D16", "16D32", "32D90", "90D110", "110D157", "157DXX",
+                                  "00D16", "16D32", "32D90", "90D105", "105D110", "110DXX"))
+
+mesh.sizes |> flextable() |> autofit() |> hline(i=6) |> set_caption("Mesh size ranges for Baltic")
+
+mesh.lookup <- active.passive |> filter(MESH != "NO") |> left_join(mesh.sizes, by=c("TYPE"="TYPE"))
+
+mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size combinations")
+
+# save to DB if needed
+#invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE))
+# added to DB by Perttu 19-06-2025
+
+### 4.1 logbook mesh sizes ####
+
+logbook_13_15 <- logbook_13_15 |> mutate(METIER6 = METIER,
+                                         METIER5 = stringr::str_sub(METIER, 1,7),
+                                         METIER4 = stringr::str_sub(METIER, 1,3)) |>
+                    rename(metier_orig=METIER)
+
+# checking for LINE metiers with mesh sizes
+# logbook_13_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
+#   select(YEAR, ALUS, ALUSNIMI, SILMAKOKO, METIER6) |> 
+#   flextable() |> autofit() |> set_caption("Enties for lines but giving mesh size")
+
+# correct data - remove mesh size if line metier
+logbook_13_15 <- logbook_13_15 |> mutate(SILMAKOKO = case_when(
+  METIER4 %in% c("LLD","LLS") ~ NA,
+  .default = as.numeric(SILMAKOKO)
+))
+
+# logbook_13_15 |> count(SILMAKOKO)
+# check missing mesh sizes in SAS data
+#logbook_13_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
+#  select(YEAR, PVM, ALUS, ALUSNIMI, SILMAKOKO, METIER6, METIER5, METIER4) |> 
+#  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
+#  filter(is.na(CODE)) |>
+#  distinct() |> select(-c(METIER5,METIER4,TYPE,MESH,GEARS,TO,FROM)) |> 
+#  arrange(ALUS,YEAR,PVM, METIER6) |>
+#  flextable() |> autofit() |> set_caption("ships with missing net sizes")
+
+# join mesh size range codes
+logbook_13_15 <- logbook_13_15 |> 
+  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,FROM,TO)))
+
+logbook_13_15 |> count(CODE)
+
+# assign CODE if KOKOSILMA IS NA
+logbook_13_15 <- logbook_13_15 |> 
+                    mutate(CODE = case_when(
+                      is.na(SILMAKOKO) & 
+                        METIER4 %in% c("OTM","GNS","PTM","FYK","MIS","FPO","OTB") ~ "NK",
+                      .default = as.character(CODE)
+                    ))
+
+logbook_13_15 |> count(CODE) |> filter(CODE == "NK") |> flextable()
+logbook_13_15 |> count(METIER4, CODE) |> filter(CODE == "NK") |> flextable()
+
+### 4.2 shorelogs mesh sizes ####
+
+### !!!HERE!!! ####
+# need to find or derive meash sizes before we can ctontinue here
+shorelogs_13_15 <- shorelogs_13_15 |> mutate(METIER6 = METIER,
+                                         METIER5 = stringr::str_sub(METIER, 1,7),
+                                         METIER4 = stringr::str_sub(METIER, 1,3)) |>
+  rename(metier_orig=METIER)
+
+tmp <- shorelogs_13_15 |> 
+  mutate(SILMAKOKO = case_when(
+    METIER4 %in% c("LHP", "LLD", "LLS") ~ NA,
+    SELITE == "Muu isorysä > 1,5 m" ~ 1500,
+    SELITE == "Muu isorysä> 1,5 m" ~ 1500,
+    SELITE == "Muu verkko, solmuväli alle 36 mm" ~ 34,
+    SELITE == "Muu verkko, solmuväli 36-40 mm" ~ 38,
+    SELITE == "Muu verkko, solmuväli 40-45 mm" ~ 42,
+    SELITE == "Muu verkko, solmuväli 41-45 mm" ~ 42,
+    SELITE == "Muu verkko, solmuväli 46-50 mm" ~ 48,
+    SELITE == "Muu verkko, solmuväli 51-60 mm" ~ 52,
+    SELITE == "Muu verkko, solmuväli yli 60 mm" ~ 62,
+    .default = NA))
+
+# checking for LINE metiers with mesh sizes
+# shorelogs_13_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
+#   select(YEAR, ALUS, ALUSNIMI, SILMAKOKO, METIER6) |> 
+#   flextable() |> autofit() |> set_caption("Enties for lines but giving mesh size")
+
+# correct data - remove mesh size if line metier
+shorelogs_13_15 <- shorelogs_13_15 |> mutate(SILMAKOKO = case_when(
+  METIER4 %in% c("LLD","LLS") ~ NA,
+  .default = as.numeric(SILMAKOKO)
+))
+
+# shorelogs_13_15 |> count(SILMAKOKO)
+# check missing mesh sizes in SAS data
+#shorelogs_13_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
+#  select(YEAR, PVM, ALUS, ALUSNIMI, SILMAKOKO, METIER6, METIER5, METIER4) |> 
+#  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
+#  filter(is.na(CODE)) |>
+#  distinct() |> select(-c(METIER5,METIER4,TYPE,MESH,GEARS,TO,FROM)) |> 
+#  arrange(ALUS,YEAR,PVM, METIER6) |>
+#  flextable() |> autofit() |> set_caption("ships with missing net sizes")
+
+# join mesh size range codes
+shorelogs_13_15 <- shorelogs_13_15 |> 
+  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,FROM,TO)))
+
+shorelogs_13_15 |> count(CODE)
+
+# assign CODE if KOKOSILMA IS NA
+logbook_13_15 <- logbook_13_15 |> 
+  mutate(CODE = case_when(
+    is.na(SILMAKOKO) & 
+      METIER4 %in% c("OTM","GNS","PTM","FYK","MIS","FPO","OTB") ~ "NK",
+    .default = as.character(CODE)
+  ))
+
+logbook_13_15 |> count(CODE) |> filter(CODE == "NK") |> flextable()
+logbook_13_15 |> count(METIER4, CODE) |> filter(CODE == "NK") |> flextable()
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
+rm(mesh.sizes, mesh.lookup, active.passive, metier_check, metier.lookup, metier.lookup.fin)
+invisible(gc())
+
 #.------------------------------------------------------------------------------
-#                   4. metier lookup                                        ####    
+#                   5. metier lookup                                        ####    
 #.------------------------------------------------------------------------------
+#
 
-metier.lookup <- read.csv(text=getURL("https://raw.githubusercontent.com/ices-eg/RCGs/refs/heads/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv"))
+#### !!!HERE!!! ####
+# first produce mesh sizes
+# then cross-validate metier codes against METIER4 + CODE
+# then correct METIER using new code lookup!
 
-# correct missing FIN tag in lookup table
-metier.lookup <- metier.lookup |> 
-              mutate(Used_by_country_in_RDB = case_when(
-                Metier_level6 == "PTM_SPF_16-31_0_0" & RCG == "BALT" ~ paste0(Used_by_country_in_RDB,", FIN"),
-                .default = as.character(Used_by_country_in_RDB))) |> 
-              select(RCG,Metier_level6,Old_code,Used_by_country_in_RDB,Metier_level5,Description)
+metier.codes <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |>
+                  mutate(METIER4 = str_sub(METIER, 1,3),
+                         METIER5 = str_sub(METIER, 1,7)) |>
+                  select(METIER4, METIER5, METIER6=METIER,DESCRIPTION=2)
 
-metier.lookup.fin <- metier.lookup |> filter(Used_by_country_in_RDB == "FIN")
-# metier.lookup.fin |> select(RCG, Metier_level5, Metier_level6, Used_by_country_in_RDB) |> 
-#  kable(caption="Official metier classes for Finland")
+#list of all metiers in logbook or shore data
+tag1 <- unique(logbook_13_15$METIER5)
+tag2 <- unique(shorelogs_13_15$METIER5)
+tag <- unique(append(tag1,tag2))
 
-metier_check <- metier_2013_15 |> 
-  select(METIER, SILMAKOKO) |> distinct() |> 
+# only matching METIER4's for Finland
+metier.codes.fin <- metier.codes |> filter(METIER5 %in% tag)
+
+# only keep classes for unknown mesh sizes
+metier.codes.fin <- metier.codes.fin |> mutate(
+          TAG = str_sub(METIER6, -6L, nchar(METIER6))) |>
+          filter(TAG == "_0_0_0" | TAG == ">0_0_0") |>
+        select(-TAG) |> mutate(FROM = "NA", TO="NA", CODE = "NA")
+
+# now add all possible  variations based on mesh sizes
+tmp <- metier.codes.fin |> select(METIER4, METIER5) |> left_join(mesh.lookup,by="METIER4") |>
+        select(-c(TYPE, MESH)) |> rename(DESCRIPTION=GEARS) |> filter(!is.na(CODE)) |>
+        mutate(METIER6 = case_when(
+          FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
+          TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
+          FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0")
+          )) |> relocate(METIER6, .after=METIER5)
+
+# now glue both versions together
+metier.codes.fin <- rbind(metier.codes.fin, tmp) |> arrange(METIER5, FROM)
+
+### !!!HERE!!! ####
+# save to DB if needed
+#invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "metier_codes_fin", metier.codes.fin, overwrite = FALSE))
+
+# !I AM HERE! ####
+
+#.------------------------------------------------------------------------------
+#                   5.1 clean metiers                                       ####    
+#.------------------------------------------------------------------------------  
+tmp <- logbook_13_15 |> mutate(CATEGORY = str_sub(METIER,1,7)) |> 
+           left_join(metier.codes.fin, join_by(CATEGORY, between(SILMAKOKO,TO,FROM))) |>
+           
+
+
+metier_check <- logbook_13_15 |> 
+  select(METIER) |> distinct() |> 
   left_join(metier.lookup |> filter(RCG == "BALT"), by = c("METIER" = "Metier_level6"), keep = T) |>
   filter(is.na(Metier_level6))
 
@@ -452,7 +704,7 @@ logbook_13_15 <- logbook_13_15 |> mutate(METIER5 = stringr::str_sub(METIER, 1,7)
   relocate(METIER6, .after = TARGET_ASSEMBLAGE)
 
 logbook_13_15 |> count(METIER6) |> flextable() |> autofit() |>
-  set_caption("Metier 6 classes in metier_2013_15")
+  set_caption("Metier 6 classes in logbook_2013_15")
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
@@ -462,104 +714,7 @@ logbook_13_15 |> count(METIER6) |> flextable() |> autofit() |>
 # - need to get complete lookup for Finland ??? the provided lookup only gives 
 #   the base _0_0_0 codes for some categories
 
-#.------------------------------------------------------------------------------
-#                   5. mesh size lookup                                     ####    
-#.------------------------------------------------------------------------------
 
-# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
-
-logbook_13_15 <- logbook_13_15 |> mutate(METIER4 = stringr::str_sub(METIER5, 1,3))
-
-active.passive <- data.frame(TYPE = c(rep("passive",5), rep("active", 4)),
-           METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"),
-           MESH    = c("YES", "YES", "YES", "NO", "NO", "PERHAPS", "YES", "YES", "YES"))
-
-active.passive |> flextable() |> autofit() |> set_caption("METIER4 lookup for active and passive gears")
-
-mesh.sizes <- data.frame(TYPE = c(rep("passive",6), rep("active", 6)),
-                         GEARS = c("Diamond mesh <16 mm",
-                                   "Diamond mesh >=16 mm and <32 mm",
-                                   "Diamond mesh >=32 mm and <90 mm",
-                                   "Diamond mesh >=90 mm and <110 mm",
-                                   "Diamond mesh >=110 mm and <157 mm",
-                                   "Diamond mesh >=157 mm",
-                                   "Diamond mesh <16 mm",
-                                   "Diamond mesh >=16 mm and <32 mm",
-                                   "Diamond mesh >=32 mm and <90 mm",
-                                   "Diamond mesh >=90 mm and <105 mm",
-                                   "Diamond mesh >=105 mm and <110 mm",
-                                   "Diamond mesh >=110 mm"),
-                          FROM  = c( 0,16,32,90,110,157, 0,16,32,90,105,110),
-                          TO   = c(16,32,90,110,157,Inf,16,32,90,105,110,Inf),
-                          CODE = c("00D16", "16D32", "32D90", "90D110", "110D157", "157DXX",
-                                   "00D16", "16D32", "32D90", "90D105", "105D110", "110DXX"))
-
-mesh.sizes |> flextable() |> autofit() |> hline(i=6) |> set_caption("Mesh size ranges for Baltic")
-
-mesh.lookup <- active.passive |> filter(MESH != "NO") |> left_join(mesh.sizes, by=c("TYPE"="TYPE"))
-
-mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size combinations")
-
-# save to DB if needed
-#invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE)) # added to DB by Perttu 19-06-2025 ####
-
-# checking for LINE metiers with mesh sizes
-logbook_13_15 |> filter(METIER4 %in% c("LLD","LLS") & !is.na(SILMAKOKO)) |> 
-  select(YEAR, ALUS, ALUSNIMI, SILMAKOKO, METIER, METIER6) |> 
-  flextable() |> autofit() |> set_caption("Enties for lines but giving mesh size")
-
-# correct data - remove mesh size if line metier
-logbook_13_15 <- logbook_13_15 |> mutate(SILMAKOKO = case_when(
-  METIER4 %in% c("LLD","LLS") ~ NA,
-  .default = as.numeric(SILMAKOKO)
-))
-
-# check missing mesh sizes in SAS data
-logbook_13_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
-  select(YEAR, PVM, ALUS, ALUSNIMI, SILMAKOKO, METIER6, METIER5, METIER4) |> 
-  left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM))) |> 
-  filter(is.na(CODE)) |>
-  distinct() |> select(-c(METIER5,METIER4,TYPE,MESH,GEARS,TO,FROM)) |> 
-  arrange(ALUS,YEAR,PVM, METIER6) |>
-  flextable() |> autofit() |> set_caption("ships with missing net sizes")
-
-# join mesh size range codes
-logbook_13_15 <- logbook_13_15 |> left_join(mesh.lookup, join_by(METIER4, between(SILMAKOKO,TO,FROM)))
-
-# assign CODE if KOKOSILMA IS NA
-logbook_13_15 <- logbook_13_15 |> mutate(CODE = case_when(
-  is.na(SILMAKOKO) & METIER6 == "FPO_FWS_>0_0_0" ~ "16D32",
-  is.na(SILMAKOKO) & METIER6 == "FYK_ANA_>0_0_0" ~ "32D90",
-  is.na(SILMAKOKO) & METIER6 == "FYK_FWS_>0_0_0" ~ "16D32",
-  is.na(SILMAKOKO) & METIER6 == "FYK_SPF_>0_0_0" ~ "16D32",
-  is.na(SILMAKOKO) & METIER6 == "GNS_DEF_110-156_0_0" ~ "110D157",
-  is.na(SILMAKOKO) & METIER6 == "GNS_FWS_>0_0_0" ~ "32D90",
-  is.na(SILMAKOKO) & METIER6 == "OTM_FWS_>0_0_0" ~ "16D32",
-  is.na(SILMAKOKO) & METIER6 == "PTM_SPF_16-31_0_0" ~ "16D32",
-  .default = as.character(CODE)
-))
-
-# FPO_FWS_>0_0_0      --> 16D32 # DONE
-# FYK_ANA_>0_0_0      --> 32D90 # DONE
-# FYK_FWS_>0_0_0      --> 16D32 # DONE
-# FYK_SPF_>0_0_0      --> 16D32 # DONE
-# GNS_DEF_110-156_0_0 --> 110D157 # DONE
-# GNS_FWS_>0_0_0      --> 32D90 # DONE
-# OTM_FWS_>0_0_0      --> 16D32 # DONE
-# PTM_SPF_16-31_0_0   --> 16D32 # DONE
-
-# check missing mesh sizes in SAS data
-logbook_13_15 |> filter(!METIER4 %in% c("LLD","LLS")) |>
-  select(YEAR, ALUS, ALUSNIMI, SILMAKOKO, METIER6, CODE) |> 
-  filter(is.na(SILMAKOKO)) |> 
-  arrange(ALUS,YEAR,METIER6) |>
-  flextable() |> autofit() |> set_caption("imputed codes for ships with missing net sizes")
-
-# save to der folder
-# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
-
-rm(mesh.sizes, mesh.lookup, active.passive, metier_check, metier.lookup, metier.lookup.fin)
-invisible(gc())
 
 #.------------------------------------------------------------------------------
 #                   6. ADD ICES AREAS                                       ####    
