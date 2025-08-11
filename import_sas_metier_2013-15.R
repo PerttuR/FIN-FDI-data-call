@@ -265,12 +265,6 @@ invisible(gc())
 #save to der folder
 saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15_raw.rds"))
 
-### !!!HERE!!! ####
-# save to DB if renewed
-#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shore_raw_2013_15", shore_2013_15, overwrite = FALSE))
-
-# dim(shore_2013_15)
-
 ### find newest db schema ####
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
@@ -287,8 +281,17 @@ message("Newest schema is from: ", schemadate)
 #
 ## Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
 #
-#dcprodschema <- paste0(schemadate, "-dcprod")
-#invisible(write.dbTable(dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
+dcprodschema <- paste0(schemadate, "-dcprod")
+
+# uncomment and save to DB if renewed
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
+
+# uncomment and save to DB if renewed
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shore_raw_2013_15", shore_2013_15, overwrite = FALSE))
+
+# dim(shore_2013_15)
+
+
 
 ## Write species lookup table to Luke LOGBOOK database
 #dcprodschema <- paste0(schemadate, "-dcprod")
