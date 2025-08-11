@@ -645,8 +645,9 @@ logbook_13_15 |> count(METIER4, CODE) |> filter(CODE == "NK") |> flextable()
 rm(mesh.sizes, mesh.lookup, active.passive, metier_check, metier.lookup, metier.lookup.fin)
 invisible(gc())
 
+# !!! I AM HERE !!! ####
 #.------------------------------------------------------------------------------
-#                   6. ADD ICES AREAS                                       ####    
+#                   5. ADD ICES AREAS                                       ####    
 #.------------------------------------------------------------------------------
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
@@ -694,7 +695,7 @@ rm(icesRectangle,areas,ewkb_to_sf)
 invisible(gc())
 
 #.------------------------------------------------------------------------------
-#                   7. longitude / latitude                                 ####    
+#                   6. longitude / latitude                                 ####    
 #.------------------------------------------------------------------------------
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
@@ -718,7 +719,7 @@ rm(midpoints)
 invisible(gc())
 
 #.------------------------------------------------------------------------------
-#                   8. fish column names                                   ####    
+#                   7. fish column names                                   ####    
 #.------------------------------------------------------------------------------
 
 #import species lookup table ASFIS_sp_2024.xlsx
@@ -872,7 +873,7 @@ test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
 
 #.------------------------------------------------------------------------------
-#                   9. calculate fishing days                               ####    
+#                   8. calculate fishing days                               ####    
 #.------------------------------------------------------------------------------
 
 # proc sort data=effort out=alus_saalis_sort;
@@ -895,7 +896,7 @@ test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR
 
 
 #.------------------------------------------------------------------------------
-#                   10. calculate sea days                               ####    
+#                   9. calculate sea days                               ####    
 #.------------------------------------------------------------------------------
 
 # DATA meripv;
@@ -923,7 +924,7 @@ test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR
 
 
 #.------------------------------------------------------------------------------
-#                   11. matching akt1 column names                          ####    
+#                   10. matching akt1 column names                          ####    
 #.------------------------------------------------------------------------------
 
 # column names to match
