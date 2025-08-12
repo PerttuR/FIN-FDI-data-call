@@ -158,10 +158,6 @@ invisible(gc())
 #save to der folder
 saveRDS(metier_2013_15, file = paste0(path_der,"sas_logbook_2013_15_raw.rds"))
 
-### !!!HERE!!! ####
-# save to DB if renewed
-#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_logbook_raw_2013_15", metier_2013_15, overwrite = FALSE))
-
 # dim(metier_2013_15)
 
 # check
@@ -265,10 +261,6 @@ invisible(gc())
 #save to der folder
 saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15_raw.rds"))
 
-### !!!HERE!!! ####
-# save to DB if renewed
-#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shorelogs_raw_2013_15", shore_2013_15, overwrite = FALSE))
-
 ### find newest db schema ####
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
@@ -287,11 +279,10 @@ message("Newest schema is from: ", schemadate)
 #
 dcprodschema <- paste0(schemadate, "-dcprod")
 
+# SAVEPOINT -------- ####
 # uncomment and save to DB if renewed
-# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "metier_sas_files_2013_15", metier_2013_15, overwrite = TRUE))
-
-# uncomment and save to DB if renewed
-# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shore_raw_2013_15", shore_2013_15, overwrite = FALSE))
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_logbook_raw_2013_15", metier_2013_15, overwrite = TRUE))
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shorelogs_raw_2013_15", shore_2013_15, overwrite = FALSE))
 
 # dim(shore_2013_15)
 
@@ -528,8 +519,7 @@ mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size c
 rm(active.passive, mesh.sizes, mesh.lookup1, mesh.lookup2, mesh.lookup3)
 invisible(gc())
 
-# !!!HERE!!! ####
-# new version 11/08/2025
+# SAVEPOINT -------- ####
 # save to DB if needed
 #invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE))
 # added to DB by Perttu 19-06-2025
@@ -706,7 +696,7 @@ invisible(gc())
 
 source("spatial.R")
 
-midpoints <- latlon(metier_2013_15$ices_name, midpoint=TRUE)
+midpoints <- latlon(logbook_13_15$ices_name, midpoint=TRUE)
 
 logbook_13_15 <- tibble::rowid_to_column(logbook_13_15, "ID")
 midpoints <- tibble::rowid_to_column(midpoints, "ID")
