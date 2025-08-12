@@ -848,8 +848,6 @@ metier.fish <- metier.fish |> mutate(VALUE = case_when(
           TRUE ~ -999
 ))
 
-# metier.fish |> filter(VALUE == -999) |> count(YEAR,SPECIES)
-
 # !!!HERE!!!
 # majority of catches don't have KG
 
@@ -857,14 +855,20 @@ metier.fish |> filter(is.na(VALUE)) |> count(YEAR,ICES, SPECIES) |>
   adorn_totals("row") |> flextable() |> 
   set_caption("fish species without commercial value in certain year")
 
-tag <- metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES)
+# tag <- metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES)
+# 
+# test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR), max(tag$YEAR)+1) &
+#                         FAO_KOODI %in% tag$SPECIES) |> arrange(FAO_KOODI,VUOSI, ICES_ALUE)
+  
+  
+# save value to table and add categories
+metier.fish <- metier.fish |> select(ID, SPECIES, VALUE) |>
+  pivot_wider(id_cols=ID, names_from = SPECIES, values_from = VALUE, names_prefix = "SVT_VALUE_") |> 
+  mutate(SVT_VALUE_TOTAL = rowSums(across(SVT_VALUE_COD:SVT_VALUE_WHG)))
 
-test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR), max(tag$YEAR)+1) &
-                        FAO_KOODI %in% tag$SPECIES) |> arrange(FAO_KOODI,VUOSI, ICES_ALUE)
-  
-  
-# save to der folder
-# saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
+# add to logbook data
+logbook_13_15 <- logbook_13_15 |> left_join(metier.fish, by="ID")
+
 
 #.------------------------------------------------------------------------------
 #                   8. calculate fishing days                               ####    
