@@ -265,6 +265,10 @@ invisible(gc())
 #save to der folder
 saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15_raw.rds"))
 
+### !!!HERE!!! ####
+# save to DB if renewed
+#invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shorelogs_raw_2013_15", shore_2013_15, overwrite = FALSE))
+
 ### find newest db schema ####
 # ... time stamp to latest Logbook DB source: YYYY-MM-DD
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
