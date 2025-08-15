@@ -611,7 +611,7 @@ invisible(gc())
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
-areas <- seq(23,32)
+areas <- seq(22,32)
 
 ewkb_to_sf <- function(data) {
   return(st_as_sfc(structure(data, class="WKB"), EWKB=T))
@@ -910,24 +910,40 @@ shorelogs_13_15 <- shorelogs_13_15 |> rename(ft_orig=FT.x, FT=FT.y)
 shorelogs_13_15$FT <- ifelse(shorelogs_13_15$FT != "PG", "PG", shorelogs_13_15$FT)
 
 #.------------------------------------------------------------------------------
-#                   8.1. fecR for logbooks only                             ####    
+#                   8.1 trip and haul ID                                     ####    
 #.------------------------------------------------------------------------------
 
-# here fecR  code !!!! script 1 DCRPOD, line 1846-2499
+# logdata ####
+# drop 13 records without hauls
+logbook_13_15 <- logbook_13_15 |> filter(!is.na(KALASTUSKERTATUNNUS))
 
-# ... ... ... ... ... ...  EFFORT ... ... ... ... ... ... #
+# create a trip ID
+tmp <- logbook_13_15 |> arrange(KALASTUSKERTATUNNUS) |> group_by(ALUS, LAHTOPVM) |> 
+  summarise(KMATKA_TUNNUS = min(KALASTUSKERTATUNNUS))
+
+# add trip id to main table
+logbook_13_15 <- logbook_13_15 |> left_join(tmp, by=c("ALUS","LAHTOPVM"))
+
+# shore ####
+"FT_REF", "FT_TRIP", "KMATKA_TUNNUS", "KKERTA_TUNNUS"
 
 
+# drop 13 records without hauls
+shorelogs_13_15 <- shorelogs_13_15 |> filter(!is.na(KALASTUSKERTATUNNUS))
 
+# create a trip ID
+tmp <- logbook_13_15 |> arrange(KALASTUSKERTATUNNUS) |> group_by(ALUS, LAHTOPVM) |> 
+  summarise(KMATKA_TUNNUS = min(KALASTUSKERTATUNNUS))
 
-# ... ... MERIPÄIVÄT JA KALASTUSPÄIVÄT ... ... #
+# add trip id to main table
+logbook_13_15 <- logbook_13_15 |> left_join(tmp, by=c("ALUS","LAHTOPVM"))
+# KKERTA_TUNNUS = KALASTUSKERTATUNNUS
 
+#.------------------------------------------------------------------------------
+#                   8.2. fecR for logbooks only                             ####    
+#.------------------------------------------------------------------------------
 
-# ... lataa paketit
-#suppressMessages({
-#library(dplyr)
-#library(fecR, lib.loc = paste0(getwd(), "/fecR-LOCAL"))
-#})
+library(fecR, lib.loc = paste0(getwd(), "/fecR-LOCAL"))
 
 # ... apufunktio
 missing_stats <- function(df, column, y) {
@@ -948,80 +964,19 @@ missing_stats <- function(df, column, y) {
 }
 
 
-
-
-
-
-
-# ... ... ... @HUOM EFFORTIN LASKENTA TEHDÄÄN ERIKSEEN JOKAISELLE VUODELLE ... ... ... # 
-
-
-#       SYY: fecR-paketin palauttama tulosaineistossa ei ole kalastuspäivämäärää mukana
-#            Jotta takaisinaggregoinnin saa validoitua, on laskettava ponnistus vuosittain
-#            (Kalastusmatkat, jotka alkavat loppuvuodesta ja päättyvät seuraavan vuoden puolella
-#             aiheuttavata muutoin ongelmia)
-
-
-
-
-
-
-
-# ... ... ... .. . DATA PREPARATION ... ... ... .. . #
-
-
-
-# The effort for fishing diary logbooks is calculated via `fecR`-package developed at the 2nd Workshop on Transversal Variables
-# held in Nikosia. The vignettes and package charasteristics can be found from
-# https://rdrr.io/cran/fecR/f/vignettes/calculating_fishing_effort.Rmd
-
-# The Nikosia package requires that the logbook data is processed into strict format including naming
-# conventions etc. 
-
-
-# The corresponding variables in FIN logbook data:
-
-#* CHR eunr_id = ULKOINENTUNNUS  | Vessel identifier, anonymous
-#* NUM loa = pituus   | Vessel length in cm (NOTE: not in meters!)
-#* NUM gt = VETOISUUS  | Gross tonnage
-#* NUM kw = PAAKONETEHO  | Engine power
-#* CHR trip_id = KMATKA_TUNNUS   | Unique identifier for fishing trip
-#* CHR depdate = LAHTOPVM, LAHTOPVM1   | Date of trip departure
-#* CHR deptime = LAHTOAIKA   | Time of trip departure
-#* CHR retdate = PALUUPVM    | Date of trip return
-#* CHR rettime = PALUUAIKA   | Time of trip return
-#* CHR fishdate = KALASTUSPVM  | Date of fishing operation
-#* CHR gear = GEAR | Gear used for specific fishing operation
-#* INT gear_mesh_size = SILMAKOKO | Mesh size in mm
-#* CHR fishing_area = derive from ICES  | Area where the fishing operation took place. DCF level 3 (level 4 for Baltic)
-#* CHR economic_zone = "EU" fixed value  | Economic zone where the fishing operation took place
-#* CHR rectangle = RECTANGLE | Rectangle where fishing operation took place
-
-
-
-
+## preparing data for fec.R ####
 
 # .. ladataan edellä muodostettu aineisto 
-LogBookTimeSeries <- readRDS(paste0(getwd(), "/PROD/DATA-TEMP/PVK02T-KALASTUSPAIVAKIRJA.rds"))
-
+LogBookTimeSeries <- logbook_13_15
 
 # ... aineistossa olevat vuodet (KALASTUSPVM MUKAAN)
 fishYears <- sort(unique(LogBookTimeSeries$KALASTUSVUOSI))
-
-# ... tallennetaan vektori
-saveRDS(fishYears, paste0(getwd(), "/PROD/DATA-TEMP/fishYears.rds"))
-
 
 # ... lista tulosaineistoille 
 DataListLogBookPrepared <- list()
 
 # ... lista alkuperäisille vuosiaineistoilla, joihin on tehty fecR-muuttujat (linkkausta varten)
 DataListLogBookOriginal <- list()
-
-cat("\nValmistellaan aineisto pyyntiponnistuksen laskentaa varten ...")
-
-cat("\n-fecR laskentafunktio ei salli puuttuvaa tietoa.")
-cat("\nPoistetaan puuttuvat ...\n\n")
 
 for (y in fishYears) {
   
@@ -1036,12 +991,12 @@ for (y in fishYears) {
   
   ## CHR eunr_id = ULKOINENTUNNUS  | Vessel identifier, anonymous
   # RDBES NOTE: add the encryption of vessel ID later
-  LogBook$eunr_id <- LogBook$ULKOINENTUNNUS
+  LogBook$eunr_id <- LogBook$ALUS
   #missing_stats(LogBook, "eunr_id", y)
   
   
   ## NUM loa = KOKPITUUS   | Vessel length in cm (NOTE: not in meters!)
-  LogBook$loa <- as.numeric(LogBook$KOKONAISPITUUS*100.0)
+  LogBook$loa <- as.numeric(LogBook$PITUUS*100.0)
   #missing_stats(LogBook, "loa", y)
   
   ## NUM gt = VETOISUUS  | Gross tonnage
@@ -1049,11 +1004,11 @@ for (y in fishYears) {
   #missing_stats(LogBook, "gt", y)
   
   ## NUM kw = PAAKONETEHO  | Engine power,
-  LogBook$kw <- as.numeric(LogBook$PAAKONETEHO)
+  LogBook$kw <- as.numeric(LogBook$TEHO)
   #missing_stats(LogBook, "kw", y)
   
   ## CHR trip_id = KMATKA_TUNNUS   | Unique identifier for fishing trip
-  LogBook$trip_id <- as.character(LogBook$KMATKA_TUNNUS)
+  LogBook$trip_id <- as.character(LogBook$KALASTUSKERTATUNNUS)
   #missing_stats(LogBook, "trip_id", y)
   
   ## CHR depdate = LAHTOPVM, LAHTOPVM1   | Date of trip departure
@@ -1063,7 +1018,7 @@ for (y in fishYears) {
   
   ## CHR deptime = LAHTOAIKA   | Time of trip departure
   # format: HHMM or HH:MM
-  LogBook$deptime <- gsub(":", "", as.character(LogBook$LAHTOAIKA))
+  LogBook$deptime <- "00:00"
   #missing_stats(LogBook, "deptime", y)
   
   ## CHR retdate = PALUUPVM    | Date of trip return
@@ -1076,7 +1031,7 @@ for (y in fishYears) {
   
   ## CHR fishdate = KALASTUSPVM  | Date of fishing operation
   # format: YYYYMMDD
-  LogBook$fishdate <- substr(gsub('-','', as.character(LogBook$KALASTUSPVM)),1,8)
+  LogBook$fishdate <- substr(gsub('-','', as.character(LogBook$PVM)),1,8)
   #missing_stats(LogBook, "fishdate", y)
   
   ## CHR gear = gear | Gear used for specific fishing operation
@@ -1090,11 +1045,10 @@ for (y in fishYears) {
   
   ## CHR rettime = PALUUAIKA   | Time of trip return
   # format: HHMM or HH:MM
-  LogBook$rettime <- gsub(":", "", LogBook$PALUUAIKA)
+  LogBook$rettime <- "00:00"
   #missing_stats(LogBook, "rettime", y)
   
-  
-  
+
   ## CHR | fishing_area = derived from ICES | Area where fishing operation took place
   # format: UPCASE
   LogBook[LogBook$ICES == 22, "fishing_area"] <- "27.3.d.22"
@@ -1115,7 +1069,7 @@ for (y in fishYears) {
   LogBook$economic_zone <- "EU"
   
   ## CHR rectangle = RECTANGLE | Rectangle where fishing operation took place
-  LogBook$rectangle <- as.character(LogBook$RECTANGLE)
+  LogBook$rectangle <- as.character(LogBook$ices_name)  # !!! ICES RECTANGLE 
   #missing_stats(LogBook, "rectangle", y)
   
   # The data cannot include any other columns
@@ -1134,9 +1088,6 @@ for (y in fishYears) {
                     "fishing_area",
                     "economic_zone",
                     "rectangle")
-  
-  
-  
   
   # ... @HUOM ... #
   
@@ -1160,8 +1111,6 @@ for (y in fishYears) {
                   100*round((nrow_lb-nrow_lb_omitted) / nrow_lb, digits = 3) ,"% ]"))
   }
   
-  
-  
   # ... OMIT duplicate rows
   LogBook <- distinct(LogBook)
   
@@ -1178,30 +1127,10 @@ for (y in fishYears) {
   # ... tallennetaan fecR-pakettia varten muokatut aineistot
   DataListLogBookPrepared[[i]] <- LogBook 
   
-  
-  
-  
-  
 }
 
 
-
-
-
-
-
-
-# ... ... ... .. . AINEISTON TARKISTAMINEN ... ... ... .. . #
-
-
-
-cat("\nValidoidaan aineisto [fecR::check_format()] ...")
-# ... tekninen validointi voidaan tehdä koko aikasarjalla yhdellä kertaa 
-#suppressMessages({
-#  check_format(dplyr::bind_rows(DataListLogBookPrepared))
-#})
-
-# ... funktio, joka hiljentää fecR-paketin tulostukset (varoitukset ja errorit näkyy, jos niitä tulee)
+## check output ####
 quietlyCheckFormat <- function() {
   sink(tempfile(), type = "output")
   invisible(fecR::check_format(dplyr::bind_rows(DataListLogBookPrepared)))
@@ -1212,27 +1141,7 @@ quietlyCheckFormat <- function() {
 quietlyCheckFormat()
 
 
-# ... kommentoi ja aja allaoleva, jos haluat tietää mitä check_format() tekee
-#?check_format()
-
-
-
-# @HUOM FUNKTIO TULOSTAA OLETUKSENA DATAN (TYPERÄÄ->KORJATTU 12.3.2024 NS. TUOTANTOON);
-#       SKROLLAAMALLA YLÖS NÄET TARKASTUKSEN TULOKSEN. KAIKKI ON HYVIN
-#       JOS VIESTI SANOO "The returned data passes the check."
-#       MUUSSA TAPAUKSESSA TULEE PUNAINEN VAROITUS, JOKA KERTOO MISSÄ VIKA 
-
-
-
-
-
-# ... ... ... .. . LASKETAAN EFFORT ... ... ... .. . #
-
-
-
-# fecR-package includes function calc_fishing_effort() to calculate the fishing effort 
-# INPUT: Dataset holding individual fishing trips in format as described
-# OUTPUT: A list of two dataframes holding the "days at sea" and "fishing days" 
+## calculating effort ####
 
 DataListDaysAtSea <- list()
 DataListFishingDays <- list()
@@ -1263,64 +1172,17 @@ for (y in fishYears) {
   
 }
 
-
-
-
-
-# ... ... ... TALLENNETAAN AINEISTOLISTAT JA TYHJENNETÄÄN ISTUNTO ... ... ... # 
-
-
-# ... kalastuspäivät löytyy 
-#str(DataListFishingDays)
-saveRDS(DataListFishingDays, paste0(getwd(), "/PROD/DATA-TEMP/DataListFishingDays.rds"))
-
-# ... ja meripäivät 
-#str(DataListDaysAtSea)
-saveRDS(DataListDaysAtSea, paste0(getwd(), "/PROD/DATA-TEMP/DataListDaysAtSea.rds"))
-
-# ... ja originaaliaineistot 
-#str(DataListLogBookOriginal)
-saveRDS(DataListLogBookOriginal, paste0(getwd(), "/PROD/DATA-TEMP/DataListLogBookOriginal.rds"))
-
-
-# ... siivous
-cleanup(except_these = c("ICES_AVE_KG_PRICES", "LOGBOOK"))
-
-
-
-
-
-# ... ... Viedään EFFORT alkuperäiseen aineistoon ... ... #
-
-
-
-cat("\nPalautetaan ponnistus aineistoon (fecR tuottaman aggregoinnin purkaminen) ...\n")
-
-# ... luetaan edellä tallennetut aineistolistat 
-DataListFishingDays <- readRDS(paste0(getwd(), "/PROD/DATA-TEMP/DataListFishingDays.rds"))
-DataListDaysAtSea <- readRDS(paste0(getwd(), "/PROD/DATA-TEMP/DataListDaysAtSea.rds"))
-DataListLogBookOriginal <- readRDS(paste0(getwd(), "/PROD/DATA-TEMP/DataListLogBookOriginal.rds"))
-
-
-# ... ja kalastusvuodet vektori
-fishYears <- readRDS(paste0(getwd(), "/PROD/DATA-TEMP/fishYears.rds"))
-
-# ... tarvittavat paketit takaisin
-#library(dplyr)
-
+# can't use cleanup, as I don't save interim objects
+# use gc() if necessary
 
 # ... tähän listaan tallennetaan aineistot, joihin on lisätty ponnistustiedot 
 DataListLogBookWithEffort <- list()
 
 
-
 for (y in fishYears) {
-  
-  cat("\rValidoidaan pyyntiponnistus", y, "... " )
   
   # ... indeksi jokaiselle (vuosi)kierrokselle 
   i <- y+1-min(fishYears)
-  
   
   # ... originaalivuosiaineisto
   LBORIG <- DataListLogBookOriginal[[i]]
@@ -1328,25 +1190,6 @@ for (y in fishYears) {
   # ... vuosikohtaiset tulosaineistot 
   seadays_pvk_LB <- DataListDaysAtSea[[i]]
   fishingdays_pvk_LB <- DataListFishingDays[[i]]
-  
-  
-  
-  
-  
-  
-  
-  # @HUOM OSASSA MATKOJA ON 0 MERI/KALASTUSPÄIVÄÄ TAI NEGATIIVINEN MERI/KALASTUSPÄIVÄT
-  # -> JOHTUU VIRHEELLISISTÄ KIRJAUKSISTA LÄHDEAINEISTOSSA (NÄMÄ OLISI HYVÄ KÄYDÄ LÄPI,
-  #     MUTTA LAITETAAN NYT NÄILLE ARVOKSI 1) 
-  
-  # @HUOM KOSKEE VAIN VUOSIA 2016-2019
-  # cat("\n", y)
-  # print(summary(seadays_pvk_LB$days_at_sea))
-  # print(summary(fishingdays_pvk_LB$fishing_days))
-  # cat("\n*****************************")
-  
-  
-  
   
   seadays_pvk_LB$days_at_sea <- ifelse(seadays_pvk_LB$days_at_sea<0 | seadays_pvk_LB$days_at_sea==0,
                                        1,
@@ -1360,16 +1203,7 @@ for (y in fishYears) {
   
   # ... tehdään trip_id linkkausta varten (kuten se tehtiin aiemmin)
   # ... @HUOM LAHTOPVM on mukana siltä varalta, jos eri vuosina on samoja kalastusmatkatunnuksia 
-  LBORIG$trip_id <- paste0(LBORIG$ULKOINENTUNNUS, LBORIG$KMATKA_TUNNUS, gsub('-','', as.character(LBORIG$LAHTOPVM)))
-  
-  
-  
-  
-  # ... liitetään effort aineistoon
-  
-  
-  
-  # (1) Mikä sarakeyhdistelmä yksilöi tulosaineiston rivin?
+  LBORIG$trip_id <- paste0(LBORIG$ALUS, LBORIG$KALASTUSKERTATUNNUS, gsub('-','', as.character(LBORIG$LAHTOPVM)))
   
   # ... meripäivien tulosaineistolle 
   seadays_pvk_LB$IDENTIFIER <- paste0(seadays_pvk_LB$trip_id, 
@@ -1377,21 +1211,17 @@ for (y in fishYears) {
                                       seadays_pvk_LB$gear_mesh_size, 
                                       seadays_pvk_LB$fishing_area)
   
-  
   if (length(unique(seadays_pvk_LB$IDENTIFIER))==nrow(seadays_pvk_LB)) {
     invisible() # ... PASS 
   } else {
     warning("Vuonna ", y, " meripäivien tulosaineistossa puutteellinen IDENTIFIER")
   }
   
-  
-  
+
   # ... kalastuspäivien tulosaineistolle 
   fishingdays_pvk_LB$IDENTIFIER <- paste0(fishingdays_pvk_LB$trip_id, fishingdays_pvk_LB$gear, 
                                           fishingdays_pvk_LB$gear_mesh_size, fishingdays_pvk_LB$fishing_area,
                                           fishingdays_pvk_LB$rectangle)
-  
-  
   
   # ... tarkistus 
   if (nrow(fishingdays_pvk_LB)==length(unique(fishingdays_pvk_LB$IDENTIFIER))) {
@@ -1407,8 +1237,7 @@ for (y in fishYears) {
   LBORIG$FISHINGDAYS_IDENTIFIER <- paste0(LBORIG$trip_id, LBORIG$gear, 
                                           LBORIG$gear_mesh_size, LBORIG$fishing_area,
                                           LBORIG$rectangle)
-  
-  
+
   # ... meripäivät 
   LBORIG <- left_join(LBORIG, seadays_pvk_LB[c("IDENTIFIER", "days_at_sea")], 
                       by=join_by("SEADAYS_IDENTIFIER"=="IDENTIFIER"))
@@ -1418,12 +1247,10 @@ for (y in fishYears) {
   LBORIG <- left_join(LBORIG, fishingdays_pvk_LB[c("IDENTIFIER", "fishing_days")], 
                       by=join_by("FISHINGDAYS_IDENTIFIER"=="IDENTIFIER"))
   
-  
-  
   # ... tehdään aineistoon HAULDIVIDER_DAYS_AT_SEA = jakaja
   LBORIG <- LBORIG %>%
     group_by(trip_id, fishing_area, gear, gear_mesh_size) %>%
-    mutate(HAULDIVIDER_DAYS_AT_SEA = n_distinct(KKERTA_TUNNUS))
+    mutate(HAULDIVIDER_DAYS_AT_SEA = n_distinct(KALASTUSKERTATUNNUS))
   
   
   # ... jaetaan meripäivät kalastuskerroille annettujen luokittelijoiden (fishing_area, gear, gear_mesh_size) mukaan
@@ -1433,14 +1260,13 @@ for (y in fishYears) {
   # ... tehdään aineistoon HAULDIVIDER_FISHING_DAYS = jakaja
   LBORIG <- LBORIG %>%
     group_by(trip_id, fishing_area, gear, gear_mesh_size, rectangle) %>%
-    mutate(HAULDIVIDER_FISHING_DAYS = n_distinct(KKERTA_TUNNUS))
+    mutate(HAULDIVIDER_FISHING_DAYS = n_distinct(KALASTUSKERTATUNNUS))
   
   
   # ... jaetaan kalastuspäivät kalastuskerroille annettujen luokittelijoiden (fishing_area, gear, gear_mesh_size, rectangle) mukaan 
   LBORIG$KALASTUSPAIVAT <- LBORIG$fishing_days / LBORIG$HAULDIVIDER_FISHING_DAYS
   
-  
-  
+
   # ... palautetaan data frameksi
   LBORIG <- data.frame(LBORIG)
   
@@ -1490,27 +1316,12 @@ for (y in fishYears) {
         warning("Aineistoon jaetut paivien summat eivat vastaa fecR-tuloksia vuonna.", y, "Tarkasta virheelliset matkat vektoreista SeaDaysError ja FishDaysError")
       }
       
-      
     }
     
   }
   
-  
-  
-  
-  
-  
-  
-  
-  
   # ... tallennetaan aineisto
   DataListLogBookWithEffort[[i]] <- LBORIG
-  
-  # # ... tuloste
-  # cat("\n Vuonna", y, "yhteensä", "\n",
-  #     "\t - MERIPÄIVIÄ", sum(LBORIG$MERIPAIVAT, na.rm=T), "(fecR summa", sum(seadays_pvk_LB$days_at_sea),")", "\n",
-  #     "\t - KALASTUSPÄIVIÄ", sum(LBORIG$KALASTUSPAIVAT, na.rm=T), "(fecR summa", sum(fishingdays_pvk_LB$fishing_days),")")
-  
   
 } # END
 
@@ -1526,54 +1337,11 @@ if ((k+j)==2) {
 # ... palautetaan aikasarjaksi
 pvk03 <- dplyr::bind_rows(DataListLogBookWithEffort)
 
-
-
-
-# # ... kuva @TODO -> VIE PDF !!!
-# meripaivat <- c()
-# kalastuspaivat <- c()
-# kalastusvuodet <- c()
-# 
-# 
-# 
-# for (y in fishYears) {
-#   i <- y+1-min(fishYears)
-#   
-#   kalastusvuodet[i] <- y
-#   meripaivat[i] <- sum(pvk03[which(pvk03$KALASTUSVUOSI==y), "MERIPAIVAT"], na.rm=T)
-#   kalastuspaivat[i] <- sum(pvk03[which(pvk03$KALASTUSVUOSI==y), "KALASTUSPAIVAT"], na.rm=T)
-#   
-# }
-# 
-# 
-# plot(kalastusvuodet, meripaivat, type = "b", ylab = "LKM", xlab="VUOSI", main = "Pyyntiponnistus - Kalastuspäiväkirja")
-# mtext(paste0("Tiedot haettu kalatalouden keskusrekisterin tietokannasta ", kakeTimeStamp), line = 0.5)
-# lines(kalastusvuodet, kalastuspaivat, type = "b", col="orange")
-# legend("topright", legend = c("Meripäivät", "Kalastuspäivät"), lty = c(1,1), pch = 1, col = c("black", "orange"))
-# 
-
-
-# .... jakaumia
-table(pvk03$KALASTUSVUOSI)
-
-
 # ... lisämuuttujat 
 pvk03$LOMAKE <- "KALASTUSPAIVAKIRJA"
 
-
 # ... tallennetaan aineisto 
 LOGBOOK <- pvk03
-saveRDS(LOGBOOK, paste0(getwd(), "/PROD/DATA-PG/LOGBOOK.rds"))
-
-cat("\n\nTallennetaan aikasarja-aineistot", paste(as.character(min(pvk03$KALASTUSVUOSI)), as.character(max(pvk03$KALASTUSVUOSI)) , sep="-"), "... \n\n")
-
-# ... tyhjennetään ympäristö (paitsi välttämättömät ja tietokantaan vietävä data)
-cleanup(except_these = c("ICES_AVE_KG_PRICES", "LOGBOOK"))
-
-
-cat("\t\t* Aineisto PVK01-KALASTUSPAIVAKIRJA muodostettu [", paste0(getwd(), "/PROD/DATA-TEMP ]"))
-cat("\n\t\t* Aineisto PVK02T-KALASTUSPAIVAKIRJA muodostettu [", paste0(getwd(), "/PROD/DATA-TEMP ]"))
-cat("\n\t\t* Aineisto LOGBOOK muodostettu [", paste0(getwd(), "/PROD/DATA-PG ]"))
 
 
 #.------------------------------------------------------------------------------
@@ -1618,7 +1386,7 @@ logbook_13_15 |> select(KALASTUSVUOSI, KK, PYYNTIPV, KALASTUSKERTATUNNUS) |>
 # tehdään FT_REF- ja LE_ID -sarakkeet
 # I think this needs ordering first
 D <- D |> group_by(LOMAKE) |> mutate(LOMAKE_ID = paste0(LOMAKE, "_", row_number())) |> ungroup()
-D <- D |> mutate(FT_REF = paste0("FT_REF_", ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KMATKA_", KALASTUSKERTATUNNUS), LOMAKE_ID)))
+D <- D |> mutate(FT_REF = paste0("FT_REF_", ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KMATKA_", KMATKA_TUNNUS ), LOMAKE_ID)))
 D <- D |> mutate(LE_ID = paste0("LE_ID_", ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KKERTA_", KKERTA_TUNNUS), LOMAKE_ID)))
 
 #nimea trip_id uudelleen
