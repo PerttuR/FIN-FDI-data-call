@@ -44,3 +44,5 @@ vignettes/*.html
 rsconnect/
 .Rproj.user
 orig/
+import_sas_metier_2013-15.R
+fecR-LOCAL/*
