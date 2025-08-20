@@ -53,8 +53,8 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 #-------------------------------------------------------------------------------
 
 #----------- set years ---------------
-
-years <- seq(2016, run.year-1)
+#years <- seq(2016, run.year-1)
+years <- seq(2013, run.year-1)
 
 
 #----------- get data ---------------
@@ -108,12 +108,12 @@ discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
 
 #Table A years 2013-2015 - see import_sas_metier_2013-15.R
-tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
-tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
-tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
-
-tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
-names(tableA1315) <- toupper(names(tableA1315))
+# tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
+# tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
+# tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
+# 
+# tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
+# names(tableA1315) <- toupper(names(tableA1315))
 
 
 #--------------------------
@@ -136,6 +136,7 @@ aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>%
 
 # Select and mutate all the needed variables for tables H and I ####
 # We seem to be missing "SVT_KG_PLE" and "SVT_KG_WHG"
+# JCD: match cleaning with sas cleaning here!!!
 akt1 <- aktiviteetti_all %>% 
   select(YEAR = KALASTUSVUOSI,
          ULKOINENTUNNUS,
@@ -244,6 +245,7 @@ metier_check <- metier %>% left_join(valid_metiers, by = c("METIER" = "valid_met
 missing <- metier_check %>% filter(is.na(valid_metiers))
 print(missing)
 
+# JCD: need to match SAS methodology
 # Change the needed metiers into new format
 akt1 <- akt1 %>%  mutate(METIER = case_when(
   METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0",         # typo
@@ -645,17 +647,13 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 
 #add 2013-2015 sas data
 
-j_sas <- readRDS(paste0(path_der,"metier_2013_15_for_J.rds"))
-
-#j_sas <- j_sas %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
-
-#j_sas <- j_sas %>% select("YEAR","ULKOINENTUNNUS"="alus","KALASTUSPAIVAT","MERIPAIVAT","PAAKONETEHO","VETOISUUS","KALASTUSAIKAHH",
-#                          "FT_REF","VESSEL_LENGTH","FISHING_TECH","GEAR_TYPE","TARGET_ASSEMBLAGE","METIER","COUNTRY","QUARTER",
-#                          "MESH_SIZE_RANGE","METIER_7","SUPRA_REGION","SUB_REGION","EEZ_INDICATOR","GEO_INDICATOR","SPECON_TECH","DEEP")
-
+#j_sas <- readRDS(paste0(path_der,"metier_2013_15_for_J.rds"))
+j_sas <- readRDS(file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 # Select variables needed for J table from akt1 (DCPROD active vessels 2016 onwards):
-j <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE)
+j <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH)
+
+j_all <- rbind(j_sas, j)
 
 # Select variables needed for J table from metier_sas (2013-2015 active vessels 2013-2015):
 
@@ -681,7 +679,7 @@ kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, KOKPITUUS, VESSEL_LENGTH, AGE) %>%
 
 
 # join the capacity to the j table
-j2 <- left_join(kap2, j, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
+j2 <- left_join(kap2, j_all, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
 
 # replacing missing fishing tech's in the vessels that are not active
 # Convert the factor to a character vector
