@@ -1356,6 +1356,7 @@ shorelogs_13_15$KALASTUSPAIVAT <- ifelse(shorelogs_13_15$PYYNTIPV==0, 1, shorelo
 shorelogs_13_15$MERIPAIVAT <- shorelogs_13_15$KALASTUSPAIVAT
 
 shorelogs_13_15$LOMAKE = "KKILMOITUS"
+shorelogs_13_15 <- shorelogs_13_15 |> mutate(ID=1:n())
 
 #.------------------------------------------------------------------------------
 #                   9. GT and KW days                                       ####    
@@ -1364,60 +1365,104 @@ shorelogs_13_15$LOMAKE = "KKILMOITUS"
 # done in table a-j script?
 
 #.------------------------------------------------------------------------------
-#                   10. join datasets                                       ####    
+#                   10. join datasets and save for table J                  ####    
 #.------------------------------------------------------------------------------
 
-# !!! I AM HERE !!! ####
-LOG <- LOGBOOK |> select()
-SHORE <- shorelogs_13_15 |> select()
+# cat(intersect(colnames(LOGBOOK), colnames(shorelogs_13_15)), sep=", ")
+same <- intersect(colnames(LOGBOOK), colnames(shorelogs_13_15))
+all <- names(shorelogs_13_15)
+all2 <- names(LOGBOOK)
+
+all[!all %in% same]
+all2[!all2 %in% same]
+
+LOG <- LOGBOOK |> select(ALUS, ALUSNIMI, KKERTA_TUNNUS=KALASTUSKERTATUNNUS, PURKUPVM, PYYDYS, PYYDLKM, 
+                         RUUTU, TE, SILMAKOKO, HUOM, LABEL, TURSKA, KAMPELA, SILAKKA, KILOHAIL, 
+                         VALKOTURSKA, MUU_KALA, LOHI_KG, SIIKA, MUIKKU, AHVEN, KUHA, SARKI, KUORE, 
+                         PKAMP, HAUKI, MADE, TAIMEN, LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
+                         KK, PAINO, PYYNTIPV, LAHTOPVM, PALUUPVM, PVM,
+                         OMISTAJA, ASIAKASTUNNUS=ASTUNNUS, KUNTA, RAKENTAMISAIKA, PITUUS, TEHO, VETOISUUS, 
+                         ft_orig, GEAR, KIRJOLOH, KIISKI, LEVEL4, ALL, DEMERSAL, FRESH, 
+                         SMALLPELAGIC, ANADR, LEVEL5, LEVEL6, GROUND, GROUND2, length_orig, 
+                         LENGTH, metier_orig, SATAMA, PURKU_KUNTA, LOCODE, PURKUMAA, HSILAKKA, 
+                         HKILOHAIL, HTURSKA, HKAMPELA, HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, 
+                         HMUU_KALA, HHAUKI, HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, 
+                         HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN, HKUHA, HANKERIAS, HMUIKKU, 
+                         HYHT, SATAMAKUNTA, RECTANGLE, ICES, AMMATTI, KALASTUSVUOSI, COUNTRY, 
+                         YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, 
+                         METIER_7, SUPRA_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, 
+                         SPECON_TECH, DEEP, DISCARDS, metier6_orig, METIER5, METIER4, FROM, TO, 
+                         CODE, METIER6, ices_name, area_code_full, LATITUDE, LONGITUDE, SVT_KG_COD, 
+                         SVT_KG_ELE, SVT_KG_FBM, SVT_KG_FBU, SVT_KG_FID, SVT_KG_FIN, SVT_KG_FLE, 
+                         SVT_KG_FPE, SVT_KG_FPI, SVT_KG_FPP, SVT_KG_FRO, SVT_KG_FVE, SVT_KG_HER, 
+                         SVT_KG_PLE, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_SME, SVT_KG_SPR, SVT_KG_TRR, 
+                         SVT_KG_TRS, SVT_KG_TUR, SVT_KG_WHG, SVT_KG_TOTAL, FT_TRIP, FT, 
+                         KMATKA_TUNNUS, TRIP_ID=trip_id, ID, MERIPAIVAT=days_at_sea, KALASTUSPAIVAT=fishing_days, LOMAKE)
+                         
+SHORE <- shorelogs_13_15 |> mutate(LAHTOPVM=NA, PALUUPVM=NA, PVM=NA, KUNTA=NA,
+                                   PURKUPVM = as.Date(PURKUPVM),
+                                   PURKUPVM = if_else(is.na(PURKUPVM), PURKUPV, PURKUPVM), TRIP_ID=NA) |>
+  select(ALUS, ALUSNIMI, KKERTA_TUNNUS=KALASTUSKERTATUNNUS, PURKUPVM, PYYDYS, PYYDLKM, 
+                                   RUUTU, TE, SILMAKOKO, HUOM, LABEL, TURSKA, KAMPELA, SILAKKA, KILOHAIL, 
+                                   VALKOTURSKA, MUU_KALA, LOHI_KG, SIIKA, MUIKKU, AHVEN, KUHA, SARKI, KUORE, 
+                                   PKAMP, HAUKI, MADE, TAIMEN, LAHNA, SAYNE, LOHI_KPL, PUNAKAMPELA, ANKERIAS, 
+                                   KK, PAINO, PYYNTIPV, LAHTOPVM, PALUUPVM, PVM,
+                                   OMISTAJA, ASIAKASTUNNUS, KUNTA, RAKENTAMISAIKA, PITUUS, TEHO, VETOISUUS, 
+                                   ft_orig, GEAR, KIRJOLOH, KIISKI, LEVEL4, ALL, DEMERSAL, FRESH, 
+                                   SMALLPELAGIC, ANADR, LEVEL5, LEVEL6, GROUND, GROUND2, length_orig, 
+                                   LENGTH, metier_orig, SATAMA, PURKU_KUNTA, LOCODE, PURKUMAA, HSILAKKA, 
+                                   HKILOHAIL, HTURSKA, HKAMPELA, HPKAMP, HVALKOTURSKA, HPUNAKAMPELA, 
+                                   HMUU_KALA, HHAUKI, HSIIKA, HLOHI_KG, HTAIMEN, HKIRJOLOH, HKUORE, 
+                                   HLAHNA, HSAYNE, HSARKI, HMADE, HAHVEN, HKUHA, HANKERIAS, HMUIKKU, 
+                                   HYHT, SATAMAKUNTA, RECTANGLE, ICES, AMMATTI, KALASTUSVUOSI, COUNTRY, 
+                                   YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, 
+                                   METIER_7, SUPRA_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, 
+                                   SPECON_TECH, DEEP, DISCARDS, metier6_orig, METIER5, METIER4, FROM, TO, 
+                                   CODE, METIER6, ices_name, area_code_full, LATITUDE, LONGITUDE, SVT_KG_COD, 
+                                   SVT_KG_ELE, SVT_KG_FBM, SVT_KG_FBU, SVT_KG_FID, SVT_KG_FIN, SVT_KG_FLE, 
+                                   SVT_KG_FPE, SVT_KG_FPI, SVT_KG_FPP, SVT_KG_FRO, SVT_KG_FVE, SVT_KG_HER, 
+                                   SVT_KG_PLE, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_SME, SVT_KG_SPR, SVT_KG_TRR, 
+                                   SVT_KG_TRS, SVT_KG_TUR, SVT_KG_WHG, SVT_KG_TOTAL, FT_TRIP, FT, 
+                                   KMATKA_TUNNUS, TRIP_ID, ID, MERIPAIVAT, KALASTUSPAIVAT, LOMAKE) 
 
 D <- rbind(LOG, SHORE)
 
-# cheking logbook counter
-logbook_13_15 |> select(KALASTUSVUOSI, KK, PYYNTIPV, KALASTUSKERTATUNNUS) |>
-  arrange(KALASTUSVUOSI, KK, PYYNTIPV, KALASTUSKERTATUNNUS) |> View()
-
 # tehdään FT_REF- ja LE_ID -sarakkeet
 # I think this needs ordering first
-D <- D |> group_by(LOMAKE) |> mutate(LOMAKE_ID = paste0(LOMAKE, "_", row_number())) |> ungroup()
-D <- D |> mutate(FT_REF = paste0("FT_REF_", ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KMATKA_", KMATKA_TUNNUS ), LOMAKE_ID)))
-D <- D |> mutate(LE_ID = paste0("LE_ID_", ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KKERTA_", KKERTA_TUNNUS), LOMAKE_ID)))
+D <- D |> group_by(LOMAKE) |> mutate(LOMAKE_ID = paste0(LOMAKE, "_", YEAR, "_", row_number())) |> ungroup()
+D <- D |> mutate(FT_REF = paste0("FT_REF_", ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KMATKA_", YEAR, "_", KMATKA_TUNNUS), LOMAKE_ID)))
+D <- D |> mutate(LE_ID =  paste0("LE_ID_",  ifelse(LOMAKE == "KALASTUSPAIVAKIRJA", paste0("KKERTA_", YEAR, "_", KKERTA_TUNNUS), LOMAKE_ID)))
 
 #nimea trip_id uudelleen
-D <- D |> rename(TRIP_ID_KAKE = trip_id)
+D <- D |> rename(TRIP_ID_KAKE = TRIP_ID)
 
 # ... tallennetaan aineisto
 KALASTUSAKTIVITEETTI_13_15 <- D
 
-# join shore and logbooks
-
-
-
-## relabel trawling times - not sure this is needed
-#logbook_13_15 |> mutate(
-#  VETOAIKA2 = if_else(VETOAIKA >=20, 20, VETOAIKA),
-#  AIKAMIN2 = ,
-#  KALASTUSAIKAHH = 
-#)
 
 
 # join for table J
 # Save this for J active vessels:
-logbook_13_15_for_J <- logbook_13_15 |> select(YEAR=KALASTUSVUOSI, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT=TOTFISHDAYS, 
-                                                MERIPAIVAT=TOTSEADAYS, PAAKONETEHO=TEHO, VETOISUUS,
+logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, 
+                                                MERIPAIVAT, PAAKONETEHO=TEHO, VETOISUUS,
                                                 FT_REF, VESSEL_LENGTH, FISHING_TECH, 
                                                 GEAR_TYPE, TARGET_ASSEMBLAGE, METIER=METIER6,
-                                                COUNTRY,QUARTER,MESH_SIZE_RANGE,METIER_7,SUPRA_REGION,
-                                                SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,DEEP)                                                                                               
+                                                COUNTRY,QUARTER,MESH_SIZE_RANGE=CODE,METIER_7,SUPRA_REGION,
+                                                SUB_REGION=area_code_full,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,DEEP)                                                                                               
 
 
 
 # saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
-# wide to long table ####
-logbook_13_15 <- tibble::rowid_to_column(logbook_13_15, "ID")
+#.------------------------------------------------------------------------------
+#                   10. join datasets and save for table J                  ####    
+#.------------------------------------------------------------------------------
 
-metier.fish <- logbook_13_15 |> select(ID, YEAR, ICES, SVT_KG_COD:SVT_KG_WHG) |>
+# !!! I AM HERE !!! ####
+# wide to long table ####
+KALASTUSAKTIVITEETTI_13_15 <- tibble::rowid_to_column(KALASTUSAKTIVITEETTI_13_15, "ID2")
+
+metier.fish <- KALASTUSAKTIVITEETTI_13_15 |> select(ID, YEAR, ICES, SVT_KG_COD:SVT_KG_WHG) |>
                 rename_with(~gsub("SVT_KG_", "", .x)) |>
                 pivot_longer(!ID:ICES, names_to = "SPECIES", values_to = "KG")
 
@@ -1477,44 +1522,6 @@ metier.fish <- metier.fish |> select(ID, SPECIES, VALUE) |>
   mutate(SVT_VALUE_TOTAL = rowSums(across(SVT_VALUE_COD:SVT_VALUE_WHG)))
 
 # add to logbook data
-logbook_13_15 <- logbook_13_15 |> left_join(metier.fish, by="ID")
-
-
-#.------------------------------------------------------------------------------
-#                   10. matching akt1 column names                          ####    
-#.------------------------------------------------------------------------------
-
-logbook_13_15_akt1 <- logbook_13_15 |> mutate(C_SQUARE ="NA") |>
-                        select(YEAR=KALASTUSVUOSI, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT=TOTFISHDAYS, 
-                               MERIPAIVAT=TOTSEADAYS, PAAKONETEHO=TEHO, VETOISUUS, 
-                               KALASTUSAIKAHH=???, FT_REF=FT, VESSEL_LENGTH, FISHING_TECH, 
-                               GEAR_TYPE, TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, 
-                               SVT_KG_SPR, SVT_KG_COD, SVT_KG_FLE, SVT_KG_TUR, SVT_KG_PLN, 
-                               SVT_KG_SAL, SVT_KG_TRS, SVT_KG_SME, SVT_KG_FBM, SVT_KG_FID,
-                               SVT_KG_FRO, SVT_KG_FPI, SVT_KG_FPE, SVT_KG_FPP, SVT_KG_FBU, SVT_KG_TRR,
-                               SVT_KG_FVE, SVT_KG_ELE, SVT_KG_FIN, SVT_KG_TOTAL, SVT_VALUE_HER, SVT_VALUE_SPR,
-                               SVT_VALUE_COD, SVT_VALUE_FLE, SVT_VALUE_TUR, SVT_VALUE_PLN, SVT_VALUE_SAL, 
-                               SVT_VALUE_TRS, SVT_VALUE_SME, SVT_VALUE_FBM, SVT_VALUE_FID, SVT_VALUE_FRO, 
-                               SVT_VALUE_FPI, SVT_VALUE_FPE, SVT_VALUE_FPP, SVT_VALUE_FBU, SVT_VALUE_TRR, 
-                               SVT_VALUE_FVE, SVT_VALUE_ELE, SVT_VALUE_FIN, RECTANGLE, COUNTRY, QUARTER, 
-                               MESH_SIZE_RANGE, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, 
-                               GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, C_SQUARE, LATITUDE, LONGITUDE)
-
-grep("AIKA", names(logbook_13_15), value = TRUE)
-
-# column names to match
-# > names(akt1)
-# [1] "YEAR"              "ULKOINENTUNNUS"    "KALASTUSPAIVAT"    "MERIPAIVAT"        "PAAKONETEHO"       "VETOISUUS"        
-# [7] "KALASTUSAIKAHH"    "FT_REF"            "VESSEL_LENGTH"     "FISHING_TECH"      "GEAR_TYPE"         "TARGET_ASSEMBLAGE"
-# [13] "METIER"            "SVT_KG_HER"        "SVT_KG_SPR"        "SVT_KG_COD"        "SVT_KG_FLE"        "SVT_KG_TUR"       
-# [19] "SVT_KG_PLN"        "SVT_KG_SAL"        "SVT_KG_TRS"        "SVT_KG_SME"        "SVT_KG_FBM"        "SVT_KG_FID"       
-# [25] "SVT_KG_FRO"        "SVT_KG_FPI"        "SVT_KG_FPE"        "SVT_KG_FPP"        "SVT_KG_FBU"        "SVT_KG_TRR"       
-# [31] "SVT_KG_FVE"        "SVT_KG_ELE"        "SVT_KG_FIN"        "SVT_KG_TOTAL"      "SVT_VALUE_HER"     "SVT_VALUE_SPR"    
-# [37] "SVT_VALUE_COD"     "SVT_VALUE_FLE"     "SVT_VALUE_TUR"     "SVT_VALUE_PLN"     "SVT_VALUE_SAL"     "SVT_VALUE_TRS"    
-# [43] "SVT_VALUE_SME"     "SVT_VALUE_FBM"     "SVT_VALUE_FID"     "SVT_VALUE_FRO"     "SVT_VALUE_FPI"     "SVT_VALUE_FPE"    
-# [49] "SVT_VALUE_FPP"     "SVT_VALUE_FBU"     "SVT_VALUE_TRR"     "SVT_VALUE_FVE"     "SVT_VALUE_ELE"     "SVT_VALUE_FIN"    
-# [55] "RECTANGLE"         "COUNTRY"           "QUARTER"           "MESH_SIZE_RANGE"   "METIER_7"          "SUPRA_REGION"     
-# [61] "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "SPECON_TECH"       "DEEP"              "RECTANGLE_TYPE"   
-# [67] "C_SQUARE"          "LATITUDE"          "LONGITUDE"# 
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |> left_join(metier.fish, by="ID")
 
 
