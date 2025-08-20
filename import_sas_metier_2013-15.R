@@ -1439,7 +1439,33 @@ D <- D |> rename(TRIP_ID_KAKE = TRIP_ID)
 # ... tallennetaan aineisto
 KALASTUSAKTIVITEETTI_13_15 <- D
 
+# mesh sizes match table prep script
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
+            mutate(MESH_SIZE_RANGE = case_when(
+            FISHING_TECH == "TM" & SILMAKOKO < 16 ~ "00D16",
+            FISHING_TECH == "TM" & 16 <= SILMAKOKO & SILMAKOKO < 32 ~ "16D32",
+            FISHING_TECH == "TM" & 32 <= SILMAKOKO & SILMAKOKO < 90 ~ "32D90",
+            FISHING_TECH == "TM" & 90 <= SILMAKOKO & SILMAKOKO < 105 ~ "90D105",
+            FISHING_TECH == "TM" & 105 <= SILMAKOKO & SILMAKOKO < 110 ~ "105D110",
+            FISHING_TECH == "TM" & 110 <= SILMAKOKO ~ "110DXX",
+            FISHING_TECH == "PG" & SILMAKOKO < 16 ~ "00D16",
+            FISHING_TECH == "PG" & 16 <= SILMAKOKO & SILMAKOKO < 32 ~ "16D32",
+            FISHING_TECH == "PG" & 32 <= SILMAKOKO & SILMAKOKO < 90 ~ "32D90",
+            FISHING_TECH == "PG" & 90 <= SILMAKOKO & SILMAKOKO < 110 ~ "90D110",
+            FISHING_TECH == "PG" & 110 <= SILMAKOKO & SILMAKOKO < 157 ~ "110D157",
+            FISHING_TECH == "PG" & 157 <= SILMAKOKO ~ "157DXX",
+            #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+            is.na(SILMAKOKO) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ "16D32",
+            is.na(SILMAKOKO) & PYYDYS %in% c(8,9,10,44,45,32) ~ "32D90",
+            is.na(SILMAKOKO) & PYYDYS %in% c(11,12) ~ "90D110",
+            is.na(SILMAKOKO) & PYYDYS == 13 ~ "110D157",
+            is.na(SILMAKOKO) & PYYDYS == 22 ~ "157DXX",
+            is.na(SILMAKOKO) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
+            TRUE ~ "NK"),
+            CODE = if_else(CODE %in% c("NK","NA"), MESH_SIZE_RANGE, CODE))
 
+# check differences
+KALASTUSAKTIVITEETTI_13_15 |> count(CODE,MESH_SIZE_RANGE) |> filter(CODE != MESH_SIZE_RANGE)
 
 # join for table J
 # Save this for J active vessels:
@@ -1455,7 +1481,7 @@ logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, 
 # saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 #.------------------------------------------------------------------------------
-#                   10. join datasets and save for table J                  ####    
+#                   11. add fish pricing data                               ####    
 #.------------------------------------------------------------------------------
 
 # !!! I AM HERE !!! ####
