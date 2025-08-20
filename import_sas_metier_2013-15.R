@@ -429,10 +429,10 @@ logbook_13_15 <- logbook_13_15 |> rename(length_orig=VESSEL_LENGTH) |>
                     relocate(VESSEL_LENGTH, .after = QUARTER)
 
 # checking records
-logbook_13_15 |> count(length_orig) |> flextable() |> 
+logbook_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_hauls=n) |> flextable() |> 
   set_caption("Check length_orig classes in logbook_13_15")
 
-logbook_13_15 |> count(VESSEL_LENGTH) |> flextable() |> 
+logbook_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_hauls=n) |> flextable() |> 
   set_caption("Check VESSEL_LENGTH classes in logbook_13_15")
 
 ### 3.2 clean shorelogs ####
@@ -462,10 +462,10 @@ shorelogs_13_15 <- shorelogs_13_15 |> rename(length_orig=VESSEL_LENGTH, OMISTAJA
   mutate(VESSEL_LENGTH = if_else(VESSEL_LENGTH == "NA", "NK", VESSEL_LENGTH))
 
 # checking records
-shorelogs_13_15 |> count(length_orig) |> flextable() |> 
+shorelogs_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_recs=n) |> flextable() |> 
   set_caption("Check length_orig classes in shorelogs_13_15")
 
-shorelogs_13_15 |> count(VESSEL_LENGTH) |> flextable() |> 
+shorelogs_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_recs=n) |> flextable() |> 
   set_caption("Check VESSEL_LENGTH classes in shorelogs_13_15")
 
 #.------------------------------------------------------------------------------
@@ -923,20 +923,20 @@ tmp <- logbook_13_15 |> arrange(KALASTUSKERTATUNNUS) |> group_by(ALUS, LAHTOPVM)
 
 # add trip id to main table
 logbook_13_15 <- logbook_13_15 |> left_join(tmp, by=c("ALUS","LAHTOPVM"))
+logbook_13_15 <- logbook_13_15 |> mutate(ID=1:n())
 
 # shore ####
-"FT_REF", "FT_TRIP", "KMATKA_TUNNUS", "KKERTA_TUNNUS"
-
-
 # drop 13 records without hauls
-shorelogs_13_15 <- shorelogs_13_15 |> filter(!is.na(KALASTUSKERTATUNNUS))
+shorelogs_13_15 <- shorelogs_13_15 |> arrange(KALASTUSVUOSI, KK, ALUS, GEAR, PYYDYS, PYYDLKM) |> 
+  mutate(KALASTUSKERTATUNNUS = 1:n())
 
 # create a trip ID
-tmp <- logbook_13_15 |> arrange(KALASTUSKERTATUNNUS) |> group_by(ALUS, LAHTOPVM) |> 
+tmp <- shorelogs_13_15 |> arrange(KALASTUSKERTATUNNUS) |> 
+  group_by(KALASTUSVUOSI, KK, ALUS, GEAR, PYYDYS, PYYDLKM) |> 
   summarise(KMATKA_TUNNUS = min(KALASTUSKERTATUNNUS))
-
+  
 # add trip id to main table
-logbook_13_15 <- logbook_13_15 |> left_join(tmp, by=c("ALUS","LAHTOPVM"))
+shorelogs_13_15 <- shorelogs_13_15 |> left_join(tmp, by=c("KALASTUSVUOSI", "KK", "ALUS", "GEAR", "PYYDYS", "PYYDLKM"))
 # KKERTA_TUNNUS = KALASTUSKERTATUNNUS
 
 #.------------------------------------------------------------------------------
@@ -1008,7 +1008,7 @@ for (y in fishYears) {
   #missing_stats(LogBook, "kw", y)
   
   ## CHR trip_id = KMATKA_TUNNUS   | Unique identifier for fishing trip
-  LogBook$trip_id <- as.character(LogBook$KALASTUSKERTATUNNUS)
+  LogBook$trip_id <- as.character(LogBook$KMATKA_TUNNUS)
   #missing_stats(LogBook, "trip_id", y)
   
   ## CHR depdate = LAHTOPVM, LAHTOPVM1   | Date of trip departure
@@ -1203,7 +1203,7 @@ for (y in fishYears) {
   
   # ... tehdään trip_id linkkausta varten (kuten se tehtiin aiemmin)
   # ... @HUOM LAHTOPVM on mukana siltä varalta, jos eri vuosina on samoja kalastusmatkatunnuksia 
-  LBORIG$trip_id <- paste0(LBORIG$ALUS, LBORIG$KALASTUSKERTATUNNUS, gsub('-','', as.character(LBORIG$LAHTOPVM)))
+  LBORIG$trip_id <- paste0(LBORIG$ALUS, LBORIG$KMATKA_TUNNUS, gsub('-','', as.character(LBORIG$LAHTOPVM)))
   
   # ... meripäivien tulosaineistolle 
   seadays_pvk_LB$IDENTIFIER <- paste0(seadays_pvk_LB$trip_id, 
@@ -1335,46 +1335,40 @@ if ((k+j)==2) {
 
 
 # ... palautetaan aikasarjaksi
-pvk03 <- dplyr::bind_rows(DataListLogBookWithEffort)
+LOGBOOK <- dplyr::bind_rows(DataListLogBookWithEffort)
 
 # ... lisämuuttujat 
-pvk03$LOMAKE <- "KALASTUSPAIVAKIRJA"
+LOGBOOK$LOMAKE <- "KALASTUSPAIVAKIRJA"
 
-# ... tallennetaan aineisto 
-LOGBOOK <- pvk03
 
+# this creates 500 extra rows in fec.R - check later!!!
+# tmp <- LOGBOOK |> count(ID) |> filter(n>1)
+# 
+# LOGBOOK |> filter(ID %in% tmp$ID) |> 
+#   select(KALASTUSVUOSI, KK, ALUS, GEAR, LAHTOPVM, PALUUPVM, KALASTUSKERTATUNNUS,trip_id,ID) |> View()
 
 #.------------------------------------------------------------------------------
-#                   8.2. fishing and seadays shore                          ####    
+#                   8.3. fishing, seadays fec.R - shore                     ####    
 #.------------------------------------------------------------------------------
 
 # in script 4
-shorelogs_13_15$KALASTUSPAIVAT <- ifelse(shorelogs_13_15$PYYNTIPAIVAT==0, 1, shorelogs_13_15$PYYNTIPAIVAT)
+shorelogs_13_15$KALASTUSPAIVAT <- ifelse(shorelogs_13_15$PYYNTIPV==0, 1, shorelogs_13_15$PYYNTIPV)
 shorelogs_13_15$MERIPAIVAT <- shorelogs_13_15$KALASTUSPAIVAT
 
-
+shorelogs_13_15$LOMAKE = "KKILMOITUS"
 
 #.------------------------------------------------------------------------------
 #                   9. GT and KW days                                       ####    
 #.------------------------------------------------------------------------------
 
+# done in table a-j script?
 
 #.------------------------------------------------------------------------------
 #                   10. join datasets                                       ####    
 #.------------------------------------------------------------------------------
 
-# cheking logbook counter
-logbook_13_15 |> select(KALASTUSVUOSI, KK, PYYNTIPV, KALASTUSKERTATUNNUS) |>
-  arrange(KALASTUSVUOSI, KK, PYYNTIPV, KALASTUSKERTATUNNUS) |> View()
-
-logbook_13_15$LOMAKE <- "KALASTUSPAIVAKIRJA"
-
-# cheking logbook counter
-shorelogs_13_15 <- shorelogs_13_15 |> arrange(KALASTUSVUOSI, KK, PYYNTIPV) |> 
-  mutate(KALASTUSKERTATUNNUS = 1:n(),
-         LOMAKE = "KKILMOITUS")
-
-LOG <- logbook_13_15 |> select()
+# !!! I AM HERE !!! ####
+LOG <- LOGBOOK |> select()
 SHORE <- shorelogs_13_15 |> select()
 
 D <- rbind(LOG, SHORE)
@@ -1395,45 +1389,32 @@ D <- D |> rename(TRIP_ID_KAKE = trip_id)
 # ... tallennetaan aineisto
 KALASTUSAKTIVITEETTI_13_15 <- D
 
-
-#.------------------------------------------------------------------------------
-#                   11. add inactive vessels                                ####    
-#.------------------------------------------------------------------------------
+# join shore and logbooks
 
 
 
-
-
-
-
-
+## relabel trawling times - not sure this is needed
+#logbook_13_15 |> mutate(
+#  VETOAIKA2 = if_else(VETOAIKA >=20, 20, VETOAIKA),
+#  AIKAMIN2 = ,
+#  KALASTUSAIKAHH = 
+#)
 
 
 # join for table J
-# Save this for J aktive vessels:
-logbook_13_15_for_J <- logbook_13_15 |> selectt(YEAR=KALASTUSVUOSI, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT=TOTFISHDAYS, 
-                                                MERIPAIVAT=TOTSEADAYS, PAAKONETEHO=TEHO, VETOISUUS, 
-                                                FT_REF=FT, VESSEL_LENGTH, FISHING_TECH, 
+# Save this for J active vessels:
+logbook_13_15_for_J <- logbook_13_15 |> select(YEAR=KALASTUSVUOSI, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT=TOTFISHDAYS, 
+                                                MERIPAIVAT=TOTSEADAYS, PAAKONETEHO=TEHO, VETOISUUS,
+                                                FT_REF, VESSEL_LENGTH, FISHING_TECH, 
                                                 GEAR_TYPE, TARGET_ASSEMBLAGE, METIER=METIER6,
-                                                
-# need to create - check DCPROD R scrips 3 and 4
-# FT_REF
-# KALASTUSPAIVAT
-# MERIPAIVAT
-
-# from table the following variables are needed
-# [1] "YEAR"              "ULKOINENTUNNUS"    "KALASTUSPAIVAT"    "MERIPAIVAT"        "PAAKONETEHO"       "VETOISUUS"        
-# "FT_REF"            "VESSEL_LENGTH"     "FISHING_TECH"      "GEAR_TYPE"         "TARGET_ASSEMBLAGE"
-# [13] "METIER"           "COUNTRY"           "QUARTER"           "MESH_SIZE_RANGE"   "METIER_7"          "SUPRA_REGION"     
-# [61] "SUB_REGION"        "EEZ_INDICATOR"     "GEO_INDICATOR"     "SPECON_TECH"       "DEEP"
-
-
+                                                COUNTRY,QUARTER,MESH_SIZE_RANGE,METIER_7,SUPRA_REGION,
+                                                SUB_REGION,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,DEEP)                                                                                               
 
 
 
 # saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
-# wide to long table
+# wide to long table ####
 logbook_13_15 <- tibble::rowid_to_column(logbook_13_15, "ID")
 
 metier.fish <- logbook_13_15 |> select(ID, YEAR, ICES, SVT_KG_COD:SVT_KG_WHG) |>
