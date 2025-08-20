@@ -675,7 +675,9 @@ dup<-kap %>%
   group_by(YEAR, ULKOINENTUNNUS) %>% 
   filter(n()>1)
 
-kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, KOKPITUUS, VESSEL_LENGTH, AGE) %>% group_by(YEAR, ULKOINENTUNNUS) %>% summarise(KOKPITUUS = first(KOKPITUUS), VESSEL_LENGTH = first(VESSEL_LENGTH), AGE = first(AGE),.groups = "drop")
+kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, KOKPITUUS, VESSEL_LENGTH, AGE) %>% 
+  group_by(YEAR, ULKOINENTUNNUS) %>% 
+  summarise(KOKPITUUS = first(KOKPITUUS), VESSEL_LENGTH = first(VESSEL_LENGTH), AGE = first(AGE),.groups = "drop")
 
 
 # join the capacity to the j table
@@ -709,16 +711,21 @@ principal_sub_region <- j4 %>%
 j5 <- left_join(j3, principal_sub_region, by = c("YEAR","ULKOINENTUNNUS"))
   
 # Calculate the number of fishing trips for each vessel
-vessel_fishing_trips <- j5 %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% summarise(
+vessel_fishing_trips <- j5 %>% 
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% 
+  summarise(
     total_fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
     total_fishingdays = sum(fishingdays, na.rm = TRUE),
     .groups = 'drop'
   )
 
 # Calculate the average number of fishing days for the top 10 vessels with the highest number of fishing trips
-maxseadays <- vessel_fishing_trips %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% arrange(desc(total_fishingdays)) %>%
+maxseadays <- vessel_fishing_trips %>% 
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
+  arrange(desc(total_fishingdays)) %>%
   # Sort vessels by days at sea in descending order and take the top 10
-  slice(1:10) %>% summarise(
+  slice(1:10) %>% 
+  summarise(
     MAXSEADAYS = mean(total_fishingdays, na.rm = TRUE),
     .groups = 'drop'
   ) %>%
@@ -726,15 +733,17 @@ maxseadays <- vessel_fishing_trips %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FI
   
 
 # Calculate the other sums and averages
-j6 <- j5 %>% group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% summarise(
-  TOTTRIPS = sum(fishingtrips, na.rm = TRUE),
-  TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
-  TOTGT = sum(VETOISUUS, na.rm = TRUE),
-  TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
-  AVGAGE = mean(AGE, na.rm = TRUE),
-  AVGLOA = mean(KOKPITUUS, na.rm = TRUE),
-  .groups = 'drop'
-)
+j6 <- j5 %>% 
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
+  summarise(
+    TOTTRIPS = sum(fishingtrips, na.rm = TRUE), # changed from fishingtrips
+    TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
+    TOTGT = sum(VETOISUUS, na.rm = TRUE),
+    TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
+    AVGAGE = mean(AGE, na.rm = TRUE),
+    AVGLOA = mean(KOKPITUUS, na.rm = TRUE),
+    .groups = 'drop'
+  )
 
 # join the maximum days at sea with j table
 j7 <- left_join(j6, maxseadays, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
