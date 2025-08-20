@@ -136,7 +136,7 @@ aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>%
 
 # Select and mutate all the needed variables for tables H and I ####
 # We seem to be missing "SVT_KG_PLE" and "SVT_KG_WHG"
-# JCD: match cleaning with sas cleaning here!!!
+
 akt1 <- aktiviteetti_all %>% 
   select(YEAR = KALASTUSVUOSI,
          ULKOINENTUNNUS,
@@ -200,8 +200,49 @@ akt1 <- aktiviteetti_all %>%
       is.na(MESH_SIZE) & PYYDYS == 13 ~ "110D157",
       is.na(MESH_SIZE) & PYYDYS == 22 ~ "157DXX",
       is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
-      TRUE ~ "NK"
-    ),
+      TRUE ~ "NK"),
+    FROM = case_when(
+      FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 0,
+      FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
+      FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 32,
+      FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ 90,
+      FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ 105,
+      FISHING_TECH == "TM" & 110 <= MESH_SIZE ~  110,
+      FISHING_TECH == "PG" & MESH_SIZE < 16 ~ 0,
+      FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
+      FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 32,
+      FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ 90,
+      FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ 110,
+      FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ 157,
+      #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+      is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 16,
+      is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 32,
+      is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ 90,
+      is.na(MESH_SIZE) & PYYDYS == 13 ~ 110,
+      is.na(MESH_SIZE) & PYYDYS == 22 ~ 157,
+      is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 16,
+      TRUE ~ NA),
+    TO = case_when(
+      FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 15,
+      FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 31,
+      FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 89,
+      FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ 104,
+      FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ 109,
+      FISHING_TECH == "TM" & 110 <= MESH_SIZE ~ Inf,
+      FISHING_TECH == "PG" & MESH_SIZE < 16 ~ 15,
+      FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 31,
+      FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 89,
+      FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ 109,
+      FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ 156,
+      FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ Inf,
+      #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+      is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 31,
+      is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 89,
+      is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ 109,
+      is.na(MESH_SIZE) & PYYDYS == 13 ~ 156,
+      is.na(MESH_SIZE) & PYYDYS == 22 ~ Inf,
+      is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 31,
+      TRUE ~ NA),
     ICES = case_when(
       ICES == 19 ~ 29, # bugi, korjataan myöhemmin dcprodiin!!
       TRUE ~ ICES
@@ -247,14 +288,26 @@ print(missing)
 
 # JCD: need to match SAS methodology
 # Change the needed metiers into new format
-akt1 <- akt1 %>%  mutate(METIER = case_when(
-  METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0",         # typo
-  METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0", # old code
-  METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0", # old code
-  METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0", # old code
-  METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120", # old code
-  METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120", # old code
-  TRUE ~ METIER))  # All other values remain unchanged
+# akt1 <- akt1 %>%  mutate(METIER = case_when(
+#   METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0",         # typo
+#   METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0", # old code
+#   METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0", # old code
+#   METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0", # old code
+#   METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120", # old code
+#   METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120", # old code
+#   TRUE ~ METIER))  # All other values remain unchanged
+
+akt1  <- akt1 |> 
+            mutate(metier6_orig=METIER,
+                   METIER5 = stringr::str_sub(METIER, 1,7),
+                   METIER = case_when(
+              FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
+              TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
+              FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO+1, "_0_0"),
+              MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA" ~ paste0(METIER5,"_0_0_0")))
+
+# akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
+# akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
 
 # AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
 
