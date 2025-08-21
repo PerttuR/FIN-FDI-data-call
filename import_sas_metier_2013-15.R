@@ -1439,33 +1439,56 @@ D <- D |> rename(TRIP_ID_KAKE = TRIP_ID)
 # ... tallennetaan aineisto
 KALASTUSAKTIVITEETTI_13_15 <- D
 
-# mesh sizes match table prep script
+# mesh sizes match table prep script - solves a lot of missing mesh sizes in shore data
 KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
             mutate(MESH_SIZE_RANGE = case_when(
-            FISHING_TECH == "TM" & SILMAKOKO < 16 ~ "00D16",
-            FISHING_TECH == "TM" & 16 <= SILMAKOKO & SILMAKOKO < 32 ~ "16D32",
-            FISHING_TECH == "TM" & 32 <= SILMAKOKO & SILMAKOKO < 90 ~ "32D90",
-            FISHING_TECH == "TM" & 90 <= SILMAKOKO & SILMAKOKO < 105 ~ "90D105",
-            FISHING_TECH == "TM" & 105 <= SILMAKOKO & SILMAKOKO < 110 ~ "105D110",
-            FISHING_TECH == "TM" & 110 <= SILMAKOKO ~ "110DXX",
-            FISHING_TECH == "PG" & SILMAKOKO < 16 ~ "00D16",
-            FISHING_TECH == "PG" & 16 <= SILMAKOKO & SILMAKOKO < 32 ~ "16D32",
-            FISHING_TECH == "PG" & 32 <= SILMAKOKO & SILMAKOKO < 90 ~ "32D90",
-            FISHING_TECH == "PG" & 90 <= SILMAKOKO & SILMAKOKO < 110 ~ "90D110",
-            FISHING_TECH == "PG" & 110 <= SILMAKOKO & SILMAKOKO < 157 ~ "110D157",
-            FISHING_TECH == "PG" & 157 <= SILMAKOKO ~ "157DXX",
-            #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
-            is.na(SILMAKOKO) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ "16D32",
-            is.na(SILMAKOKO) & PYYDYS %in% c(8,9,10,44,45,32) ~ "32D90",
-            is.na(SILMAKOKO) & PYYDYS %in% c(11,12) ~ "90D110",
-            is.na(SILMAKOKO) & PYYDYS == 13 ~ "110D157",
-            is.na(SILMAKOKO) & PYYDYS == 22 ~ "157DXX",
-            is.na(SILMAKOKO) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
-            TRUE ~ "NK"),
+                FISHING_TECH == "TM" & SILMAKOKO < 16 ~ "00D16",
+                FISHING_TECH == "TM" & 16 <= SILMAKOKO & SILMAKOKO < 32 ~ "16D32",
+                FISHING_TECH == "TM" & 32 <= SILMAKOKO & SILMAKOKO < 90 ~ "32D90",
+                FISHING_TECH == "TM" & 90 <= SILMAKOKO & SILMAKOKO < 105 ~ "90D105",
+                FISHING_TECH == "TM" & 105 <= SILMAKOKO & SILMAKOKO < 110 ~ "105D110",
+                FISHING_TECH == "TM" & 110 <= SILMAKOKO ~ "110DXX",
+                FISHING_TECH == "PG" & SILMAKOKO < 16 ~ "00D16",
+                FISHING_TECH == "PG" & 16 <= SILMAKOKO & SILMAKOKO < 32 ~ "16D32",
+                FISHING_TECH == "PG" & 32 <= SILMAKOKO & SILMAKOKO < 90 ~ "32D90",
+                FISHING_TECH == "PG" & 90 <= SILMAKOKO & SILMAKOKO < 110 ~ "90D110",
+                FISHING_TECH == "PG" & 110 <= SILMAKOKO & SILMAKOKO < 157 ~ "110D157",
+                FISHING_TECH == "PG" & 157 <= SILMAKOKO ~ "157DXX",
+                #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+                is.na(SILMAKOKO) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ "16D32",
+                is.na(SILMAKOKO) & PYYDYS %in% c(8,9,10,44,45,32) ~ "32D90",
+                is.na(SILMAKOKO) & PYYDYS %in% c(11,12) ~ "90D110",
+                is.na(SILMAKOKO) & PYYDYS == 13 ~ "110D157",
+                is.na(SILMAKOKO) & PYYDYS == 22 ~ "157DXX",
+                is.na(SILMAKOKO) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
+                TRUE ~ "NK"),
             CODE = if_else(CODE %in% c("NK","NA"), MESH_SIZE_RANGE, CODE))
 
-# check differences
-KALASTUSAKTIVITEETTI_13_15 |> count(CODE,MESH_SIZE_RANGE) |> filter(CODE != MESH_SIZE_RANGE)
+# not fix FROM and TO for imputed MESH SIZES
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
+            mutate(FROM = case_when(
+                is.na(FROM) & CODE == "16D32" ~ 16,
+                is.na(FROM) & CODE == "32D90" ~ 32,
+                is.na(FROM) & CODE == "90D110" ~ 90,
+                is.na(FROM) & CODE == "110D157" ~ 110,
+                is.na(FROM) & CODE == "157DXX" ~ 157,
+                TRUE ~ FROM),
+            TO = case_when(
+                is.na(TO) & CODE == "16D32" ~ 31,
+                is.na(TO) & CODE == "32D90" ~ 89,
+                is.na(TO) & CODE == "90D110" ~ 109,
+                is.na(TO) & CODE == "110D157" ~ 156,
+                is.na(TO) & CODE == "157DXX" ~ Inf,
+               TRUE ~ TO))
+
+# fixing previously unknown metier classes after imputing mesh sizes above
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
+  mutate(METIER6 = case_when(
+              FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
+              TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
+              FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO+1, "_0_0"),
+              CODE == "NK" | CODE == "NA" ~ paste0(METIER5,"_0_0_0"))
+            )
 
 # join for table J
 # Save this for J active vessels:
@@ -1477,8 +1500,7 @@ logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, 
                                                 SUB_REGION=area_code_full,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,DEEP)                                                                                               
 
 
-
-# saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
+saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 #.------------------------------------------------------------------------------
 #                   11. add fish pricing data                               ####    
