@@ -34,7 +34,6 @@ library(icesVocab)
 library(RPostgres)
 library(tidyr)
 library(lubridate)
-library(lubridate)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -316,13 +315,34 @@ akt1  <- akt1 |>
 
 akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable()
 
+# load sas data
+sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
+  mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="0.5*1",C_SQUARE="NA") |> 
+  select(YEAR, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, 
+         VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
+         TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, SVT_KG_SPR, SVT_KG_COD, 
+         SVT_KG_FLE, SVT_KG_TUR, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_TRS, 
+         SVT_KG_SME, SVT_KG_FBM, SVT_KG_FID, SVT_KG_FRO, SVT_KG_FPI, 
+         SVT_KG_FPE, SVT_KG_FPP, SVT_KG_FBU, SVT_KG_TRR, SVT_KG_FVE, 
+         SVT_KG_ELE, SVT_KG_FIN, SVT_KG_TOTAL, SVT_VALUE_HER, SVT_VALUE_SPR, 
+         SVT_VALUE_COD, SVT_VALUE_FLE, SVT_VALUE_TUR, SVT_VALUE_PLN, 
+         SVT_VALUE_SAL, SVT_VALUE_TRS, SVT_VALUE_SME, SVT_VALUE_FBM, 
+         SVT_VALUE_FID, SVT_VALUE_FRO, SVT_VALUE_FPI, SVT_VALUE_FPE, 
+         SVT_VALUE_FPP, SVT_VALUE_FBU, SVT_VALUE_TRR, SVT_VALUE_FVE, 
+         SVT_VALUE_ELE, SVT_VALUE_FIN, RECTANGLE, COUNTRY, QUARTER, 
+         MESH_SIZE_RANGE=CODE, FROM, TO, METIER_7, SUPRA_REGION, SUB_REGION=area_code_full, 
+         EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, 
+         C_SQUARE, LATITUDE, LONGITUDE, metier6_orig, METIER5)
+
+akt1_all <- rbind(akt1, sas)
+
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
 #-------------------------------------------------------------------------------
 
 # add new 2013-15 table here
 
-a <- akt1 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
+a <- akt1_all %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
 # Pivot to longer format
 a2 <- a %>%
@@ -445,76 +465,76 @@ disc_joined <- a11 %>% filter(DISCARDS > 0)
 
 # Add years 2013-2015
 
-tableA20132015 <- tableA1315 %>% mutate(SUB_REGION = tolower(SUB_REGION),
-                                        METIER_7 = "NA", 
-                                        EEZ_INDICATOR = "NA",
-                                        SPECON_TECH = "NA",
-                                        DEEP = "NA",
-                                        NEP_SUB_REGION = "NA",
-       GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
-       GEAR_TYPE == "OTM" | GEAR_TYPE == "PTM" ~ "OTM-PTM",
-       SPECIES == "SPR" & (GEAR_TYPE == "GNS" | GEAR_TYPE == "FYK") ~ "GNS-FYK",
-       TRUE ~ GEAR_TYPE),
-       DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
-                           QUARTER, "_", # quarter
-                           SUB_REGION, "_", # region
-                           GEAR, "_", # gear type
-                           "all_", # target assemblage
-                           "all_", # mesh size range
-                           "NA_", # selective device / metier
-                           "NA_", # mesh size range of the selective device
-                           "all_", # vessel length
-                           SPECIES, "_", # species
-                           "all" # commercial category
-                           ),
-  DOMAIN_DISCARDS = DOMAIN_LANDINGS
-) %>% select(-GEAR, -METIER7)
-
-# Check for any metiers that are not valid
-metier2 <- tableA20132015 %>% dplyr::select(METIER) %>% distinct()
-metier_check2 <- metier2 %>% left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
-missing2 <- metier_check2 %>% filter(is.na(valid_metiers))
-print(missing2)
-
-# Change the needed metiers into new format and delete one missing value row
-tableA20132015 <- tableA20132015 %>%  mutate(METIER = case_when(
-  METIER == "MISSING" ~ "NK",
-  METIER == "GNS_SPF_16-109" ~ "GNS_SPF_>=16_0_0",
-  METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_>=16_0_0",
-  METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_>0_0_0",
-  METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_>0_0_0",
-  METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_100-119_0_0",
-  METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_100-119_0_0",
-  TRUE ~ METIER)) %>% filter(!is.na(TOTVALLANDG))
-
-tableA_all <- rbind(a11, tableA20132015) %>% 
-  mutate(DISCARDS = DISCARDS/1000) 
-
-#Rounding discards:
-tableA_all$DISCARDS <- round(tableA_all$DISCARDS, digits = 3)      
-
-#Rounding landings:
-tableA_all$TOTWGHTLANDG <- round(tableA_all$TOTWGHTLANDG, digits = 3)
-
-#Rounding value:
-tableA_all$TOTVALLANDG <- round(as.numeric(tableA_all$TOTVALLANDG), digits = 0)
- 
-tableA_all <- tableA_all %>% 
-  mutate (DISCARDS = case_when(
-  DISCARDS == 0 ~ "NK",
-  TRUE ~ as.character(DISCARDS)))
-
-
-# Put the variables in the correct order:
-table_A <- tableA_all %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
-
-
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
-
-# Write the resulting table A
-openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+# tableA20132015 <- tableA1315 %>% mutate(SUB_REGION = tolower(SUB_REGION),
+#                                         METIER_7 = "NA", 
+#                                         EEZ_INDICATOR = "NA",
+#                                         SPECON_TECH = "NA",
+#                                         DEEP = "NA",
+#                                         NEP_SUB_REGION = "NA",
+#        GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
+#        GEAR_TYPE == "OTM" | GEAR_TYPE == "PTM" ~ "OTM-PTM",
+#        SPECIES == "SPR" & (GEAR_TYPE == "GNS" | GEAR_TYPE == "FYK") ~ "GNS-FYK",
+#        TRUE ~ GEAR_TYPE),
+#        DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
+#                            QUARTER, "_", # quarter
+#                            SUB_REGION, "_", # region
+#                            GEAR, "_", # gear type
+#                            "all_", # target assemblage
+#                            "all_", # mesh size range
+#                            "NA_", # selective device / metier
+#                            "NA_", # mesh size range of the selective device
+#                            "all_", # vessel length
+#                            SPECIES, "_", # species
+#                            "all" # commercial category
+#                            ),
+#   DOMAIN_DISCARDS = DOMAIN_LANDINGS
+# ) %>% select(-GEAR, -METIER7)
+# 
+# # Check for any metiers that are not valid
+# metier2 <- tableA20132015 %>% dplyr::select(METIER) %>% distinct()
+# metier_check2 <- metier2 %>% left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
+# missing2 <- metier_check2 %>% filter(is.na(valid_metiers))
+# print(missing2)
+# 
+# # Change the needed metiers into new format and delete one missing value row
+# tableA20132015 <- tableA20132015 %>%  mutate(METIER = case_when(
+#   METIER == "MISSING" ~ "NK",
+#   METIER == "GNS_SPF_16-109" ~ "GNS_SPF_>=16_0_0",
+#   METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_>=16_0_0",
+#   METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_>0_0_0",
+#   METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_>0_0_0",
+#   METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_100-119_0_0",
+#   METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_100-119_0_0",
+#   TRUE ~ METIER)) %>% filter(!is.na(TOTVALLANDG))
+# 
+# tableA_all <- rbind(a11, tableA20132015) %>% 
+#   mutate(DISCARDS = DISCARDS/1000) 
+# 
+# #Rounding discards:
+# tableA_all$DISCARDS <- round(tableA_all$DISCARDS, digits = 3)      
+# 
+# #Rounding landings:
+# tableA_all$TOTWGHTLANDG <- round(tableA_all$TOTWGHTLANDG, digits = 3)
+# 
+# #Rounding value:
+# tableA_all$TOTVALLANDG <- round(as.numeric(tableA_all$TOTVALLANDG), digits = 0)
+#  
+# tableA_all <- tableA_all %>% 
+#   mutate (DISCARDS = case_when(
+#   DISCARDS == 0 ~ "NK",
+#   TRUE ~ as.character(DISCARDS)))
+# 
+# 
+# # Put the variables in the correct order:
+# table_A <- tableA_all %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+# 
+# 
+# 
+# # Write the resulting table A into der folder as rds file and into results folder
+# saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
+# 
+# # Write the resulting table A
+# openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 
 
@@ -523,7 +543,7 @@ openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CA
 #-------------------------------------------------------------------------------
 
 # Select the variables not needed and needed in G table
-g <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
+g <- akt1_all %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
                      TOTSEADAYS = MERIPAIVAT,
                      TOTFISHDAYS = KALASTUSPAIVAT,
                      HRSEA = KALASTUSAIKAHH) %>% mutate(
@@ -616,7 +636,7 @@ write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx")
 
 # some TOTAL in SPECIES need to be removed
 
-h <- akt1 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF) #not needed in table H
+h <- akt1_all %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF) #not needed in table H
 
 # Pivot to longer format
 h2 <- h %>%
@@ -681,7 +701,7 @@ openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LA
 #-------------------------------------------------------------------------------
 
 # remove variables not needed in table I (relating to catch)
-i <- akt1 %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
+i <- akt1_all %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
 # Sum the total of fishing days and calculate the number of distinct vessels in each strata
 i2 <- i %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE) %>% summarise(
@@ -706,16 +726,16 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 #add 2013-2015 sas data
 
 #j_sas <- readRDS(paste0(path_der,"metier_2013_15_for_J.rds"))
-j_sas <- readRDS(file = paste0(path_der,"logbook_2013_15_for_J.rds"))
+#j_sas <- readRDS(file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 # Select variables needed for J table from akt1 (DCPROD active vessels 2016 onwards):
-j <- akt1 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH, -FROM, -TO, -metier6_orig, -METIER5)
+j <- akt1_all %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH, -FROM, -TO, -metier6_orig, -METIER5)
 
-j_all <- rbind(j_sas, j)
+#j_all <- rbind(j_sas, j)
 
 #Aggregating all passive gears to PG
 
-j_all <- j_all %>% mutate(FISHING_TECH = case_when(
+j_all <- j %>% mutate(FISHING_TECH = case_when(
   FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
   TRUE ~ FISHING_TECH
 ))
