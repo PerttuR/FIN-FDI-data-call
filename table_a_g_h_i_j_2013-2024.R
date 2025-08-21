@@ -34,6 +34,7 @@ library(icesVocab)
 library(RPostgres)
 library(tidyr)
 library(lubridate)
+library(lubridate)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -201,6 +202,7 @@ akt1 <- aktiviteetti_all %>%
       is.na(MESH_SIZE) & PYYDYS == 22 ~ "157DXX",
       is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
       TRUE ~ "NK"),
+    # add mesh size range to se for metier cleaning
     FROM = case_when(
       FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 0,
       FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
@@ -297,6 +299,7 @@ print(missing)
 #   METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120", # old code
 #   TRUE ~ METIER))  # All other values remain unchanged
 
+# clean metier categories based on METIER 5 and mesh size ranges
 akt1  <- akt1 |> 
             mutate(metier6_orig=METIER,
                    METIER5 = stringr::str_sub(METIER, 1,7),
@@ -310,6 +313,8 @@ akt1  <- akt1 |>
 # akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
 
 # AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
+
+akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable()
 
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
