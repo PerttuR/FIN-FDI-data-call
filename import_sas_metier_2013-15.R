@@ -1439,7 +1439,7 @@ D <- D |> rename(TRIP_ID_KAKE = TRIP_ID)
 # ... tallennetaan aineisto
 KALASTUSAKTIVITEETTI_13_15 <- D
 
-# mesh sizes match table prep script
+# mesh sizes match table prep script - solves a lot of missing mesh sizes in shore data
 KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
             mutate(MESH_SIZE_RANGE = case_when(
                 FISHING_TECH == "TM" & SILMAKOKO < 16 ~ "00D16",
@@ -1462,27 +1462,33 @@ KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
                 is.na(SILMAKOKO) & PYYDYS == 22 ~ "157DXX",
                 is.na(SILMAKOKO) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
                 TRUE ~ "NK"),
-            CODE = if_else(CODE %in% c("NK","NA"), MESH_SIZE_RANGE, CODE),
-            FROM = case_when(
-                is.na(CODE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 16,
-                is.na(CODE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 32,
-                is.na(CODE) & PYYDYS %in% c(11,12) ~ 90,
-                is.na(CODE) & PYYDYS == 13 ~ 110,
-                is.na(CODE) & PYYDYS == 22 ~ 157,
-                is.na(CODE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 16,
-                .default = is.numeric(FROM)),
-            TO = case_when(
-                is.na(CODE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 31,
-                is.na(CODE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 89,
-                is.na(CODE) & PYYDYS %in% c(11,12) ~ 109,
-                is.na(CODE) & PYYDYS == 13 ~ 156,
-                is.na(CODE) & PYYDYS == 22 ~ Inf,
-                is.na(CODE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 31,
-                .default = is.numeric(TO))
-            )
+            CODE = if_else(CODE %in% c("NK","NA"), MESH_SIZE_RANGE, CODE))
 
-# check differences
-KALASTUSAKTIVITEETTI_13_15 |> count(CODE,MESH_SIZE_RANGE) |> filter(CODE != MESH_SIZE_RANGE)
+# not fix FROM and TO for imputed MESH SIZES
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
+            mutate(FROM = case_when(
+                is.na(FROM) & CODE == "16D32" ~ 16,
+                is.na(FROM) & CODE == "32D90" ~ 32,
+                is.na(FROM) & CODE == "90D110" ~ 90,
+                is.na(FROM) & CODE == "110D157" ~ 110,
+                is.na(FROM) & CODE == "157DXX" ~ 157,
+                TRUE ~ FROM),
+            TO = case_when(
+                is.na(TO) & CODE == "16D32" ~ 31,
+                is.na(TO) & CODE == "32D90" ~ 89,
+                is.na(TO) & CODE == "90D110" ~ 109,
+                is.na(TO) & CODE == "110D157" ~ 156,
+                is.na(TO) & CODE == "157DXX" ~ Inf,
+               TRUE ~ TO))
+
+# fixing previously unknown metier classes after imputing mesh sizes above
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
+  mutate(METIER6 = case_when(
+              FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
+              TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
+              FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO+1, "_0_0"),
+              CODE == "NK" | CODE == "NA" ~ paste0(METIER5,"_0_0_0"))
+            )
 
 # join for table J
 # Save this for J active vessels:
@@ -1492,7 +1498,6 @@ logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, 
                                                 GEAR_TYPE, TARGET_ASSEMBLAGE, METIER=METIER6,
                                                 COUNTRY,QUARTER,MESH_SIZE_RANGE=CODE,METIER_7,SUPRA_REGION,
                                                 SUB_REGION=area_code_full,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,DEEP)                                                                                               
-
 
 
 saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
