@@ -19,6 +19,7 @@ library(labelled)  # remove sas imported column labels
 library(janitor)
 library(readxl)
 library(lubridate)
+library(tidyr)
 
 source("db.r")
 
@@ -1508,13 +1509,16 @@ saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds")
 
 # !!! I AM HERE !!! ####
 # wide to long table ####
+
 KALASTUSAKTIVITEETTI_13_15 <- tibble::rowid_to_column(KALASTUSAKTIVITEETTI_13_15, "ID2")
 
-metier.fish <- KALASTUSAKTIVITEETTI_13_15 |> select(ID, YEAR, ICES, SVT_KG_COD:SVT_KG_WHG) |>
+metier.fish <- KALASTUSAKTIVITEETTI_13_15 |> select(ID2, YEAR, ICES, SVT_KG_COD:SVT_KG_WHG) |>
                 rename_with(~gsub("SVT_KG_", "", .x)) |>
-                pivot_longer(!ID:ICES, names_to = "SPECIES", values_to = "KG")
+                pivot_longer(!ID2:ICES, names_to = "SPECIES", values_to = "KG")
 
 # dim(metier.fish)
+# check records
+metier.fish |> count(SPECIES) |> flextable()
 
 # get commercial value from DCPROD lookup table
 commercial.value <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""), 
@@ -1530,46 +1534,58 @@ commercial.value <- commercial.value |> select(FAO_KOODI,VUOSI,ICES_ALUE,KESKIHI
 commercial.value$KESKIHINTA[commercial.value$FAO_KOODI == "ELE" & 
                               (commercial.value$KESKIHINTA < 2 | is.na(commercial.value$KESKIHINTA)) ] <- 10
 
-# create lookup of all combination years, ices, fish
-# outer join to commericial.value
-# fill in empty rows
-
-# join area specific price
-metier.fish <- metier.fish |> left_join(commercial.value,  
-                            by=c("YEAR"="VUOSI", "ICES"="ICES_ALUE", "SPECIES"="FAO_KOODI"))
-
-# average yearly prices (all ices)
-tmp <- metier.fish |> group_by(YEAR,SPECIES) |> summarise(YEAR_AVG = mean(KESKIHINTA, na.rm=TRUE))
-
-metier.fish <- metier.fish |> left_join(tmp, by=c("YEAR","SPECIES"))
-
-# calculate value
-metier.fish <- metier.fish |> mutate(VALUE = case_when(
-          !is.na(KESKIHINTA) ~ KG*KESKIHINTA,
-          is.na(KESKIHINTA) ~ KG*KESKIHINTA_KOKO_MERIALUE,
-          is.na(KESKIHINTA) & is.na(KESKIHINTA_KOKO_MERIALUE) ~ KG*YEAR_AVG,
-          TRUE ~ -999
+# clean value step 1
+commercial.value <- commercial.value |> mutate(HINTA = case_when(
+  !is.na(KESKIHINTA) ~ round(KESKIHINTA,2),
+  is.na(KESKIHINTA) ~  round(KESKIHINTA_KOKO_MERIALUE,2),
+  TRUE ~ NA
 ))
 
-# !!!HERE!!!
-# majority of catches don't have KG
+# find all combinations of year, species and ices and link back to commercial value to fill in the gaps
+# YEAR <- 2009:2024
+# SPECIES <- sort(unique(commercial.value$FAO_KOODI))
+# ICES <- sort(unique(commercial.value$ICES_ALUE))
+# 
+# # Create the lookup table
+# all <- expand.grid(YEAR = YEAR, SPECIES = SPECIES, ICES = ICES)
+# 
+# commercial.value <- all |> left_join(commercial.value, 
+#                                      by=c("YEAR"="VUOSI","SPECIES"="FAO_KOODI","ICES"="ICES_ALUE"))
+# 
+# dim(commercial.value)
+# 
+# # average area yearly prices
+# tmp <- commercial.value |> group_by(YEAR,SPECIES) |> 
+#   summarise(YEAR_AVG = case_when(
+#     ICES == mean(HINTA, na.rm=TRUE))
+# 
+# commercial.value <- commercial.value |> left_join(tmp, by=c("YEAR","SPECIES"))
+
+metier.fish <- metier.fish |> 
+  left_join(commercial.value, by=c("YEAR"="VUOSI","SPECIES"="FAO_KOODI","ICES"="ICES_ALUE"))
+
+
+# calculate value
+metier.fish <- metier.fish |> mutate(VALUE = round(KG*HINTA,2))
+
+# check formatting
 
 metier.fish |> filter(is.na(VALUE)) |> count(YEAR,ICES, SPECIES) |>
   adorn_totals("row") |> flextable() |> 
   set_caption("fish species without commercial value in certain year")
 
-# tag <- metier.fish |> filter(is.na(VALUE)) |> count(YEAR,SPECIES)
-# 
-# test <- commercial.value |> filter(VUOSI %in% c(min(tag$YEAR)-1, unique(tag$YEAR), max(tag$YEAR)+1) &
-#                         FAO_KOODI %in% tag$SPECIES) |> arrange(FAO_KOODI,VUOSI, ICES_ALUE)
-  
-  
 # save value to table and add categories
-metier.fish <- metier.fish |> select(ID, SPECIES, VALUE) |>
-  pivot_wider(id_cols=ID, names_from = SPECIES, values_from = VALUE, names_prefix = "SVT_VALUE_") |> 
+metier.fish2 <- metier.fish |> select(ID2, SPECIES, ICES, VALUE) |>
+  pivot_wider(id_cols=ID2, names_from = SPECIES, values_from = VALUE, names_prefix = "SVT_VALUE_") |> 
   mutate(SVT_VALUE_TOTAL = rowSums(across(SVT_VALUE_COD:SVT_VALUE_WHG)))
 
 # add to logbook data
-KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |> left_join(metier.fish, by="ID")
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |> left_join(metier.fish2, by="ID2")
+# add up total value (not sure why the above is not added correctly)
+KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |> 
+                                rowwise() |>
+                                mutate(SVT_VALUE_TOTAL = sum(across(SVT_VALUE_COD:SVT_VALUE_WHG), na.rm = TRUE)) |>
+                                ungroup() |>
+                                mutate(SVT_VALUE_TOTAL = if_else(is.na(SVT_VALUE_COD), NA, SVT_VALUE_TOTAL))
 
-
+saveRDS(KALASTUSAKTIVITEETTI_13_15, file = paste0(path_der,"logbook_2013_15.rds"))
