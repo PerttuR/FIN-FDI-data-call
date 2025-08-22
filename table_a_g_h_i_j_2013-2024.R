@@ -358,7 +358,8 @@ akt1_all <- akt1_all |> mutate(METIER = case_when(
   METIER5 == "LLD_ANA" ~ "LLD_ANA_0_0_0",
   METIER5 == "LLS_FWS" ~ "LLS_FWS_0_0_0",
   METIER5 == "MIS_MIS" ~ "MIS_MIS_0_0_0",
-  METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0"
+  METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0".
+  .default = as.character(METIER)
 ))
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
