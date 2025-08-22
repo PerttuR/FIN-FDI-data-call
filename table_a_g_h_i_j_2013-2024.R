@@ -302,26 +302,22 @@ print(missing)
 # clean metier categories based on METIER 5 and mesh size ranges
 akt1  <- akt1 |> 
             mutate(metier6_orig=METIER,
+                   METIER4 = stringr::str_sub(METIER, 1,3),
                    METIER5 = stringr::str_sub(METIER, 1,7),
                    METIER = case_when(
-              FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
+              FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
               TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
-              FROM > 0 & TO != Inf ~ paste0(METIER5, "_>", FROM, "-", TO+1, "_0_0"),
-              MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA" ~ paste0(METIER5,"_0_0_0")),
-              METIER = case_when(
-              METIER5 == "FPO_FWS" ~ "FPO_FWS_>0_0_0",
-              METIER5 == "FYK_ANA" ~ "FYK_ANA_>0_0_0",
-              METIER5 == "FYK_FWS" ~ "FYK_FWS_>0_0_0",
-              METIER5 == "FYK_SPF" ~ "FYK_SPF_>0_0_0",
-              METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0"
-)
+              FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
+              (MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),
+              (MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
+            )
 
 # akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
 # akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
 
 # AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
 
-akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable()
+akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
 # load sas data
 sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
@@ -340,17 +336,24 @@ sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
          SVT_VALUE_ELE, SVT_VALUE_FIN, RECTANGLE, COUNTRY, QUARTER, 
          MESH_SIZE_RANGE=CODE, FROM, TO, METIER_7, SUPRA_REGION, SUB_REGION=area_code_full, 
          EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, 
-         C_SQUARE, LATITUDE, LONGITUDE, metier6_orig, METIER5)
+         C_SQUARE, LATITUDE, LONGITUDE, metier6_orig, METIER4, METIER5)
 
 akt1_all <- rbind(akt1, sas)
-
-akt1_all |> count(METIER)
 
 #just checking data types
 sapply(akt1_all, class)
 
 #cast QUARTER as integer
 akt1_all$QUARTER <- as.integer(akt1_all$QUARTER)
+
+akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
+
+# lookup METIER classs
+# lookup <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |> 
+#   mutate(METIER5=str_sub(METIER, 1,7)) |>
+#   filter(METIER5 %in% unique(akt1_all$METIER5))
+# 
+# akt1_all |> count(METIER) |> select(METIER_NEW=METIER) |> left_join(lookup, by=("METIER_NEW"="METIER")) |> View()
 
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
