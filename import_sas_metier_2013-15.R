@@ -564,12 +564,14 @@ logbook_13_15 <- logbook_13_15 |>
 logbook_13_15 <- logbook_13_15 |> 
                     mutate(METIER5 = if_else(METIER5 == "MISSING", "MIS_MIS", METIER5))
 
-logbook_13_15  <- logbook_13_15 |> rename(metier6_orig=METIER6) |>
+logbook_13_15  <- logbook_13_15 |> #rename(metier6_orig=METIER6) |>
                     mutate(METIER6 = case_when(
-                      FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
+                      FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
                       TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
-                      FROM > 0 & TO != Inf ~ paste0(METIER5, "_>", FROM, "-", TO+1, "_0_0"),
-                      CODE == "NK" | CODE == "NA" ~ paste0(METIER5,"_0_0_0")))
+                      FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
+                      (CODE == "NK" | CODE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),
+                      (CODE == "NK" | CODE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
+                    )
 
 logbook_13_15 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
 logbook_13_15 |> count(METIER6) |> flextable() |> autofit() |> set_caption("after cleaning") 
@@ -592,10 +594,12 @@ shorelogs_13_15 <- shorelogs_13_15 |>
 
 shorelogs_13_15  <- shorelogs_13_15 |> rename(metier6_orig=METIER6) |>
   mutate(METIER6 = case_when(
-    FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
-    TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
-    FROM > 0 & TO != Inf ~ paste0(METIER5, "_>", FROM, "-", TO+1, "_0_0"),
-    CODE == "NK" | CODE == "NA" ~ paste0(METIER5,"_0_0_0")))
+    FROM == 0 & METIER4 %in% c("LLH", "LHP", "LLD", "MIS") ~ paste0(METIER5, "_", TO, "_0_0"),
+    FROM == 0 & !METIER4 %in% c("LLH", "LHP", "LLD", "MIS") ~ paste0(METIER5, "_>", TO, "_0_0"),
+    FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
+    (CODE == "NK" | CODE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),
+    (CODE == "NK" | CODE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
+  )
 
 shorelogs_13_15 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
 shorelogs_13_15 |> count(METIER6) |> flextable() |> autofit() |> set_caption("after cleaning") 
