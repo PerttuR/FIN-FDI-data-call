@@ -305,7 +305,7 @@ akt1  <- akt1 |>
                    METIER = case_when(
               FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
               TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
-              FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO+1, "_0_0"),
+              FROM > 0 & TO != Inf ~ paste0(METIER5, "_>", FROM, "-", TO+1, "_0_0"),
               MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA" ~ paste0(METIER5,"_0_0_0")))
 
 # akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
