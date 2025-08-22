@@ -346,6 +346,21 @@ sapply(akt1_all, class)
 #cast QUARTER as integer
 akt1_all$QUARTER <- as.integer(akt1_all$QUARTER)
 
+# classes that don't exist fix
+akt1_all <- akt1_all |> mutate(METIER = case_when(
+  METIER5 == "GNS_FWS" ~ "GNS_FWS_>0_0_0",
+  METIER5 == "FPO_FWS" ~ "FPO_FWS_>0_0_0",
+  METIER5 == "FYK_ANA" ~ "FYK_ANA_>0_0_0",
+  METIER5 == "FYK_FWS" ~ "FYK_FWS_>0_0_0",
+  METIER5 == "FYK_SPF" ~ "FYK_SPF_>0_0_0",
+  METIER5 == "GNS_FWS" ~ "GNS_FWS_>0_0_0",
+  METIER5 == "LHP_FIF" ~ "LHP_FIF_0_0_0",
+  METIER5 == "LLD_ANA" ~ "LLD_ANA_0_0_0",
+  METIER5 == "LLS_FWS" ~ "LLS_FWS_0_0_0",
+  METIER5 == "MIS_MIS" ~ "MIS_MIS_0_0_0",
+  METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0"
+))
+
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
 # lookup METIER classs
