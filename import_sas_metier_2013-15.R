@@ -564,7 +564,7 @@ logbook_13_15 <- logbook_13_15 |>
 logbook_13_15 <- logbook_13_15 |> 
                     mutate(METIER5 = if_else(METIER5 == "MISSING", "MIS_MIS", METIER5))
 
-logbook_13_15  <- logbook_13_15 |> #rename(metier6_orig=METIER6) |>
+logbook_13_15  <- logbook_13_15 |> rename(metier6_orig=METIER6) |>
                     mutate(METIER6 = case_when(
                       FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
                       TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
