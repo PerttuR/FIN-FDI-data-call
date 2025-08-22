@@ -34,6 +34,7 @@ library(icesVocab)
 library(RPostgres)
 library(tidyr)
 library(lubridate)
+library(flextable)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
@@ -336,6 +337,12 @@ sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
 
 akt1_all <- rbind(akt1, sas)
 
+#just checking data types
+sapply(akt1_all, class)
+
+#cast QUARTER as integer
+akt1_all$QUARTER <- as.integer(akt1_all$QUARTER)
+
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
 #-------------------------------------------------------------------------------
@@ -526,15 +533,15 @@ disc_joined <- a11 %>% filter(DISCARDS > 0)
 # 
 # 
 # # Put the variables in the correct order:
-# table_A <- tableA_all %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+table_A <- a11 %>% arrange(YEAR) %>% select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 # 
 # 
 # 
 # # Write the resulting table A into der folder as rds file and into results folder
-# saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
+saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
 # 
 # # Write the resulting table A
-# openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+ openxlsx::write.xlsx(table_A, paste0(path_out,.Platform$file.sep,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 
 
