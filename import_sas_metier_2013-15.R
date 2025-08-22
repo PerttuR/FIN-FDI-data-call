@@ -594,7 +594,7 @@ shorelogs_13_15  <- shorelogs_13_15 |> rename(metier6_orig=METIER6) |>
   mutate(METIER6 = case_when(
     FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
     TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
-    FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO+1, "_0_0"),
+    FROM > 0 & TO != Inf ~ paste0(METIER5, "_>", FROM, "-", TO+1, "_0_0"),
     CODE == "NK" | CODE == "NA" ~ paste0(METIER5,"_0_0_0")))
 
 shorelogs_13_15 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
