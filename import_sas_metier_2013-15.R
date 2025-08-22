@@ -1486,15 +1486,6 @@ KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
                 is.na(TO) & CODE == "157DXX" ~ Inf,
                TRUE ~ TO))
 
-# fixing previously unknown metier classes after imputing mesh sizes above
-KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
-  mutate(METIER6 = case_when(
-              FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
-              TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
-              FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO+1, "_0_0"),
-              CODE == "NK" | CODE == "NA" ~ paste0(METIER5,"_0_0_0"))
-            )
-
 # join for table J
 # Save this for J active vessels:
 logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, 
@@ -1593,3 +1584,4 @@ KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
                                 mutate(SVT_VALUE_TOTAL = if_else(is.na(SVT_VALUE_COD), NA, SVT_VALUE_TOTAL))
 
 saveRDS(KALASTUSAKTIVITEETTI_13_15, file = paste0(path_der,"logbook_2013_15.rds"))
+
