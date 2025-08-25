@@ -362,8 +362,8 @@ akt1_all <- akt1_all |> mutate(
     METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0",
     METIER5 == "OTM_FWS" ~ "OTM_FWS_>0_0_0",
     METIER5 == "PTM_FWS" ~ "PTM_FWS_>0_0_0",
-    METIER == "OTB_DEF_>=110_0_0" ~ "OTB_DEF_105_115_1_120",
-    METIER == "OTM_DEF_>=110_0_0" ~ "OTM_DEF_105_115_1_120", 
+    METIER == "OTB_DEF_>=110_0_0" ~ "OTB_DEF_105-115_1_120",
+    METIER == "OTM_DEF_>=110_0_0" ~ "OTM_DEF_105-115_1_120", 
     .default = as.character(METIER)),
   # lines don't have mesh sizes
   MESH_SIZE_RANGE = case_when(
