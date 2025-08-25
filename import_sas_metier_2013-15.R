@@ -566,7 +566,7 @@ logbook_13_15 <- logbook_13_15 |>
 
 logbook_13_15  <- logbook_13_15 |> rename(metier6_orig=METIER6) |>
                     mutate(METIER6 = case_when(
-                      FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
+                      FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
                       TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
                       FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
                       (CODE == "NK" | CODE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),
@@ -594,7 +594,7 @@ shorelogs_13_15 <- shorelogs_13_15 |>
 
 shorelogs_13_15  <- shorelogs_13_15 |> rename(metier6_orig=METIER6) |>
   mutate(METIER6 = case_when(
-    FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
+    FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
     TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
     FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
     (CODE == "NK" | CODE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),

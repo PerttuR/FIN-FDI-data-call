@@ -305,7 +305,7 @@ akt1  <- akt1 |>
                    METIER4 = stringr::str_sub(METIER, 1,3),
                    METIER5 = stringr::str_sub(METIER, 1,7),
                    METIER = case_when(
-              FROM == 0 ~ paste0(METIER5, "_<", TO, "_0_0"),
+              FROM == 0 ~ paste0(METIER5, "_<", TO+1, "_0_0"),
               TO == Inf ~ paste0(METIER5, "_>=", FROM, "_0_0"),
               FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
               (MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),
