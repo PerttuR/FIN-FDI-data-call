@@ -321,7 +321,7 @@ akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
 # load sas data
 sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
-  mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="0.5*1",C_SQUARE="NA") |> 
+  mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA") |> 
   select(YEAR, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, 
          VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
          TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, SVT_KG_SPR, SVT_KG_COD, 
@@ -376,8 +376,8 @@ akt1_all <- akt1_all |> mutate(
     METIER5 == "MIS_MIS" ~ "NK",
     METIER5 == "OTM_FWS" ~ "NK",
     METIER5 == "PTM_FWS" ~ "NK",
-    METIER == "GNS_ANA_16-31_0_0" ~ "90D110",
-    METIER == "GNS_ANA_32-89_0_0" ~ "110D157",
+    METIER == "GNS_ANA_16-31_0_0" ~ "90D110", # too small for salmon
+    METIER == "GNS_ANA_32-89_0_0" ~ "110D157", # too small for salmon
     .default =  as.character(MESH_SIZE_RANGE)),
   TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE),
   GEAR_TYPE = if_else(GEAR_TYPE == "MIS", "NK", GEAR_TYPE))
