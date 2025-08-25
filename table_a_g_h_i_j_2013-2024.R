@@ -350,20 +350,23 @@ akt1_all$QUARTER <- as.integer(akt1_all$QUARTER)
 akt1_all <- akt1_all |> mutate(
   # metiers that don't have ranges
   METIER = case_when(
-    METIER5 == "GNS_FWS" ~ "GNS_FWS_>0_0_0",
-    METIER5 == "FPO_FWS" ~ "FPO_FWS_>0_0_0",
-    METIER5 == "FYK_ANA" ~ "FYK_ANA_>0_0_0",
-    METIER5 == "FYK_FWS" ~ "FYK_FWS_>0_0_0",
-    METIER5 == "FYK_SPF" ~ "FYK_SPF_>0_0_0",
-    METIER5 == "LHP_FIF" ~ "LHP_FIF_0_0_0",
-    METIER5 == "LLD_ANA" ~ "LLD_ANA_0_0_0",
-    METIER5 == "LLS_FWS" ~ "LLS_FWS_0_0_0",
-    METIER5 == "MIS_MIS" ~ "MIS_MIS_0_0_0",
-    METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0",
-    METIER5 == "OTM_FWS" ~ "OTM_FWS_>0_0_0",
-    METIER5 == "PTM_FWS" ~ "PTM_FWS_>0_0_0",
-    METIER == "OTB_DEF_>=110_0_0" ~ "OTB_DEF_105-115_1_120",
-    METIER == "OTM_DEF_>=110_0_0" ~ "OTM_DEF_105-115_1_120", 
+    METIER5 == "GNS_FWS" ~ "GNS_FWS_>0_0_0", # not accepted
+    METIER5 == "FPO_FWS" ~ "FPO_FWS_>0_0_0", # not accepted
+    METIER5 == "FYK_ANA" ~ "FYK_ANA_>0_0_0", # not accepted
+    METIER5 == "FYK_FWS" ~ "FYK_FWS_>0_0_0", # not accepted
+    METIER5 == "FYK_SPF" ~ "FYK_SPF_>0_0_0", # not accepted
+    METIER5 == "LHP_FIF" ~ "LHP_FIF_0_0_0", # lines have no mesh sizes
+    METIER5 == "LLD_ANA" ~ "LLD_ANA_0_0_0", # lines have no mesh sizes
+    METIER5 == "LLS_FWS" ~ "LLS_FWS_0_0_0", # lines have no mesh sizes
+    METIER5 == "MIS_MIS" ~ "MIS_MIS_0_0_0", # not accepted
+    METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0", # not accepted
+    METIER5 == "OTM_FWS" ~ "OTM_FWS_>0_0_0", # not accepted
+    METIER5 == "PTM_FWS" ~ "PTM_FWS_>0_0_0", # not accepted
+    METIER == "OTB_DEF_>=110_0_0" ~ "OTB_DEF_105-115_1_120",    # not accepted
+    METIER == "OTB_DEF_105-109_0_0" ~ "OTB_DEF_105-115_1_120",  # not accepted
+    METIER == "OTM_DEF_>=110_0_0" ~ "OTM_DEF_105-115_1_120",    # not accepted
+    METIER == "GNS_ANA_16-31_0_0" ~ "GNS_ANA_90-109_0_0", # too small for salmon
+    METIER == "GNS_ANA_32-89_0_0" ~ "GNS_ANA_110-156_0_0", # too small for salmon
     .default = as.character(METIER)),
   # lines don't have mesh sizes
   MESH_SIZE_RANGE = case_when(
@@ -373,9 +376,9 @@ akt1_all <- akt1_all |> mutate(
     METIER5 == "MIS_MIS" ~ "NA",
     METIER5 == "OTM_FWS" ~ "NK",
     METIER5 == "PTM_FWS" ~ "NK",
-    .default =  as.character(MESH_SIZE_RANGE),
+    METIER == "GNS_ANA_16-31_0_0" ~ "90D110",
+    .default =  as.character(MESH_SIZE_RANGE)),
   TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE))
-)
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
