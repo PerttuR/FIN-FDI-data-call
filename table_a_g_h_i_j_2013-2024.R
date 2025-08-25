@@ -370,6 +370,7 @@ akt1_all <- akt1_all |> mutate(
     METIER5 == "LHP_FIF" ~ "NA",
     METIER5 == "LLD_ANA" ~ "NA",
     METIER5 == "LLS_FWS" ~ "NA",
+    METIER5 == "MIS_MIS" ~ "NA",
     METIER5 == "OTM_FWS" ~ "NK",
     METIER5 == "PTM_FWS" ~ "NK",
     .default =  as.character(MESH_SIZE_RANGE))
