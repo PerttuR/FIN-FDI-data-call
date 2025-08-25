@@ -373,7 +373,8 @@ akt1_all <- akt1_all |> mutate(
     METIER5 == "MIS_MIS" ~ "NA",
     METIER5 == "OTM_FWS" ~ "NK",
     METIER5 == "PTM_FWS" ~ "NK",
-    .default =  as.character(MESH_SIZE_RANGE))
+    .default =  as.character(MESH_SIZE_RANGE),
+  TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE))
 )
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
