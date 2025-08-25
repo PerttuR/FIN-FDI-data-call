@@ -370,15 +370,17 @@ akt1_all <- akt1_all |> mutate(
     .default = as.character(METIER)),
   # lines don't have mesh sizes
   MESH_SIZE_RANGE = case_when(
-    METIER5 == "LHP_FIF" ~ "NA",
-    METIER5 == "LLD_ANA" ~ "NA",
-    METIER5 == "LLS_FWS" ~ "NA",
-    METIER5 == "MIS_MIS" ~ "NA",
+    METIER5 == "LHP_FIF" ~ "NK",
+    METIER5 == "LLD_ANA" ~ "NK",
+    METIER5 == "LLS_FWS" ~ "NK",
+    METIER5 == "MIS_MIS" ~ "NK",
     METIER5 == "OTM_FWS" ~ "NK",
     METIER5 == "PTM_FWS" ~ "NK",
     METIER == "GNS_ANA_16-31_0_0" ~ "90D110",
+    METIER == "GNS_ANA_32-89_0_0" ~ "110D157",
     .default =  as.character(MESH_SIZE_RANGE)),
-  TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE))
+  TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE),
+  GEAR_TYPE = if_else(GEAR_TYPE == "MIS", "NK", GEAR_TYPE))
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
