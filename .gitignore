@@ -10,6 +10,10 @@ mongo_params.R
 !FDI-vertailu.docx
 # Excell files
 *.xlsx
+#Powerpoint
+*.pptx
+#PNG
+*.png
 !ISSUES reported by EWG.xlsx
 !Mismatches for checks.xlsx
 !Table_A_metier and gear comparison.csv
@@ -46,3 +50,5 @@ rsconnect/
 orig/
 import_sas_metier_2013-15.R
 fecR-LOCAL/*
+Fleet_summary_pptx.pptx
+trips_by_length.png
