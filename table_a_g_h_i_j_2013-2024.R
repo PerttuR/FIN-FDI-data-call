@@ -384,6 +384,31 @@ akt1_all <- akt1_all |> mutate(
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
+# clean against capacity table
+kap <- kapasiteetti %>% filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) %>% select(
+  YEAR = VUOSI,
+  ULKOINENTUNNUS, 
+  RAKENNUSPVM,
+  PAAKONETEHO,
+  VETOISUUS,
+  VESSEL_LENGTH = VLENGTH_AER_NEW) %>% distinct()
+
+# removing duplicates and checking there are none left
+dup<-kap %>% 
+  group_by(YEAR, ULKOINENTUNNUS) %>% 
+  filter(n()>1)
+
+kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) %>% 
+  group_by(YEAR, ULKOINENTUNNUS) %>% 
+  summarise(VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), 
+            VETOISUUS=first(VETOISUUS),.groups = "drop")
+
+# join the capacity to the j table
+akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> left_join(kap2, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
+
+
+
+
 # lookup METIER classs
 # lookup <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |> 
 #   mutate(METIER5=str_sub(METIER, 1,7)) |>
@@ -598,10 +623,11 @@ saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
 #-------------------------------------------------------------------------------
 
 # Select the variables not needed and needed in G table
-g <- akt1_all %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
+g <- akt1_all2 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
                      TOTSEADAYS = MERIPAIVAT,
                      TOTFISHDAYS = KALASTUSPAIVAT,
-                     HRSEA = KALASTUSAIKAHH) %>% mutate(
+                     HRSEA = KALASTUSAIKAHH) %>% 
+                    mutate(
                        TOTKWDAYSATSEA = TOTSEADAYS*PAAKONETEHO,
                        TOTGTDAYSATSEA = TOTSEADAYS*VETOISUUS,
                        TOTKWFISHDAYS = TOTFISHDAYS*PAAKONETEHO,
@@ -824,6 +850,7 @@ kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, KOKPITUUS, VESSEL_LENGTH, AGE) %>%
   group_by(YEAR, ULKOINENTUNNUS) %>% 
   summarise(KOKPITUUS = first(KOKPITUUS), VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), VETOISUUS=first(VETOISUUS) ,AGE = first(AGE),.groups = "drop")
 
+kap2 |> flextable()
 
 # join the capacity to the j table
 j2 <- left_join(kap2, j_all_trip, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
