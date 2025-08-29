@@ -146,6 +146,8 @@ akt1 <- aktiviteetti_all %>%
          PAAKONETEHO,
          VETOISUUS,
          KALASTUSAIKAHH,
+         LAHTOPVM, LAHTOAIKA,   # need to create timestamp and difference in hours
+         PALUUPVM, PALUUAIKA,
          FT_REF, #trip id
          MONTH = kalastus_kk,
          VESSEL_LENGTH = VLENGTH_AER_NEW,
@@ -257,13 +259,28 @@ akt1 <- aktiviteetti_all %>%
     SPECON_TECH = "NA",
     DEEP = "NA",
     RECTANGLE_TYPE = "05*1",
-    C_SQUARE = "NA") %>% 
-  select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS) %>% mutate(
+    C_SQUARE = "NA",
+    LAHTO =as.POSIXct(paste(LAHTOPVM, LAHTOAIKA), format="%Y-%m-%d %H:%M"),
+    PALUU =as.POSIXct(paste(PALUUPVM, PALUUAIKA), format="%Y-%m-%d %H:%M"),
+    HRSEA = as.integer(difftime(PALUU, LAHTO, unit = 'hour')),
+    HRSEA = if_else(HRSEA > 0 & HRSEA <= 200, HRSEA, NA)) %>% 
+  select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS, -LAHTOPVM, -LAHTOAIKA, -PALUUPVM, -PALUUAIKA, -LAHTO, -PALUU
+         ) %>% mutate(
     SUB_REGION = case_when(
       SUB_REGION == "27.3.d.28" ~ "27.3.d.28.2", #Vaihtoehtoinen 28.1 ja 28.2 ja jälkimmäinen pääallas, jolla Suomi kalastaa
       TRUE ~ SUB_REGION
     )) #tehdään tarkaste myöhemmin!
 
+# akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |> 
+#   mutate(TAG = case_when(
+#     HRSEA < 0 ~ "NEGATIVE",
+#     HRSEA == 0 ~ "ZERO",
+#     HRSEA > 0 & HRSEA <= 200 ~ "POSITIVE <= 200",
+#     HRSEA > 200 ~ "TOO BIG > 200"
+#   )) |>
+#   count(FISHING_TECH, TAG) |> flextable() |> autofit()
+
+ggplot(akt1, aes(x=HRSEA)) + geom_histogram() + facet_wrap(~FISHING_TECH) + ggtitle("DCPROD HRSEA by fishing tech")
 
 # Create variables LATITUDE and LONGITUDE:
 # .. define coordinates 
@@ -321,7 +338,7 @@ akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
 # load sas data
 sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
-  mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA") |> 
+  mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
   select(YEAR, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, 
          VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
          TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, SVT_KG_SPR, SVT_KG_COD, 
@@ -336,7 +353,7 @@ sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
          SVT_VALUE_ELE, SVT_VALUE_FIN, RECTANGLE, COUNTRY, QUARTER, 
          MESH_SIZE_RANGE=CODE, FROM, TO, METIER_7, SUPRA_REGION, SUB_REGION=area_code_full, 
          EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, 
-         C_SQUARE, LATITUDE, LONGITUDE, metier6_orig, METIER4, METIER5)
+         C_SQUARE, HRSEA, LATITUDE, LONGITUDE, metier6_orig, METIER4, METIER5)
 
 akt1_all <- rbind(akt1, sas)
 
@@ -383,6 +400,31 @@ akt1_all <- akt1_all |> mutate(
   GEAR_TYPE = if_else(GEAR_TYPE == "MIS", "NK", GEAR_TYPE))
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
+
+# clean against capacity table
+kap <- kapasiteetti %>% filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) %>% select(
+  YEAR = VUOSI,
+  ULKOINENTUNNUS, 
+  RAKENNUSPVM,
+  PAAKONETEHO,
+  VETOISUUS,
+  VESSEL_LENGTH = VLENGTH_AER_NEW) %>% distinct()
+
+# removing duplicates and checking there are none left
+dup<-kap %>% 
+  group_by(YEAR, ULKOINENTUNNUS) %>% 
+  filter(n()>1)
+
+kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) %>% 
+  group_by(YEAR, ULKOINENTUNNUS) %>% 
+  summarise(VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), 
+            VETOISUUS=first(VETOISUUS),.groups = "drop")
+
+# join the capacity to the j table
+akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> left_join(kap2, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
+
+
+
 
 # lookup METIER classs
 # lookup <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |> 
@@ -598,10 +640,11 @@ saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
 #-------------------------------------------------------------------------------
 
 # Select the variables not needed and needed in G table
-g <- akt1_all %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
+g <- akt1_all2 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, 
                      TOTSEADAYS = MERIPAIVAT,
                      TOTFISHDAYS = KALASTUSPAIVAT,
-                     HRSEA = KALASTUSAIKAHH) %>% mutate(
+                     HRSEA) %>% 
+                    mutate(
                        TOTKWDAYSATSEA = TOTSEADAYS*PAAKONETEHO,
                        TOTGTDAYSATSEA = TOTSEADAYS*VETOISUUS,
                        TOTKWFISHDAYS = TOTFISHDAYS*PAAKONETEHO,
@@ -824,6 +867,7 @@ kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, KOKPITUUS, VESSEL_LENGTH, AGE) %>%
   group_by(YEAR, ULKOINENTUNNUS) %>% 
   summarise(KOKPITUUS = first(KOKPITUUS), VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), VETOISUUS=first(VETOISUUS) ,AGE = first(AGE),.groups = "drop")
 
+kap2 |> flextable()
 
 # join the capacity to the j table
 j2 <- left_join(kap2, j_all_trip, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))

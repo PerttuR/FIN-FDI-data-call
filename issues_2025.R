@@ -6,7 +6,7 @@ library(tidyverse)
 library(flextable)
 library(janitor)
 library(officer)
-library(openxlsx)
+library(readxl)
 
 # G_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/G_table_2013_2022_SAS.csv")
 # I_table <- read.csv("C:/Users/03269737/OneDrive - Valtion/Projects/FIN-FDI-data-call/orig/I_table_2013_2022_SAS.csv")
@@ -20,51 +20,39 @@ path_orig <- paste0(getwd(), .Platform$file.sep, "orig/")
 
 #### COPY SCRIPT FROM HERE ####
 
-G_table.13 <- read.csv(paste0(path_orig,"G_table_2013_2022_SAS.csv")) |> filter(YEAR==2013)
-I_table.13 <- read.csv(paste0(path_orig,"I_table_2013_2022_SAS.csv")) |> filter(YEAR==2013)
+G_table.13 <- read_excel("results/2025/FIN_TABLE_G_EFFORT.xlsx") |> filter(YEAR==2013)
+I_table.13 <- read_excel("results/2025/FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx") |> filter(YEAR==2013)
 
-G_table.13 <- G_table.13 |> mutate(METIER_7 = NA)
-G_table.13 <- G_table.13 |> relocate(METIER_7, .after = METIER)
-
-I_table.13 <- I_table.13 |> mutate(METIER_7 = NA,
-                                   C_SQUARE = NA, 
-                                   RECTANGLE_TYPE = "05*1")
-
-source("spatial.R")
-
-midpoints <- latlon(I_table.13$RECTANGLE, midpoint=TRUE)
-
-I_table.13 <- tibble::rowid_to_column(I_table.13, "ID")
-midpoints <- tibble::rowid_to_column(midpoints, "ID")
-
-I_table.13 <- left_join(I_table.13, midpoints, copy = TRUE)
-
-I_table.13 <- I_table.13 |> rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) |> 
-  select(-ID, -RECTANGLE)
-
-
-I_table.13 <- I_table.13 |> relocate(METIER_7, .after = METIER) |>
-      relocate(RECTANGLE_TYPE, .after = DEEP) |>
-      relocate(LONGITUDE, .after = RECTANGLE_TYPE) |>
-      relocate(LATITUDE, .after = LONGITUDE) |>
-      relocate(C_SQUARE, .after = LATITUDE) 
-
-
-########################################
-
-
-
-
-
-
-
-
+# G_table.13 <- G_table.13 |> mutate(METIER_7 = NA)
+# G_table.13 <- G_table.13 |> relocate(METIER_7, .after = METIER)
+# 
+# I_table.13 <- I_table.13 |> mutate(METIER_7 = NA,
+#                                    C_SQUARE = NA, 
+#                                    RECTANGLE_TYPE = "05*1")
+# 
+# source("spatial.R")
+# 
+# midpoints <- latlon(I_table.13$RECTANGLE, midpoint=TRUE)
+# 
+# I_table.13 <- tibble::rowid_to_column(I_table.13, "ID")
+# midpoints <- tibble::rowid_to_column(midpoints, "ID")
+# 
+# I_table.13 <- left_join(I_table.13, midpoints, copy = TRUE)
+# 
+# I_table.13 <- I_table.13 |> rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) |> 
+#   select(-ID, -RECTANGLE)
+# 
+# 
+# I_table.13 <- I_table.13 |> relocate(METIER_7, .after = METIER) |>
+#       relocate(RECTANGLE_TYPE, .after = DEEP) |>
+#       relocate(LONGITUDE, .after = RECTANGLE_TYPE) |>
+#       relocate(LATITUDE, .after = LONGITUDE) |>
+#       relocate(C_SQUARE, .after = LATITUDE) 
 
 ## check metiers where I bigger G ####
 
-sum.G <- G_table |> filter(YEAR == 2013) |> 
-  group_by(METIER) |> 
-  summarise(TOTFISHDAYS.G = sum(TOTFISHDAYS, na.rm=TRUE)) |> 
+sum.G <- G_table.13 |>   group_by(METIER) |> 
+  summarise(TOTFISHDAYS.G = sum(as.numeric(TOTFISHDAYS), na.rm=TRUE)) |> 
   adorn_totals("row")
 
 sum.G |>
@@ -73,7 +61,7 @@ sum.G |>
   hline(i=dim(sum.G)[1]-1, border=fp_border(width=1.5))
   
 
-sum.I <- I_table |> filter(YEAR == 2013) |> 
+sum.I <- I_table.13 |>
   group_by(METIER) |> 
   summarise(TOTFISHDAYS.I = sum(TOTFISHDAYS, na.rm=TRUE)) |> 
   adorn_totals("row")
@@ -122,6 +110,7 @@ write.xlsx(comp.IG, file="orig/25.issue.1.xlsx")
 
 comp.IG |> filter(DIFF > 0) |> flextable()
 
+
 # ISSUE 2 ####
 # library(tidyverse)
 # library(flextable)
@@ -151,23 +140,17 @@ comp.IG |> filter(DIFF > 0) |> flextable()
 # 
 # reported
 
-g2 |> filter(YEAR %in% seq(2016,2024)) |> 
-  select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
-         TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
-  filter((TOTSEADAYS == "0" | TOTKWDAYSATSEA == "0" | TOTGTDAYSATSEA == "0" |
-           TOTFISHDAYS == "0" | TOTKWFISHDAYS == "0" | TOTGTFISHDAYS == "0") & 
-          (HRSEA != "0" | GTHRSEA != "0" | KWHRSEA != "0")) |> View()
+G_table <- read_excel("results/2025/FIN_TABLE_G_EFFORT.xlsx")
 
-# 114 entries
 
-g3 |> filter(YEAR %in% seq(2016,2024)) |> 
+G_table |> filter(YEAR %in% seq(2016,2024)) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
          TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA) |> 
   filter(TOTSEADAYS != "0" | TOTKWDAYSATSEA != "0" | TOTGTDAYSATSEA != "0" |
            TOTFISHDAYS != "0" | TOTKWFISHDAYS != "0" | TOTGTFISHDAYS != "0") |> View()
 
 
-g3 |> filter(YEAR %in% seq(2016,2024)) |> 
+G_table  |> filter(YEAR %in% seq(2016,2024)) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
          TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, CONFIDENTIAL) |> View()
 
