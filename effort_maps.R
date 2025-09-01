@@ -52,8 +52,7 @@ test2 <- test |> group_by(ICESNAME) |>
   summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE))
 
 
-
-# Plot
+# Plot effort by ices ####
 ggplot() +
   geom_sf(data = test2, aes(fill = EFFORT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
@@ -68,23 +67,18 @@ ggplot() +
 
 
 # combine all years of data
-test2 <- test |> group_by(ICESNAME) |>
-  summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE))
+test3 <- test |> group_by(ICESNAME, FISHING_TECH) |>
+  summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE)) |>
+  filter(!is.na(FISHING_TECH))
 
-# Define countries of interest
-countries <- c("Finland", "Sweden", "Norway", "Denmark", "Russia", "Germany",
-               "Estonia", "Latvia", "Lithuania", "Belarus", "Poland")
-
-# Get country borders as sf object
-world_sf <- ne_countries(scale = "medium", returnclass = "sf") %>%
-  filter(admin %in% countries)
 
 # Plot effort by ices and fishing_ tech ####
 ggplot() +
-  geom_sf(data = test2, aes(fill = EFFORT)) +
+  geom_sf(data = test3, aes(fill = EFFORT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = test2, aes(label = ICESNAME), size = 2, color = "black") +
+  geom_sf_text(data = test3, aes(label = ICESNAME), size = 2, color = "black") +
   scale_fill_viridis_c(na.value = "transparent", direction=-1) +
+  facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
   ggtitle("Mean fishing effort 2013-2024") +
