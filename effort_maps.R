@@ -57,7 +57,7 @@ ggplot() +
   geom_sf(data = test2, aes(fill = EFFORT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
   geom_sf_text(data = test2, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(na.value = "transparent", direction=-1) +
+  scale_fill_viridis_c(name = "Fishing Effort", na.value = "transparent", direction=-1, option = "mako") +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
   ggtitle("Mean fishing effort 2013-2024") +
@@ -77,7 +77,7 @@ ggplot() +
   geom_sf(data = test3, aes(fill = EFFORT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
   geom_sf_text(data = test3, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(na.value = "transparent", direction=-1) +
+  scale_fill_viridis_c(name = "Fishing Effort", na.value = "transparent", direction=-1, option = "mako") +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
