@@ -16,10 +16,10 @@ world_sf <- ne_countries(scale = "medium", returnclass = "sf") %>%
   filter(admin %in% countries)
 
 # get ices gpkg ####
-st_layers("../VMS/data/ices_grid.gpkg")
+st_layers("maps/ices_grid.gpkg")
 
 # ices rectangles ####
-ices <- read_sf("../VMS/data/ices_grid.gpkg", 
+ices <- read_sf("maps/ices_grid.gpkg", 
                      layer="ices_rectangles_eco")
 
 ices <- ices |> select(-ID)
