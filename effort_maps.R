@@ -57,13 +57,15 @@ world_sf <- ne_countries(scale = "medium", returnclass = "sf") %>%
 # Plot
 ggplot() +
   geom_sf(data = test2, aes(fill = EFFORT)) +
-  geom_sf(data = world_sf, fill = "grey", color = "black", size = 1) +
+  geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
+  geom_sf_text(data = test2, aes(label = ICESNAME), size = 2, color = "black") +
   scale_fill_viridis_c(na.value = "transparent", direction=-1) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean fishing effort 2013-2024") + 
+  ggtitle("Mean fishing effort 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
-      panel.grid.major = element_line(color = NA))
+        panel.grid.major = element_line(color = NA))
+
 
 
 
