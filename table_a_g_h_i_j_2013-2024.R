@@ -35,6 +35,7 @@ library(RPostgres)
 library(tidyr)
 library(lubridate)
 library(flextable)
+library(tidyverse)
 
 #-------------------------------------------------------------------------------
 #                   0. set working directories to match folder paths                      
