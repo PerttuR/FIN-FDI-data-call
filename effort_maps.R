@@ -87,4 +87,45 @@ ggplot() +
         panel.spacing = unit(1.5, "lines"))
 
 
-# 
+# get table H ####
+
+TABLE_H <-  read_excel("results/2025/FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx")
+
+# testing
+test <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_H)
+
+# combine all years of data
+test2 <- test |> group_by(ICESNAME) |>
+  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE))
+
+# Plot weight by ices ####
+ggplot() +
+  geom_sf(data = test2, aes(fill = WEIGHT)) +
+  geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
+  geom_sf_text(data = test2, aes(label = ICESNAME), size = 2, color = "black") +
+  scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
+  coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Mean landing weights 2013-2024") +
+  theme(panel.background = element_rect(fill = "lightblue"),
+        panel.grid.major = element_line(color = NA))
+
+# combine all years of data
+test3 <- test |> group_by(ICESNAME, FISHING_TECH) |>
+  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE)) |>
+  filter(!is.na(FISHING_TECH))
+
+
+# Plot effort by ices and fishing_ tech ####
+ggplot() +
+  geom_sf(data = test3, aes(fill = WEIGHT)) +
+  geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
+  geom_sf_text(data = test3, aes(label = ICESNAME), size = 2, color = "black") +
+  scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
+  facet_wrap(~FISHING_TECH) +
+  coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Mean landing weights 2013-2024") +
+  theme(panel.background = element_rect(fill = "lightblue"),
+        panel.grid.major = element_line(color = NA),
+        panel.spacing = unit(1.5, "lines"))
