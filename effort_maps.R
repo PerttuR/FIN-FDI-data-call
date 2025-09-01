@@ -83,7 +83,8 @@ ggplot() +
   xlab("Longitude") + ylab("Latitude") + 
   ggtitle("Mean fishing effort 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
-        panel.grid.major = element_line(color = NA))
+        panel.grid.major = element_line(color = NA),
+        panel.spacing = unit(1.5, "lines"))
 
 
 # 
