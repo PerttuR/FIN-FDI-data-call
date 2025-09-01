@@ -1,0 +1,51 @@
+2025 meeting questions:
+
+METIERS:
+
+1)Tried to qreate metier6 from met 5 and met4
+
+-> Did not succeed due to miscomparison of metier6 codelist formed from valid met5?(MESH size) and met4(GEAR) 
+
+example (No MESH SIZE available in certain GMS and FYK Metier6):
+
+METIER5 == "GNS_FWS" ~ "GNS_FWS_>0_0_0", # not accepted
+METIER5 == "FPO_FWS" ~ "FPO_FWS_>0_0_0", # not accepted
+METIER5 == "FYK_ANA" ~ "FYK_ANA_>0_0_0", # not accepted
+METIER5 == "FYK_FWS" ~ "FYK_FWS_>0_0_0", # not accepted
+METIER5 == "FYK_SPF" ~ "FYK_SPF_>0_0_0", # not accepted
+
+and also Fresh water trawling anf SSC
+
+METIER5 == "SSC_FWS" ~ "SSC_FWS_>0_0_0", # not accepted
+METIER5 == "OTM_FWS" ~ "OTM_FWS_>0_0_0", # not accepted
+METIER5 == "PTM_FWS" ~ "PTM_FWS_>0_0_0", # not accepted
+
+
+2)   
+-> Limits on MESH_SIZE range codes differ between MESH_SIZE range and Metier6_MESH_SIZE labels.
+example:
+
+based on MESH_SIZE code, but not accepted
+    METIER == "OTB_DEF_>=110_0_0" ~ "OTB_DEF_105-115_1_120",    # not accepted
+    METIER == "OTB_DEF_105-109_0_0" ~ "OTB_DEF_105-115_1_120",  # not accepted
+    METIER == "OTM_DEF_>=110_0_0" ~ "OTM_DEF_105-115_1_120",    # not accepted
+    METIER == "GNS_ANA_16-31_0_0" ~ "GNS_ANA_90-109_0_0", # too small for salmon
+    METIER == "GNS_ANA_32-89_0_0" ~ "GNS_ANA_110-156_0_0", # too small for salmon
+
+3)
+Internal thing: SILMOKOKO and SOLMUVÄLI = MESH_SIZE and HALF_MESH_SIZE differences are hard to spot.
+Differences might occurr in reported data...
+
+HOURS at SEA
+
+Question to FDI:
+-> What was the ISSUE 2 in detail?
+
+How it should be defined?
+
+Previously remits of hour above whole days or Hauls durations? (decided as wrong 2025 and fixed to:)
+
+Now defined as hours between trip departure and arrival timestams (LIMIT 200 hours)
+If nor available -> NK
+
+
