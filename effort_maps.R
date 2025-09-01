@@ -66,7 +66,7 @@ ggplot() +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
 
-
+ggsave("results/2025/effort.png", width = 20, height = 20, units = "cm", dpi=300)
 
 # combine all years of data
 effort.tech <- effort |> group_by(ICESNAME, FISHING_TECH) |>
@@ -88,6 +88,7 @@ ggplot() +
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
 
+ggsave("results/2025/effort.tech.png", width = 40, height = 20, units = "cm", dpi=300)
 
 # get table H ####
 
@@ -112,6 +113,8 @@ ggplot() +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
 
+ggsave("results/2025/weight.png", width = 20, height = 20, units = "cm", dpi=300)
+
 # combine all years of data
 weight.tech <- weight |> group_by(ICESNAME, FISHING_TECH) |>
   summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE)) |>
@@ -132,3 +135,4 @@ ggplot() +
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
 
+ggsave("results/2025/weight.tech.png", width = 40, height = 20, units = "cm", dpi=300)
