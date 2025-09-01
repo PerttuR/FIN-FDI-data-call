@@ -1,3 +1,5 @@
+rm(list=ls())
+
 library(tidyverse)
 library(sf)
 library(readxl)
@@ -24,8 +26,8 @@ ices <- read_sf("maps/ices_grid.gpkg",
 
 ices <- ices |> select(-ID)
 
-ggplot(ices) +
-   geom_sf(aes(fill = ICESNAME))
+# ggplot(ices) +
+#   geom_sf(aes(fill = ICESNAME))
 
 # get table I ####
 
@@ -45,18 +47,18 @@ ices <- ices %>% rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) %>% select(-ID)
 
 
 # testing
-test <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_I)
+effort <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_I)
 
 # combine all years of data
-test2 <- test |> group_by(ICESNAME) |>
+effort2 <- effort |> group_by(ICESNAME) |>
   summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE))
 
 
 # Plot effort by ices ####
 ggplot() +
-  geom_sf(data = test2, aes(fill = EFFORT)) +
+  geom_sf(data = effort2, aes(fill = EFFORT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = test2, aes(label = ICESNAME), size = 2, color = "black") +
+  geom_sf_text(data = effort2, aes(label = ICESNAME), size = 2, color = "black") +
   scale_fill_viridis_c(name = "Fishing Effort", na.value = "transparent", direction=-1, option = "mako") +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
@@ -67,16 +69,16 @@ ggplot() +
 
 
 # combine all years of data
-test3 <- test |> group_by(ICESNAME, FISHING_TECH) |>
+effort.tech <- effort |> group_by(ICESNAME, FISHING_TECH) |>
   summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
 
 # Plot effort by ices and fishing_ tech ####
 ggplot() +
-  geom_sf(data = test3, aes(fill = EFFORT)) +
+  geom_sf(data = effort.tech, aes(fill = EFFORT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = test3, aes(label = ICESNAME), size = 2, color = "black") +
+  geom_sf_text(data = effort.tech, aes(label = ICESNAME), size = 2, color = "black") +
   scale_fill_viridis_c(name = "Fishing Effort", na.value = "transparent", direction=-1, option = "mako") +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
@@ -92,17 +94,17 @@ ggplot() +
 TABLE_H <-  read_excel("results/2025/FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx")
 
 # testing
-test <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_H)
+weight <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_H)
 
 # combine all years of data
-test2 <- test |> group_by(ICESNAME) |>
+weight2 <- weight |> group_by(ICESNAME) |>
   summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE))
 
 # Plot weight by ices ####
 ggplot() +
-  geom_sf(data = test2, aes(fill = WEIGHT)) +
+  geom_sf(data = weight2, aes(fill = WEIGHT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = test2, aes(label = ICESNAME), size = 2, color = "black") +
+  geom_sf_text(data = weight2, aes(label = ICESNAME), size = 2, color = "black") +
   scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
@@ -111,16 +113,16 @@ ggplot() +
         panel.grid.major = element_line(color = NA))
 
 # combine all years of data
-test3 <- test |> group_by(ICESNAME, FISHING_TECH) |>
+weight.tech <- weight |> group_by(ICESNAME, FISHING_TECH) |>
   summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
 
 # Plot effort by ices and fishing_ tech ####
 ggplot() +
-  geom_sf(data = test3, aes(fill = WEIGHT)) +
+  geom_sf(data = weight.tech, aes(fill = WEIGHT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = test3, aes(label = ICESNAME), size = 2, color = "black") +
+  geom_sf_text(data = weight.tech, aes(label = ICESNAME), size = 2, color = "black") +
   scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
@@ -129,3 +131,4 @@ ggplot() +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
+
