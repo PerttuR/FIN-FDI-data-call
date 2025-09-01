@@ -424,7 +424,12 @@ kap2 <- kap %>% arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) %>%
 # join the capacity to the j table
 akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> left_join(kap2, by = c("YEAR", "ULKOINENTUNNUS", "VESSEL_LENGTH"))
 
+# Aggregating all passive gears to PG
 
+akt1_all2 <- akt1_all2 %>% mutate(FISHING_TECH = case_when(
+  FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
+  TRUE ~ FISHING_TECH
+))
 
 
 # lookup METIER classs
@@ -440,7 +445,7 @@ akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> left_join(kap2, by
 
 # add new 2013-15 table here
 
-a <- akt1_all %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
+a <- akt1_all2 %>% mutate(NEP_SUB_REGION = "NA") %>% select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
 # Pivot to longer format
 a2 <- a %>%
@@ -735,7 +740,7 @@ write.xlsx(table_G,paste0(path_out,.Platform$file.sep,"FIN_TABLE_G_EFFORT.xlsx")
 
 # some TOTAL in SPECIES need to be removed
 
-h <- akt1_all %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF) #not needed in table H
+h <- akt1_all2 %>% select(-KALASTUSPAIVAT, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF) #not needed in table H
 
 # Pivot to longer format
 h2 <- h %>%
@@ -800,7 +805,7 @@ openxlsx::write.xlsx(table_H, paste0(path_out,.Platform$file.sep,"FIN_TABLE_H_LA
 #-------------------------------------------------------------------------------
 
 # remove variables not needed in table I (relating to catch)
-i <- akt1_all %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
+i <- akt1_all2 %>% select(-contains("SVT"), -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
 # Sum the total of fishing days and calculate the number of distinct vessels in each strata
 i2 <- i %>% group_by(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE) %>% summarise(
@@ -828,21 +833,21 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 #j_sas <- readRDS(file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 # Select variables needed for J table from akt1 (DCPROD active vessels 2016 onwards):
-j <- akt1_all %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH, -FROM, -TO, -metier6_orig, -METIER5)
+j <- akt1_all2 %>% select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH, -FROM, -TO, -metier6_orig, -METIER5)
 
 #j_all <- rbind(j_sas, j)
 
-#Aggregating all passive gears to PG
+# Aggregating all passive gears to PG
 
-j_all <- j %>% mutate(FISHING_TECH = case_when(
-  FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
-  TRUE ~ FISHING_TECH
-))
+# j_all <- j %>% mutate(FISHING_TECH = case_when(
+#   FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
+#   TRUE ~ FISHING_TECH
+# ))
 
 
 
 #try to aggregate to trip level inside a subregion ####
-j_all_trip <- j_all %>% group_by(COUNTRY, YEAR,VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) %>% summarise(KALASTUSPAIVAT=max(KALASTUSPAIVAT), MERIPAIVAT=max(KALASTUSPAIVAT))
+j_all_trip <- j %>% group_by(COUNTRY, YEAR,VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) %>% summarise(KALASTUSPAIVAT=max(KALASTUSPAIVAT), MERIPAIVAT=max(KALASTUSPAIVAT))
 
 # Select variables needed for J table from metier_sas (2013-2015 active vessels 2013-2015):
 
