@@ -17,8 +17,8 @@ Fleet_technique <- table_J |> group_by(YEAR, FISHING_TECH) |> summarise(TOTTRIPS
 Fleet_technique2 <- pivot_wider(Fleet_technique, names_from = FISHING_TECH , values_from = TOTTRIPS)
 
 table_J2 <- table_J |>filter(FISHING_TECH != "INACTIVE")
-Fleet_segments <- table_J2 |> group_by(YEAR, VESSEL_LENGTH) |> summarise(TOTTRIPS = sum(TOTTRIPS))
-Fleet_segments2 <- pivot_wider(Fleet_segments, names_from = VESSEL_LENGTH , values_from = TOTTRIPS)
+Fleet_segments <- table_J2 |> group_by(YEAR, VESSEL_LENGTH) |> summarise(ACTIVE_VESSELS = sum(ACTIVE))
+Fleet_segments2 <- pivot_wider(Fleet_segments, names_from = VESSEL_LENGTH , values_from = ACTIVE_VESSELS)
 
 
 # SUMMARY PPT####
@@ -80,7 +80,7 @@ ft4 <- flextable(Fleet_segments2) |> autofit() |>
   colformat_num(j=4, big.mark = "")|>
   colformat_num(j=5, big.mark = "")|>
   colformat_num(j=6, big.mark = "")|> 
-  set_caption(as_paragraph(as_chunk("Finnish marine fishing Fleet activity (trips) by Vessel range reported to FDI", props = fp_text_default(font.family = "Cambria"))), word_stylename = "Table Caption")|>
+  set_caption(as_paragraph(as_chunk("Finnish marine fishing Fleet ACTIVE_VESSELS by Vessel range reported to FDI", props = fp_text_default(font.family = "Cambria"))), word_stylename = "Table Caption")|>
   line_spacing(space = 1)
 
 
