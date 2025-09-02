@@ -107,8 +107,11 @@ weight <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_H)
 
 # combine all years of data
 weight2 <- weight |> group_by(ICESNAME) |>
+  mutate(TOTVALLANDG = case_when(
+    TOTVALLANDG == "NK" ~ NA,
+    .default = as.numeric(TOTVALLANDG))) |> 
   summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE),
-            VALUE = if_else(TOTVALLANDG == "NK", NA, mean(as.numeric(TOTVALLANDG), na.rm=TRUE)))
+            VALUE = mean(TOTVALLANDG, na.rm=TRUE))
 
 # Plot weight by ices ####
 ggplot() +
@@ -140,8 +143,11 @@ ggsave("results/2025/value.png", width = 20, height = 20, units = "cm", dpi=300)
 
 # combine all years of data
 weight.tech <- weight |> group_by(ICESNAME, FISHING_TECH) |>
+  mutate(TOTVALLANDG = case_when(
+    TOTVALLANDG == "NK" ~ NA,
+    .default = as.numeric(TOTVALLANDG))) |> 
   summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE),
-            VALUE = mean(TOTWGHTLANDG, na.rm=TRUE)) |>
+            VALUE = mean(TOTVALLANDG, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
 
