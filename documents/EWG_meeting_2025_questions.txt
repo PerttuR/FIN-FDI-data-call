@@ -36,7 +36,7 @@ based on MESH_SIZE code, but not accepted
 Internal thing: SILMOKOKO and SOLMUVÄLI = MESH_SIZE and HALF_MESH_SIZE differences are hard to spot.
 Differences might occurr in reported data...
 
-HOURS at SEA
+HOURS at SEA:
 
 Question to FDI:
 -> What was the ISSUE 2 in detail?
@@ -48,4 +48,6 @@ Previously remits of hour above whole days or Hauls durations? (decided as wrong
 Now defined as hours between trip departure and arrival timestams (LIMIT 200 hours)
 If nor available -> NK
 
+FLEET SEGMENTATION in CAPASITY:
 
+- Old Fleet length Ranges in time series 2013-2023 in several Countries data. 
