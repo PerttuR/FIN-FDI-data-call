@@ -25,7 +25,7 @@ by <- capacity |> filter(`Vessel Length Category` != "NK") |>
   group_by(Country, Year, `Vessel Length Category`) |> 
   summarise(sum.vessels = sum(`Total vessels`, na.rm=TRUE)) |>
   pivot_wider(names_from = `Vessel Length Category`, values_from = sum.vessels) |>
-  ungroup() |> group_split(Year)
+  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
 
 
 for (i in 1:length(by)){
@@ -52,7 +52,7 @@ by <- capacity |> filter(`Vessel Length Category` != "NK") |>
   group_by(Country, Year, `Vessel Length Category`) |> 
   summarise(mean.age = mean(`Average age`, na.rm=TRUE)) |>
   pivot_wider(names_from = `Vessel Length Category`, values_from = mean.age) |>
-  ungroup() |> group_split(Year)
+  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
 
 
 for (i in 1:length(by)){
