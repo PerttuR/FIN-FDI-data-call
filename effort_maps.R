@@ -1,11 +1,19 @@
 rm(list=ls())
 
+# install rnaturalearthhires
+# install.packages("remotes")
+# install.packages("devtools")
+# devtools::install_github("ropensci/rnaturalearthhires")
+
+
+# load libraries ####
 library(tidyverse)
 library(sf)
 library(readxl)
 library(ggplot2)
 library(sf)
 library(rnaturalearth)
+# library(rnaturalearthhires)
 library(rnaturalearthdata)
 library(dplyr)
 
@@ -99,7 +107,11 @@ weight <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_H)
 
 # combine all years of data
 weight2 <- weight |> group_by(ICESNAME) |>
-  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE))
+  mutate(TOTVALLANDG = case_when(
+    TOTVALLANDG == "NK" ~ NA,
+    .default = as.numeric(TOTVALLANDG))) |> 
+  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE),
+            VALUE = mean(TOTVALLANDG, na.rm=TRUE))
 
 # Plot weight by ices ####
 ggplot() +
@@ -115,13 +127,31 @@ ggplot() +
 
 ggsave("results/2025/weight.png", width = 20, height = 20, units = "cm", dpi=300)
 
+# Plot value by ices ####
+ggplot() +
+  geom_sf(data = weight2, aes(fill = VALUE)) +
+  geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
+  geom_sf_text(data = weight2, aes(label = ICESNAME), size = 2, color = "black") +
+  scale_fill_viridis_c(name = "Total value", na.value = "transparent", direction=-1, option = "mako") +
+  coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Mean landing values 2013-2024") +
+  theme(panel.background = element_rect(fill = "lightblue"),
+        panel.grid.major = element_line(color = NA))
+
+ggsave("results/2025/value.png", width = 20, height = 20, units = "cm", dpi=300)
+
 # combine all years of data
 weight.tech <- weight |> group_by(ICESNAME, FISHING_TECH) |>
-  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE)) |>
+  mutate(TOTVALLANDG = case_when(
+    TOTVALLANDG == "NK" ~ NA,
+    .default = as.numeric(TOTVALLANDG))) |> 
+  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE),
+            VALUE = mean(TOTVALLANDG, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
 
-# Plot effort by ices and fishing_ tech ####
+# Plot weight by ices and fishing_ tech ####
 ggplot() +
   geom_sf(data = weight.tech, aes(fill = WEIGHT)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
@@ -136,3 +166,19 @@ ggplot() +
         panel.spacing = unit(1.5, "lines"))
 
 ggsave("results/2025/weight.tech.png", width = 40, height = 20, units = "cm", dpi=300)
+
+# Plot value by ices and fishing_ tech ####
+ggplot() +
+  geom_sf(data = weight.tech, aes(fill = VALUE)) +
+  geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
+  geom_sf_text(data = weight.tech, aes(label = ICESNAME), size = 2, color = "black") +
+  scale_fill_viridis_c(name = "Total value", na.value = "transparent", direction=-1, option = "mako") +
+  facet_wrap(~FISHING_TECH) +
+  coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
+  xlab("Longitude") + ylab("Latitude") + 
+  ggtitle("Mean landing value 2013-2024") +
+  theme(panel.background = element_rect(fill = "lightblue"),
+        panel.grid.major = element_line(color = NA),
+        panel.spacing = unit(1.5, "lines"))
+
+ggsave("results/2025/value.tech.png", width = 40, height = 20, units = "cm", dpi=300)
