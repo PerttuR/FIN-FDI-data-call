@@ -7,6 +7,8 @@ library(flextable)
 library(captioner)
 library(officer)
 
+doc <- read_docx()
+
 table_nums <- captioner(prefix = "Table")
 
 capacity <- read_csv("orig/FDI Capacity by country.csv")
@@ -42,7 +44,13 @@ ftab <- by[[i]] |> select(-Year) |>
 print(ftab)   
 # print(ftab, preview = "docx")   
 
+doc <- body_add_flextable(doc, value = ftab)
+doc <- body_add_par(doc, value = "")
+
 }
+
+print(doc, target = "results/baltic_stats.docx")
+
 
 
 # avg age of vessels by vessel length category for each Baltic country ####
