@@ -58,40 +58,61 @@ ices <- ices %>% rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) %>% select(-ID)
 effort <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_I)
 
 # combine all years of data
-effort2 <- effort |> group_by(ICESNAME) |>
-  summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE))
+effort2 <- effort |> group_by(ICESNAME,YEAR) |>
+  summarise(annual.EFFORT = sum(TOTFISHDAYS, na.rm=TRUE)) |> 
+  ungroup() |> 
+  group_by(ICESNAME) |>
+  summarise(EFFORT = mean(annual.EFFORT, na.rm=TRUE))
 
+effort2$text_color <- ifelse(effort2$EFFORT > 5000, "white", "black")
+
+effort2$EFFORT_BIN <- factor(cut(effort2$EFFORT,
+                          breaks = c(1, 100, 500, 1000, 5000, 10000, Inf),
+                          labels = c("1–100", "100–500", "500–1000", "1000–5000", "5000–10000", ">10000"),
+                          include.lowest = TRUE))
+                          
+                          
+# viridisLite::viridis(n = 10, option = "mako", direction=-1)
 
 # Plot effort by ices ####
 ggplot() +
-  geom_sf(data = effort2, aes(fill = EFFORT)) +
+  geom_sf(data = effort2, aes(fill = EFFORT_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = effort2, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Fishing Effort", na.value = "transparent", direction=-1, option = "mako") +
+  geom_sf_text(data = effort2, aes(label = ICESNAME), size = 2, color = effort2$text_color) +
+  scale_fill_viridis_d(option = "mako", name = "Fishing Effort", na.value = "transparent", direction=-1) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean fishing effort 2013-2024") +
+  ggtitle("Mean of annual fishing days by rectangle for 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
 
 ggsave("results/2025/effort.png", width = 20, height = 20, units = "cm", dpi=300)
 
 # combine all years of data
-effort.tech <- effort |> group_by(ICESNAME, FISHING_TECH) |>
-  summarise(EFFORT = mean(TOTFISHDAYS, na.rm=TRUE)) |>
+effort.tech <- effort |> group_by(ICESNAME,FISHING_TECH, YEAR) |>
+  summarise(annual.EFFORT = sum(TOTFISHDAYS, na.rm=TRUE)) |> 
+  ungroup() |> group_by(ICESNAME, FISHING_TECH) |>
+  summarise(EFFORT = mean(annual.EFFORT, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
+effort.tech$text_color <- ifelse(effort.tech$EFFORT > 5000, "white", "black")
+
+effort.tech$EFFORT_BIN <- factor(cut(effort.tech$EFFORT,
+                                 breaks = c(1, 100, 500, 1000, 5000, 10000, Inf),
+                                 labels = c("1–100", "100–500", "500–1000", "1000–5000", "5000–10000", ">10000"),
+                                 include.lowest = TRUE))
 
 # Plot effort by ices and fishing_ tech ####
 ggplot() +
-  geom_sf(data = effort.tech, aes(fill = EFFORT)) +
+  geom_sf(data = effort.tech, aes(fill = EFFORT_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = effort.tech, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Fishing Effort", na.value = "transparent", direction=-1, option = "mako") +
+  geom_sf_text(data = effort.tech, aes(label = ICESNAME, color = text_color), size = 2) +
+  scale_fill_viridis_d(option = "mako", name = "Fishing Effort", na.value = "transparent", direction=-1) +
+  scale_color_identity() +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean fishing effort 2013-2024") +
+  ggtitle("Mean of annual fishing days by fisching tech and rectangle for 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
