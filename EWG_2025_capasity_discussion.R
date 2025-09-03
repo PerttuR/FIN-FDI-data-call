@@ -109,5 +109,5 @@ for (i in 1:length(by)){
   doc <- body_add_par(doc, value = "")  
 }
 
-print(doc, target = "results/baltic_stats.docx")
+print(doc, target = "results/FDI_capacity_stats.docx")
 
