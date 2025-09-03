@@ -50,7 +50,7 @@ print(ftab)
 by <- capacity |> filter(`Vessel Length Category` != "NK") |>
   select(Country, Year, `Vessel Length Category`, `Average age`) |>
   group_by(Country, Year, `Vessel Length Category`) |> 
-  summarise(mean.age = mean(`Average age`, na.rm=TRUE)) |>
+  summarise(mean.age = round(mean(`Average age`, na.rm=TRUE),2)) |>
   pivot_wider(names_from = `Vessel Length Category`, values_from = mean.age) |>
   ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
 
@@ -74,13 +74,30 @@ for (i in 1:length(by)){
 
 
 # avg length of vessels by vessel length category for each Baltic country ####
-table_nums("length_vessels", "Average length of vessels by vessel length category for each Baltic country.")
 
-capacity |> filter(`Vessel Length Category` != "NK") |>
-  select(Country, `Vessel Length Category`, `Average length` ) |>
-  group_by(Country, `Vessel Length Category`) |> 
-  summarise(mean.length = mean(`Average length`, na.rm=TRUE)) |>
-  pivot_wider(names_from = `Vessel Length Category`, values_from = mean.length) |> 
-  flextable() |> 
-  set_caption(table_nums("length_vessels"))
+by <- capacity |> filter(`Vessel Length Category` != "NK") |>
+  select(Country, Year, `Vessel Length Category`, `Average length`) |>
+  group_by(Country, Year, `Vessel Length Category`) |> 
+  summarise(mean.length = round(mean(`Average length`, na.rm=TRUE),2)) |>
+  pivot_wider(names_from = `Vessel Length Category`, values_from = mean.length) |>
+  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
+
+
+for (i in 1:length(by)){
+  
+  table_nums(paste0("length_vessels_",i), 
+             paste("Average length of vessels by vessel length category for each Baltic country in", years[i], "."))
+  
+  ftab <- by[[i]] |> select(-Year) |>
+    flextable() |> autofit() |>
+    set_caption(as_paragraph(
+      as_chunk(table_nums(paste0("length_vessels_",i)), props = fp_text_default(font.family = "Arial", bold=TRUE))
+    ), word_stylename = "Table Caption")
+  
+  print(ftab)   
+  # print(ftab, preview = "docx")   
+  
+}
+
+
 
