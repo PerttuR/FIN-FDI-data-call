@@ -48,6 +48,6 @@ Previously remits of hour above whole days or Hauls durations? (decided as wrong
 Now defined as hours between trip departure and arrival timestams (LIMIT 200 hours)
 If nor available -> NK
 
-FLEET SEGMENTATION:
+FLEET SEGMENTATION in CAPASITY:
 
 - Old Fleet length Ranges in time series 2013-2023 in several Countries data. 
