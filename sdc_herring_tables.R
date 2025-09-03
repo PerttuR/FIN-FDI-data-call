@@ -49,7 +49,7 @@ doc <- body_add_par(doc, value = "")
 
 }
 
-
+#print(doc, target = "results/baltic_number_of_vessels.docx")
 
 # avg age of vessels by vessel length category for each Baltic country ####
 
@@ -79,7 +79,7 @@ for (i in 1:length(by)){
   doc <- body_add_par(doc, value = "")  
 }
 
-
+#print(doc, target = "results/baltic_average_ages.docx")
 
 # avg length of vessels by vessel length category for each Baltic country ####
 
