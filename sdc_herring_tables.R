@@ -1,11 +1,14 @@
 # baltic summaries of capacity tables
 # https://stecf.ec.europa.eu/data-dissemination/fdi_en
 
+rm(list=ls())
+
 library(tidyverse)
 library(flextable)
 # devtools::install_github("adletaw/captioner")
 library(captioner)
 library(officer)
+library(janitor)
 
 doc <- read_docx()
 
@@ -18,7 +21,7 @@ capacity |> count(Country) |> print(n=Inf)
 baltic <- c("Denmark", "Estonia", "Finland", "Germany", "Latvia", "Lithuania", "Sweden")
 
 capacity <- capacity |> filter(Country %in% baltic)
-years <- sort(unique(capacity$Year))
+years <- sort(unique(capacity$Year), decreasing=TRUE)
 
 # number of vessels by vessel length category for each Baltic country ####
 
@@ -27,16 +30,23 @@ by <- capacity |> filter(`Vessel Length Category` != "NK") |>
   group_by(Country, Year, `Vessel Length Category`) |> 
   summarise(sum.vessels = sum(`Total vessels`, na.rm=TRUE)) |>
   pivot_wider(names_from = `Vessel Length Category`, values_from = sum.vessels) |>
-  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
+  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |>
+  arrange(Country,desc(Year)) |> 
+  mutate(VL0012 = rowSums(across(VL0008:VL1012), na.rm=TRUE)) |>
+  select(Country, Year, VL0012,VL1218,VL1824,VL2440,VL40XX) |>
+  group_split(Year)
 
 
 for (i in 1:length(by)){
 
 table_nums(paste0("num_vessels_",i), 
-           paste("Number of vessels by vessel length category for each Baltic country in", years[i], "."))
+           paste("Number of vessels by vessel length category\nfor each Baltic country in", years[i]))
   
 ftab <- by[[i]] |> select(-Year) |>
+  adorn_totals(c("row", "col")) |>
   flextable() |> autofit() |>
+  theme_zebra() |>
+  hline(i=7) |> vline(j=6) |>
   set_caption(as_paragraph(
     as_chunk(table_nums(paste0("num_vessels_",i)), props = fp_text_default(font.family = "Arial", bold=TRUE))
   ), word_stylename = "Table Caption")
@@ -56,18 +66,30 @@ doc <- body_add_par(doc, value = "")
 by <- capacity |> filter(`Vessel Length Category` != "NK") |>
   select(Country, Year, `Vessel Length Category`, `Average age`) |>
   group_by(Country, Year, `Vessel Length Category`) |> 
-  summarise(mean.age = round(mean(`Average age`, na.rm=TRUE),2)) |>
+  summarise(mean.age = round(mean(`Average age`, na.rm=TRUE),0)) |>
   pivot_wider(names_from = `Vessel Length Category`, values_from = mean.age) |>
-  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
+  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> 
+  arrange(Country,desc(Year)) |> 
+  mutate(VL0012 = rowMeans(across(VL0008:VL1012), na.rm=TRUE),
+         VL0012 = round(VL0012,0)) |>
+  select(Country, Year, VL0012,VL1218,VL1824,VL2440,VL40XX) |>
+  group_split(Year)
 
 
 for (i in 1:length(by)){
   
   table_nums(paste0("age_vessels_",i), 
-             paste("Average age of vessels by vessel length category for each Baltic country in", years[i], "."))
+             paste("Average age of vessels by vessel length category\nfor each Baltic country in", years[i]))
   
   ftab <- by[[i]] |> select(-Year) |>
+    mutate(Mean = round(rowMeans(across(VL0012:VL40XX), na.rm=TRUE),0)) |>      # Adds column means
+    summarise(
+      Country = c(Country, 'Mean'),
+      across(where(is.numeric), ~ c(., round(mean(., na.rm=TRUE),0)))
+    ) |>
     flextable() |> autofit() |>
+    theme_zebra() |>
+    hline(i=7) |> vline(j=6) |>
     set_caption(as_paragraph(
       as_chunk(table_nums(paste0("age_vessels_",i)), props = fp_text_default(font.family = "Arial", bold=TRUE))
     ), word_stylename = "Table Caption")
@@ -86,18 +108,30 @@ for (i in 1:length(by)){
 by <- capacity |> filter(`Vessel Length Category` != "NK") |>
   select(Country, Year, `Vessel Length Category`, `Average length`) |>
   group_by(Country, Year, `Vessel Length Category`) |> 
-  summarise(mean.length = round(mean(`Average length`, na.rm=TRUE),2)) |>
+  summarise(mean.length = round(mean(`Average length`, na.rm=TRUE),1)) |>
   pivot_wider(names_from = `Vessel Length Category`, values_from = mean.length) |>
-  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> group_split(Year)
+  ungroup() |> select(Country, Year, VL0008,VL0010,VL0812,VL1012,VL1218,VL1824,VL2440,VL40XX) |> 
+  arrange(Country,desc(Year)) |> 
+  mutate(VL0012 = rowMeans(across(VL0008:VL1012), na.rm=TRUE),
+         VL0012 = round(VL0012,1)) |>
+  select(Country, Year, VL0012,VL1218,VL1824,VL2440,VL40XX) |> 
+  group_split(Year)
 
 
 for (i in 1:length(by)){
   
   table_nums(paste0("length_vessels_",i), 
-             paste("Average length of vessels by vessel length category for each Baltic country in", years[i], "."))
+             paste("Average length of vessels by vessel length category\nfor each Baltic country in", years[i]))
   
   ftab <- by[[i]] |> select(-Year) |>
+    mutate(Mean = round(rowMeans(across(VL0012:VL40XX), na.rm=TRUE),1)) |>      # Adds column means
+    summarise(
+      Country = c(Country, 'Mean'),
+      across(where(is.numeric), ~ c(., round(mean(., na.rm=TRUE),1)))
+    ) |>
     flextable() |> autofit() |>
+    theme_zebra() |>
+    hline(i=7) |> vline(j=6) |>
     set_caption(as_paragraph(
       as_chunk(table_nums(paste0("length_vessels_",i)), props = fp_text_default(font.family = "Arial", bold=TRUE))
     ), word_stylename = "Table Caption")
@@ -109,5 +143,5 @@ for (i in 1:length(by)){
   doc <- body_add_par(doc, value = "")  
 }
 
-print(doc, target = "results/baltic_stats.docx")
+print(doc, target = "results/baltic_fleet_capacity.docx")
 
