@@ -133,17 +133,25 @@ weight2 <- weight |> group_by(ICESNAME) |>
     .default = as.numeric(TOTVALLANDG))) |> ungroup() |>
   group_by(ICESNAME, YEAR) |>
   summarise(annual.WEIGHT = sum(TOTWGHTLANDG, na.rm=TRUE),
-            annual.VALUE = sum(TOTVALLANDG, na.rm=TRUE)/1000000) |>
+            annual.VALUE = sum(TOTVALLANDG, na.rm=TRUE)/1000) |>
   ungroup() |> group_by(ICESNAME) |> 
   summarise(WEIGHT = mean(annual.WEIGHT, na.rm=TRUE),
             VALUE = mean(annual.VALUE, na.rm=TRUE))
 
+weight2$text_color <- ifelse(weight2$WEIGHT > 5000, "white", "black")
+
+weight2$WEIGHT_BIN <- factor(cut(weight2$WEIGHT,
+                                 breaks = c(1, 100, 500, 1000, 5000, 10000, Inf),
+                                 labels = c("1–100", "100–500", "500–1000", "1000–5000", "5000–10000", ">10000"),
+                                 include.lowest = TRUE))
+
 # Plot weight by ices ####
 ggplot() +
-  geom_sf(data = weight2, aes(fill = WEIGHT)) +
+  geom_sf(data = weight2, aes(fill = WEIGHT_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = weight2, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
+  geom_sf_text(data = weight2, aes(label = ICESNAME, color = text_color), size = 2) +
+  scale_fill_viridis_d(name = "Total weight (tonnes)", na.value = "transparent", direction=-1, option = "mako") +
+  scale_color_identity() +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
   ggtitle("Mean of annual landing weights 2013-2024") +
@@ -153,11 +161,20 @@ ggplot() +
 ggsave("results/2025/weight.png", width = 20, height = 20, units = "cm", dpi=300)
 
 # Plot value by ices ####
+weight2$text_color2 <- ifelse(weight2$VALUE > 2000, "white", "black")
+
+weight2$VALUE_BIN <- factor(cut(weight2$VALUE,
+                                 breaks = c(1, 100, 250, 500, 1000, 1500, 2000, 2500, 3000, 3500, Inf),
+                                 labels = c("1-100","100-250", "250-500", "500-1M-", "1M–1.5M", "1.5M-2M", "2M-2.5M", 
+                                            "2.5M-3M", "3M-3.5M", ">3.5M"),
+                                 include.lowest = TRUE))
+
 ggplot() +
-  geom_sf(data = weight2, aes(fill = VALUE)) +
+  geom_sf(data = weight2, aes(fill = VALUE_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = weight2, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Total value\n(million €)", na.value = "transparent", direction=-1, option = "mako") +
+  geom_sf_text(data = weight2, aes(label = ICESNAME, color = text_color2), size = 2) +
+  scale_fill_viridis_d(name = "Total value\n(thousand €)", na.value = "transparent", direction=-1, option = "mako") +
+  scale_color_identity() +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
   ggtitle("Mean of annual landing values 2013-2024") +
@@ -173,19 +190,26 @@ weight.tech <- weight |> group_by(ICESNAME, FISHING_TECH) |>
     .default = as.numeric(TOTVALLANDG))) |> ungroup() |>
   group_by(ICESNAME, FISHING_TECH, YEAR) |>
   summarise(annual.WEIGHT = sum(TOTWGHTLANDG, na.rm=TRUE),
-            annual.VALUE = sum(TOTVALLANDG, na.rm=TRUE)/1000000) |>
+            annual.VALUE = sum(TOTVALLANDG, na.rm=TRUE)/1000) |>
   ungroup() |> group_by(ICESNAME, FISHING_TECH) |>   
   summarise(WEIGHT = mean(annual.WEIGHT, na.rm=TRUE),
             VALUE = mean(annual.VALUE, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
+weight.tech$text_color <- ifelse(weight.tech$WEIGHT > 5000, "white", "black")
+
+weight.tech$WEIGHT_BIN <- factor(cut(weight.tech$WEIGHT,
+                                 breaks = c( 1, 100, 500, 1000, 5000, 10000, Inf),
+                                 labels = c("1–100", "100–500", "500–1000", "1000–5000", "5000–10000", ">10000"),
+                                 include.lowest = TRUE))
 
 # Plot weight by ices and fishing_ tech ####
 ggplot() +
-  geom_sf(data = weight.tech, aes(fill = WEIGHT)) +
+  geom_sf(data = weight.tech, aes(fill = WEIGHT_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = weight.tech, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
+  geom_sf_text(data = weight.tech, aes(label = ICESNAME, color=text_color), size = 2) +
+  scale_fill_viridis_d(name = "Total weight (tonnes)", na.value = "transparent", direction=-1, option = "mako") +
+  scale_color_identity() +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
@@ -197,11 +221,20 @@ ggplot() +
 ggsave("results/2025/weight.tech.png", width = 40, height = 20, units = "cm", dpi=300)
 
 # Plot value by ices and fishing_ tech ####
+weight.tech$text_color2 <- ifelse(weight.tech$VALUE > 2000, "white", "black")
+
+weight.tech$VALUE_BIN <- factor(cut(weight.tech$VALUE,
+                                breaks = c(0.5, 1, 100, 250, 500, 1000, 1500, 2000, 2500, 3000, 3500, Inf),
+                                labels = c("0.5-1","1-100","100-250", "250-500", "500-1M-", "1M–1.5M", "1.5M-2M", "2M-2.5M", 
+                                           "2.5M-3M", "3M-3.5M", ">3.5M"),
+                                include.lowest = TRUE))
+
 ggplot() +
-  geom_sf(data = weight.tech, aes(fill = VALUE)) +
+  geom_sf(data = weight.tech, aes(fill = VALUE_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
-  geom_sf_text(data = weight.tech, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Total value\n(million €)", na.value = "transparent", direction=-1, option = "mako") +
+  geom_sf_text(data = weight.tech, aes(label = ICESNAME, color=text_color2), size = 2) +
+  scale_fill_viridis_d(name = "Total value\n(thousand €)", na.value = "transparent", direction=-1, option = "mako") +
+  scale_color_identity() +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
