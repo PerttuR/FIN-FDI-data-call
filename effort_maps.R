@@ -130,9 +130,13 @@ weight <- ices |> select(ICESNAME, LONGITUDE, LATITUDE) |> left_join(TABLE_H)
 weight2 <- weight |> group_by(ICESNAME) |>
   mutate(TOTVALLANDG = case_when(
     TOTVALLANDG == "NK" ~ NA,
-    .default = as.numeric(TOTVALLANDG))) |> 
-  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE),
-            VALUE = mean(TOTVALLANDG, na.rm=TRUE))
+    .default = as.numeric(TOTVALLANDG))) |> ungroup() |>
+  group_by(ICESNAME, YEAR) |>
+  summarise(annual.WEIGHT = sum(TOTWGHTLANDG, na.rm=TRUE),
+            annual.VALUE = sum(TOTVALLANDG, na.rm=TRUE)/1000000) |>
+  ungroup() |> group_by(ICESNAME) |> 
+  summarise(WEIGHT = mean(annual.WEIGHT, na.rm=TRUE),
+            VALUE = mean(annual.VALUE, na.rm=TRUE))
 
 # Plot weight by ices ####
 ggplot() +
@@ -142,7 +146,7 @@ ggplot() +
   scale_fill_viridis_c(name = "Total weight", na.value = "transparent", direction=-1, option = "mako") +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean landing weights 2013-2024") +
+  ggtitle("Mean of annual landing weights 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
 
@@ -153,10 +157,10 @@ ggplot() +
   geom_sf(data = weight2, aes(fill = VALUE)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
   geom_sf_text(data = weight2, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Total value", na.value = "transparent", direction=-1, option = "mako") +
+  scale_fill_viridis_c(name = "Total value\n(million €)", na.value = "transparent", direction=-1, option = "mako") +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean landing values 2013-2024") +
+  ggtitle("Mean of annual landing values 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
 
@@ -166,9 +170,13 @@ ggsave("results/2025/value.png", width = 20, height = 20, units = "cm", dpi=300)
 weight.tech <- weight |> group_by(ICESNAME, FISHING_TECH) |>
   mutate(TOTVALLANDG = case_when(
     TOTVALLANDG == "NK" ~ NA,
-    .default = as.numeric(TOTVALLANDG))) |> 
-  summarise(WEIGHT = mean(TOTWGHTLANDG, na.rm=TRUE),
-            VALUE = mean(TOTVALLANDG, na.rm=TRUE)) |>
+    .default = as.numeric(TOTVALLANDG))) |> ungroup() |>
+  group_by(ICESNAME, FISHING_TECH, YEAR) |>
+  summarise(annual.WEIGHT = sum(TOTWGHTLANDG, na.rm=TRUE),
+            annual.VALUE = sum(TOTVALLANDG, na.rm=TRUE)/1000000) |>
+  ungroup() |> group_by(ICESNAME, FISHING_TECH) |>   
+  summarise(WEIGHT = mean(annual.WEIGHT, na.rm=TRUE),
+            VALUE = mean(annual.VALUE, na.rm=TRUE)) |>
   filter(!is.na(FISHING_TECH))
 
 
@@ -181,7 +189,7 @@ ggplot() +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean landing weights 2013-2024") +
+  ggtitle("Mean of annual landing weights by fishing tech 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
@@ -193,11 +201,11 @@ ggplot() +
   geom_sf(data = weight.tech, aes(fill = VALUE)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
   geom_sf_text(data = weight.tech, aes(label = ICESNAME), size = 2, color = "black") +
-  scale_fill_viridis_c(name = "Total value", na.value = "transparent", direction=-1, option = "mako") +
+  scale_fill_viridis_c(name = "Total value\n(million €)", na.value = "transparent", direction=-1, option = "mako") +
   facet_wrap(~FISHING_TECH) +
   coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean landing value 2013-2024") +
+  ggtitle("Mean of annual landing value by fishing tech 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
