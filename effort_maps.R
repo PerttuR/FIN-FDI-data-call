@@ -165,7 +165,7 @@ weight2$text_color2 <- ifelse(weight2$VALUE > 2000, "white", "black")
 
 weight2$VALUE_BIN <- factor(cut(weight2$VALUE,
                                  breaks = c(1, 100, 250, 500, 1000, 1500, 2000, 2500, 3000, 3500, Inf),
-                                 labels = c("1-100","100-250", "250-500", "500-1M-", "1M–1.5M", "1.5M-2M", "2M-2.5M", 
+                                 labels = c("1-100","100-250", "250-500", "500-1M", "1M–1.5M", "1.5M-2M", "2M-2.5M", 
                                             "2.5M-3M", "3M-3.5M", ">3.5M"),
                                  include.lowest = TRUE))
 
@@ -224,8 +224,8 @@ ggsave("results/2025/weight.tech.png", width = 40, height = 20, units = "cm", dp
 weight.tech$text_color2 <- ifelse(weight.tech$VALUE > 2000, "white", "black")
 
 weight.tech$VALUE_BIN <- factor(cut(weight.tech$VALUE,
-                                breaks = c(0.5, 1, 100, 250, 500, 1000, 1500, 2000, 2500, 3000, 3500, Inf),
-                                labels = c("0.5-1","1-100","100-250", "250-500", "500-1M-", "1M–1.5M", "1.5M-2M", "2M-2.5M", 
+                                breaks = c(1, 100, 250, 500, 1000, 1500, 2000, 2500, 3000, 3500, Inf),
+                                labels = c("1-100","100-250", "250-500", "500-1M", "1M–1.5M", "1.5M-2M", "2M-2.5M", 
                                            "2.5M-3M", "3M-3.5M", ">3.5M"),
                                 include.lowest = TRUE))
 
