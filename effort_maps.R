@@ -79,10 +79,10 @@ ggplot() +
   geom_sf(data = effort2, aes(fill = EFFORT_BIN)) +
   geom_sf(data = world_sf, fill = "grey", color = "black", size = 1, alpha=0.8) +
   geom_sf_text(data = effort2, aes(label = ICESNAME), size = 2, color = effort2$text_color) +
-  scale_fill_viridis_d(option = "mako", name = "Fishing Effort", na.value = "transparent", direction=-1) +
-  coord_sf(xlim = c(10, 30), ylim = c(54, 65), expand = FALSE) +
+  scale_fill_viridis_d(option = "mako", name = "Fishing Effort -\nmean of annual \nfishing days \nfor 2013-2024", na.value = "transparent", direction=-1) +
+  coord_sf(xlim = c(10, 30), ylim = c(53.5, 66.5), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean of annual fishing days by rectangle for 2013-2024") +
+  ggtitle("Mean of annual fishing effort (fishing days) by rectangle for 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
 
