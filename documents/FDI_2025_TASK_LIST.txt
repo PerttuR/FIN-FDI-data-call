@@ -182,3 +182,10 @@ G:\Luke2\Stat_kala_merikalastus\Metier\data
 
 TO DO: import needed data from 2013-2015 sas datasets 
 
+
+2026
+
+ISSUE 1
+
+The segment "VL0010" and "NK" with Supra Region NAO is reported in Table G but does not listed in Table J.
+

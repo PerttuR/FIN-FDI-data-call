@@ -82,9 +82,10 @@ ggplot() +
   scale_fill_viridis_d(option = "mako", name = "Fishing Effort -\nmean of annual \nfishing days \nfor 2013-2024", na.value = "transparent", direction=-1) +
   coord_sf(xlim = c(10, 30), ylim = c(53.5, 66.5), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean of annual fishing effort (fishing days) by rectangle for 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
+
+# title: ggtitle("Mean of annual fishing effort (fishing days) by rectangle for 2013-2024") +
 
 ggsave("results/2025/effort.png", width = 20, height = 20, units = "cm", dpi=300)
 
@@ -119,12 +120,13 @@ ggplot() +
   facet_wrap(~FISHING_TECH_LABEL) +
   coord_sf(xlim = c(10, 30), ylim = c(53.5, 66.5), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean of annual fishing effort (fishing days) by fisching tech and rectangle for 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
 
 ggsave("results/2025/effort.tech.png", width = 40, height = 20, units = "cm", dpi=300)
+
+#title: ggtitle("Mean of annual fishing effort (fishing days) by fisching tech and rectangle for 2013-2024") +
 
 # get table H ####
 
@@ -161,9 +163,10 @@ ggplot() +
   scale_color_identity() +
   coord_sf(xlim = c(10, 30), ylim = c(53.5, 66.5), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean of annual Total weight of landed catches by rectangle (in tonnes) 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA))
+
+#title: ggtitle("Mean of annual Total weight of landed catches by rectangle (in tonnes) 2013-2024") +
 
 ggsave("results/2025/weight.png", width = 20, height = 20, units = "cm", dpi=300)
 
@@ -225,10 +228,11 @@ ggplot() +
   facet_wrap(~FISHING_TECH_LABEL) +
   coord_sf(xlim = c(10, 30), ylim = c(53.5, 66.5), expand = FALSE) +
   xlab("Longitude") + ylab("Latitude") + 
-  ggtitle("Mean of annual landed catch weights by fishing tech by rectangle 2013-2024") +
   theme(panel.background = element_rect(fill = "lightblue"),
         panel.grid.major = element_line(color = NA),
         panel.spacing = unit(1.5, "lines"))
+
+#title: ggtitle("Mean of annual landed catch weights by fishing tech by rectangle 2013-2024") +
 
 ggsave("results/2025/weight.tech.png", width = 40, height = 20, units = "cm", dpi=300)
 
