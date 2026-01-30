@@ -41,7 +41,7 @@ library(tidyverse)
 #                   0. set working directories to match folder paths                      
 #-------------------------------------------------------------------------------
 
-run.year = 2025
+run.year = 2026
 
 # Output folder
 path_out <- paste0(getwd(), .Platform$file.sep,"results", .Platform$file.sep, run.year)
@@ -914,6 +914,19 @@ vessel_fishing_trips <- j5 %>%
     .groups = 'drop'
   )
 
+# Calculate the TOTKW and TOTGT for each vessel segment
+
+totkw_totgt <- j5 %>% 
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% 
+  summarise(
+    TOTKW1 = first(PAAKONETEHO),
+    TOTGT1 = first(VETOISUUS)
+  ) %>% 
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
+  summarise(
+    TOTKW = sum(TOTKW1),
+    TOTGT = sum(TOTGT1)
+)
 # Calculate the average number of fishing days for the top 10 vessels with the highest number of fishing trips
 maxseadays <- vessel_fishing_trips %>% 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% 
@@ -937,8 +950,8 @@ j6 <- j5 %>%
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
   summarise(
     TOTTRIPS = n_distinct(FT_REF), # changed table aggregation to fishingtrips, changed from variable fishingtrips
-    TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
-    TOTGT = sum(VETOISUUS, na.rm = TRUE),
+    #TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
+    #TOTGT = sum(VETOISUUS, na.rm = TRUE),
     TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
     AVGAGE = mean(AGE, na.rm = TRUE),
     AVGLOA = mean(KOKPITUUS, na.rm = TRUE),
@@ -948,8 +961,12 @@ j6 <- j5 %>%
 # join the maximum days at sea with j table
 j7 <- left_join(j6, maxseadays_2, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
 
+# join the previously calculated TOTKW and TOTGT by fleet segment with table J
+j7b <- left_join(j7, totkw_totgt, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
+
+
 # replace missing values and arrange by year
-j8 <- j7 %>% mutate(
+j8 <- j7b %>% mutate(
   COUNTRY = replace_na(COUNTRY, "FIN"),
   SUPRA_REGION = replace_na(SUPRA_REGION, "NAO"),
   GEO_INDICATOR = replace_na(GEO_INDICATOR, "NGI"),
