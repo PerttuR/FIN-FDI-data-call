@@ -888,25 +888,25 @@ j3 <- j2 %>% mutate(FISHING_TECH = replace_na(FISHING_TECH, "PG"))
 j3 <- j3 %>% mutate(FISHING_TECH = as.factor(FISHING_TECH))
 
 
-# Calculate the principal sub region for each vessel
-j4 <- j3 %>% group_by(YEAR, ULKOINENTUNNUS, SUB_REGION) %>% summarise(
-  fishingdays = n_distinct(KALASTUSPAIVAT, na.rm = TRUE), #sum????
+# Calculate the principal sub region for each vessel range
+j4 <- j3 %>% group_by(YEAR, VESSEL_LENGTH, SUB_REGION) %>% summarise(
+  fishingdays = sum(as.integer(KALASTUSPAIVAT)),
   fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
   .groups = 'drop'
   )
   
-# Identify the principal sub region for each vessel
+# Identify the principal sub region for each vessel range
 principal_sub_region <- j4 %>%
-  group_by(YEAR, ULKOINENTUNNUS) %>%
+  group_by(YEAR, VESSEL_LENGTH) %>%
   filter(fishingdays == max(fishingdays, na.rm = TRUE)) %>%
   # Handle ties by randomly selecting one sub region
   slice_sample(n = 1) %>%
   ungroup() %>% rename(PRINCIPAL_SUB_REGION = SUB_REGION)
 
 # join the principal sub region to the j table
-j5 <- left_join(j3, principal_sub_region, by = c("YEAR","ULKOINENTUNNUS"))
+j5 <- left_join(j3, principal_sub_region, by = c("YEAR","VESSEL_LENGTH"))
   
-# Calculate the number of fishing trips for each vessel in sd
+# Calculate the number of fishing trips for each vessel in aggregation
 vessel_fishing_trips <- j5 %>% 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% 
   summarise(
@@ -925,8 +925,8 @@ totkw_totgt <- j5 %>%
   ) %>% 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
   summarise(
-    TOTKW = sum(TOTKW1),
-    TOTGT = sum(TOTGT1)
+    TOTKW = round(sum(TOTKW1), digits = 0),
+    TOTGT = round(sum(TOTGT1), digits = 0)
 )
 # Calculate the average number of fishing days for the top 10 vessels with the highest number of fishing trips
 #maxseadays <- vessel_fishing_trips %>% 
@@ -939,15 +939,8 @@ totkw_totgt <- j5 %>%
 #    .groups = 'drop'
 #  ) %>%
 #  mutate(MAXSEADAYS = replace_na(MAXSEADAYS, 'NK'))
-#
-#maxseadays_2 <- maxseadays %>% 
-#  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
-#  summarise(
-#    MAXSEADAYS = as.integer(mean(MAXSEADAYS, na.rm = TRUE))
-#    )
 
-#### TEST 2026 for maxseadays from AER FIN:
-maxseadays_2 <- vessel_fishing_trips %>% 
+maxseadays <- vessel_fishing_trips %>% 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>% 
   summarise(days_at_sea = sum(total_fishingdays)) |>
   # Sort vessels by days at sea in descending order and take the top 10
@@ -959,40 +952,41 @@ maxseadays_2 <- vessel_fishing_trips %>%
   ) %>%
   mutate(MAXSEADAYS = replace_na(MAXSEADAYS, 'NK'))
 
-## Alternatively: calculate maxseadays based on the 90th percentile
-#maxseadays_2 <- vessel_fishing_trips %>%
-#  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) %>%
-#  summarise(days_at_sea = sum(total_fishingdays)) |>
-#  # Sort vessels by days at sea in descending order and take the top 10
-#  group_by(COUNTRY,YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |>
-#  filter(days_at_sea <= 365) |>
+#maxseadays_2 <- maxseadays %>% 
+#  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, PRINCIPAL_SUB_REGION, GEO_INDICATOR) %>% 
 #  summarise(
-#    MAXSEADAYS = round(quantile(days_at_sea, probs = 0.9), digits = 0)
-#  )
-
+#    MAXSEADAYS = as.integer(mean(MAXSEADAYS, na.rm = TRUE))
+#    )
 
 # Calculate the other sums and averages
 j6 <- j5 %>% 
-  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) %>% 
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, PRINCIPAL_SUB_REGION, GEO_INDICATOR) %>% 
   summarise(
     TOTTRIPS = n_distinct(FT_REF), # changed table aggregation to fishingtrips, changed from variable fishingtrips
     #TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
     #TOTGT = sum(VETOISUUS, na.rm = TRUE),
     TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
-    AVGAGE = round(mean(AGE, na.rm = TRUE), digits = 1),
-    AVGLOA = round(mean(KOKPITUUS, na.rm = TRUE), digits = 2),
+    AVGAGE = round(mean(AGE, na.rm = TRUE), digits = 0),
+    AVGLOA = round(mean(KOKPITUUS, na.rm = TRUE), digits = 0),
     .groups = 'drop'
   )
 
 # join the maximum days at sea with j table
-j7 <- left_join(j6, maxseadays_2, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
+j7 <- left_join(j6, maxseadays_2, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "PRINCIPAL_SUB_REGION", "GEO_INDICATOR"))
 
 # join the previously calculated TOTKW and TOTGT by fleet segment with table J
-j7b <- left_join(j7, totkw_totgt, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
+j7b <- left_join(j7, totkw_totgt, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "PRINCIPAL_SUB_REGION", "GEO_INDICATOR"))
 
+# join the previously calculated PRIMARY_SUBDIVISION by fleet segment with table J
+#j7c <- left_join(j7b, principal_sub_region, by = c("YEAR", "VESSEL_LENGTH"))
+
+j7c <- j7b %>% mutate(PRINCIPAL_SUB_REGION = case_when(
+  MAXSEADAYS == 0 ~ "NK",
+  TRUE ~ PRINCIPAL_SUB_REGION
+  ))
 
 # replace missing values and arrange by year
-j8 <- j7b %>% mutate(
+j8 <- j7c %>% mutate(
   COUNTRY = replace_na(COUNTRY, "FIN"),
   SUPRA_REGION = replace_na(SUPRA_REGION, "NAO"),
   GEO_INDICATOR = replace_na(GEO_INDICATOR, "NGI"),
@@ -1003,7 +997,7 @@ j8 <- j7b %>% mutate(
 # SET TOTTRIPS to 0 for inactive vessel ranges
 
 j9 <- j8 %>% mutate(TOTTRIPS = case_when(
-  TOTTRIPS == 1 & PRINCIPAL_SUB_REGION == "NK" ~ 0,
+  MAXSEADAYS == 0 & PRINCIPAL_SUB_REGION == "NK" ~ 0,
   TRUE ~ TOTTRIPS
 ))
 # mutate the fishing technique to INACTIVE if TOTTRIPS ==0
