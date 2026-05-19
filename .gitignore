@@ -10,6 +10,8 @@ mongo_params.R
 !FDI-vertailu.docx
 # Excell files
 *.xlsx
+#PDF exemptions
+!documents/2026/*.xlsx
 #Powerpoint
 *.pptx
 #PNG
