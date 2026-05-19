@@ -12,6 +12,7 @@ mongo_params.R
 *.xlsx
 #PDF exemptions
 !documents/2026/*.xlsx
+!documents/2026/*.docx
 #Powerpoint
 *.pptx
 #PNG
