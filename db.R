@@ -1,4 +1,12 @@
-library(RPostgres)
+# Required packages ####
+
+# Check if installed, install if missing, and load pacman
+if (!require("pacman", quietly = TRUE)) {
+  install.packages("pacman")
+}
+
+# check installation and load libraries
+pacman::p_load(RPostgres, luketools)
 
 set_utf8 <- function(x){
   # Declare UTF-8 encoding on all character strings:
@@ -74,11 +82,18 @@ read.dbTable <- function(schema, table, where = NA, dbname = NULL) {
 
   tmp <- new.env()
   get.params(dbname, tmp)
-  drv <- RPostgres::Postgres()
+  # drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
-  con <- dbConnect(drv, dbname = resolved_dbname,
-                   host = tmp$host, tmp$port,
-                   user = tmp$user, password = tmp$password)
+  # con <- dbConnect(drv, dbname = resolved_dbname,
+  #                  host = tmp$host, tmp$port,
+  #                  user = tmp$user, password = tmp$password)
+  
+  con <- get_connection(
+    host = tmp$host,
+    dbname = resolved_dbname,
+    port = tmp$port,
+    service = tmp$service)
+  
   rm(tmp)
   data <- set_utf8(dbGetQuery(con, paste0('SELECT * from "',schema,'".',table,where)))
   dbDisconnect(con)
@@ -91,11 +106,18 @@ query.dbTable <- function(schema, table, dbname = NULL, query ) {
   validate.params(schema, table)
   tmp <- new.env()
   get.params(dbname, tmp)
-  drv <- RPostgres::Postgres()
+  # drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
-  con <- dbConnect(drv, dbname = resolved_dbname,
-                   host = tmp$host, tmp$port,
-                   user = tmp$user, password = tmp$password)
+  # con <- dbConnect(drv, dbname = resolved_dbname,
+  #                  host = tmp$host, tmp$port,
+  #                  user = tmp$user, password = tmp$password)
+  
+  con <- get_connection(
+    host = tmp$host,
+    dbname = resolved_dbname,
+    port = tmp$port,
+    service = tmp$service)
+  
   rm(tmp)
   data <- set_utf8(dbGetQuery(con, query))
   dbDisconnect(con)
@@ -107,11 +129,18 @@ write.dbTable <- function(schema, table, data, dbname = NULL, overwrite = FALSE)
   validate.params(schema, table)
   tmp <- new.env()
   get.params(dbname, tmp)
-  drv <- RPostgres::Postgres()
+  # drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
-  con <- dbConnect(drv, dbname = resolved_dbname,
-                   host = tmp$host, tmp$port,
-                   user = tmp$user, password = tmp$password)
+  # con <- dbConnect(drv, dbname = resolved_dbname,
+  #                  host = tmp$host, tmp$port,
+  #                  user = tmp$user, password = tmp$password)
+  
+  con <- get_connection(
+    host = tmp$host,
+    dbname = resolved_dbname,
+    port = tmp$port,
+    service = tmp$service)
+  
   rm(tmp)
   dbExecute(con, "set DATESTYLE TO ISO")
   dbExecute(con, "set role write_kake_siirto")
@@ -125,11 +154,18 @@ write.dbTable <- function(schema, table, data, dbname = NULL, overwrite = FALSE)
 list.dbTable <- function(dbname = NULL){
   tmp <- new.env()
   get.params(dbname, tmp)
-  drv <- RPostgres::Postgres()
+  # drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
-  con <- dbConnect(drv, dbname = resolved_dbname,
-                   host = tmp$host, tmp$port,
-                   user = tmp$user, password = tmp$password)
+  # con <- dbConnect(drv, dbname = resolved_dbname,
+  #                  host = tmp$host, tmp$port,
+  #                  user = tmp$user, password = tmp$password)
+  
+  con <- get_connection(
+    host = tmp$host,
+    dbname = resolved_dbname,
+    port = tmp$port,
+    service = tmp$service)
+  
   rm(tmp)
   data <- dbListObjects(con)
   dbDisconnect(con)
@@ -140,11 +176,18 @@ list.dbTable <- function(dbname = NULL){
 list.dbTable.tbl <- function(dbname = NULL, schema=schema){
   tmp <- new.env()
   get.params(dbname, tmp)
-  drv <- RPostgres::Postgres()
+  # drv <- RPostgres::Postgres()
   resolved_dbname <- ifelse(is.null(dbname), tmp$dbname, dbname)
-  con <- dbConnect(drv, dbname = resolved_dbname,
-                   host = tmp$host, tmp$port,
-                   user = tmp$user, password = tmp$password)
+  # con <- dbConnect(drv, dbname = resolved_dbname,
+  #                  host = tmp$host, tmp$port,
+  #                  user = tmp$user, password = tmp$password)
+  
+  con <- get_connection(
+    host = tmp$host,
+    dbname = resolved_dbname,
+    port = tmp$port,
+    service = tmp$service)
+  
   rm(tmp)
   data <- dbListObjects(con, DBI::Id(schema = schema))
   dbDisconnect(con)

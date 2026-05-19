@@ -1,6 +1,17 @@
-#Example db_params file, copy to db_params.R and fill in the correct values
-dbname <- "public"
-host <- "localhost"
+# Example db_params file, copy to db_params.R and fill in the correct values
+# https://github.com/lukefi-private/luketools
+# library(luketools)
+# handle_credentials(method = "set", service = "NAME")
+# 
+# setup for host
+# library(usethis)
+# usethis::edit_r_environ(scope = "user")
+# add this line to environment file
+# HOST_DB2PROD = your_host_name_here
+# usethis::use_git_ignore(".Renviron")
+
+dbname <- "other"
+schema <- "otherschema"
+host <- Sys.getenv("HOST_AZURE_POSTGRES", unset = NA_character_)
 port <- 5432
-user <- "postgres"
-password<-"postgres"
+service <- "otherservice"
