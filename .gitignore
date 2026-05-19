@@ -22,7 +22,8 @@ mongo_params.R
 *.xls
 #PDF files
 *.pdf
-!documents/*.pdf
+#PDF exemptions
+!documents/2026/*.pdf
 # History files
 .Rhistory
 .Rapp.history
