@@ -50,14 +50,14 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
 
 # memory hungry packages and rarely used packages, need to be prefixed! e.g. sf::
 # pacman::p_install seems to have a bug, so use base R instead
-pkg_list <- c("icesVocab", "openxlsx")
+pkg_list <- c("icesVocab")
 
 to_install <- pkg_list[!pkg_list %in% rownames(installed.packages())]
 
@@ -83,19 +83,20 @@ conflicted::conflicts_prefer(
 options(scipen = 999)
 
 run.year = 2026
+years <- seq(2013, run.year-1)
 
 path <- here::here()
-path_der  <- here::here("der", run.year)  # Location to store data
-codePath  <- here::here("prog")            # Location to store R scripts
-path_orig  <- here::here("orig", run.year)   # Location to store the results
-plotPath  <- here::here("Plots", run.year) # Location to store plots
+path_der  <- here::here("der", run.year) 
+path_out  <- here::here("results", run.year) 
+path_orig  <- here::here("orig") 
+plotPath  <- here::here("Plots", run.year)
 
 # Ensure outpath exists
-ifelse(!dir.exists(outPath), 
-          dir.create(outPath, recursive=TRUE), FALSE)
+ifelse(!dir.exists(path_out), 
+          dir.create(path_out, recursive=TRUE), FALSE)
 
-ifelse(!dir.exists(dataPath), 
-          dir.create(dataPath, recursive=TRUE), FALSE)
+ifelse(!dir.exists(path_orig), 
+          dir.create(path_orig, recursive=TRUE), FALSE)
 
 ifelse(!dir.exists(plotPath), 
           dir.create(plotPath, recursive=TRUE), FALSE)
@@ -156,7 +157,7 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 # TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
 
 # Discards excel
-discards <- read.xlsx(paste0(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
+discards <- read.xlsx(file.path(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
 
 #Table A years 2013-2015 - see import_sas_metier_2013-15.R
@@ -171,7 +172,7 @@ names(discards) <- toupper(names(discards))
 #--------------------------
 
 # Read in data from the correct year
-aktiviteetti_all <- aktiviteetti %>% filter(KALASTUSVUOSI %in% years) %>% 
+aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
   mutate(kalastus_kk = format(PALUUPVM, "%m"), #get the correct month in order to make quarters later on
          kalastus_vuosi = format(PALUUPVM,"%Y"),
          kalastus_kk = case_when(
