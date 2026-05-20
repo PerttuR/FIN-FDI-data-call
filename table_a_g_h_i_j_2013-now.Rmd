@@ -492,6 +492,9 @@ akt1_all <- akt1_all |> mutate(
     METIER == "OTM_DEF_>=110_0_0" ~ "OTM_DEF_105-115_1_120",    # not accepted
     METIER == "GNS_ANA_16-31_0_0" ~ "GNS_ANA_90-109_0_0", # too small for salmon
     METIER == "GNS_ANA_32-89_0_0" ~ "GNS_ANA_110-156_0_0", # too small for salmon
+    METIER == "OTM_SPF_<15_0_0" ~ "OTM_SPF_<16_0_0", # wrong mesh size
+    METIER == "PTM_SPF_<15_0_0" ~ "PTM_SPF_<16_0_0", # wrong mesh size
+    METIER == "GNS_SPF_<15_0_0" ~ "GNS_SPF_<16_0_0", # wrong mesh size - not in valid metier list ???
     .default = as.character(METIER)),
   # lines don't have mesh sizes
   MESH_SIZE_RANGE = case_when(
@@ -512,7 +515,7 @@ akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |
   flextable::theme_zebra() |>
   flextable::set_caption( "Mesh size to metier conversion AKT1_all")
 
-
+# check if valid
 metier <- akt1_all %>% dplyr::select(METIER) %>% distinct()
 metier_check <- metier %>% left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
 missing <- metier_check %>% filter(is.na(valid_metiers))
