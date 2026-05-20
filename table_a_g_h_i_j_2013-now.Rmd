@@ -52,7 +52,7 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx2)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
@@ -162,7 +162,8 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 
 kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
-  flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra()
+  flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra() |>
+  flextable::set_caption( "Number of vessels by vessel length in KAPASITEETI")
 
 # TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
 
@@ -175,7 +176,8 @@ names(discards) <- toupper(names(discards))
 discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |> 
   pivot_wider(names_from = TARGET_ASSEMBLAGE, values_from = n) |>
   flextable::flextable() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |> flextable::theme_zebra()
+  flextable::colformat_num(j = "YEAR", big.mark = "") |> flextable::theme_zebra() |>
+  flextable::set_caption( "Number of vessels by vessel length and target assemblage in DISCARDS")
   
 #Table A years 2013-2015 - see import_sas_metier_2013-15.R
 # tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
@@ -198,6 +200,15 @@ aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
            TRUE ~ kalastus_kk
          ))
 
+aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
+  pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
+  flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> flextable::theme_zebra() |>
+  flextable::set_caption( "Number of vessels by vessel length in AKTIVITEETTI")
+```
+
+## Prepare variables for table H and I
+
+```{r vars-h-i}
 # akt_2013_2015_headers <- c("YEAR", "ULKOINENTUNNUS", "KALASTUSPAIVAT", "MERIPAIVAT", "PAAKONETEHO", "VETOISUUS", "KALASTUSAIKAHH", "FT_REF", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "METIER", "SVT_KG_HER", "SVT_KG_SPR", "SVT_KG_COD", "SVT_KG_FLE", "SVT_KG_TUR", "SVT_KG_PLN", "SVT_KG_SAL", "SVT_KG_TRS", "SVT_KG_SME", "SVT_KG_FBM", "SVT_KG_FID", "SVT_KG_FRO", "SVT_KG_FPI", "SVT_KG_FPE", "SVT_KG_FPP", "SVT_KG_FBU", "SVT_KG_TRR", "SVT_KG_FVE", "SVT_KG_ELE", "SVT_KG_FIN", "SVT_KG_TOTAL", "SVT_VALUE_HER", "SVT_VALUE_SPR", "SVT_VALUE_COD", "SVT_VALUE_FLE", "SVT_VALUE_TUR", "SVT_VALUE_PLN", "SVT_VALUE_SAL", "SVT_VALUE_TRS", "SVT_VALUE_SME", "SVT_VALUE_FBM", "SVT_VALUE_FID", "SVT_VALUE_FRO", "SVT_VALUE_FPI", "SVT_VALUE_FPE", "SVT_VALUE_FPP", "SVT_VALUE_FBU", "SVT_VALUE_TRR", "SVT_VALUE_FVE", "SVT_VALUE_ELE", "SVT_VALUE_FIN", "RECTANGLE", "COUNTRY", "QUARTER", "MESH_SIZE_RANGE", "METIER_7", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "RECTANGLE_TYPE", "C_SQUARE")
 # metier_sas_2013_2015_headers <- c("KALASTUSVUOSI", "ALUS", "TODO: from here: KALASTUSPAIVAT", "MERIPAIVAT", "PAAKONETEHO", "VETOISUUS", "KALASTUSAIKAHH", "FT_REF", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "METIER", "SVT_KG_HER", "SVT_KG_SPR", "SVT_KG_COD", "SVT_KG_FLE", "SVT_KG_TUR", "SVT_KG_PLN", "SVT_KG_SAL", "SVT_KG_TRS", "SVT_KG_SME", "SVT_KG_FBM", "SVT_KG_FID", "SVT_KG_FRO", "SVT_KG_FPI", "SVT_KG_FPE", "SVT_KG_FPP", "SVT_KG_FBU", "SVT_KG_TRR", "SVT_KG_FVE", "SVT_KG_ELE", "SVT_KG_FIN", "SVT_KG_TOTAL", "SVT_VALUE_HER", "SVT_VALUE_SPR", "SVT_VALUE_COD", "SVT_VALUE_FLE", "SVT_VALUE_TUR", "SVT_VALUE_PLN", "SVT_VALUE_SAL", "SVT_VALUE_TRS", "SVT_VALUE_SME", "SVT_VALUE_FBM", "SVT_VALUE_FID", "SVT_VALUE_FRO", "SVT_VALUE_FPI", "SVT_VALUE_FPE", "SVT_VALUE_FPP", "SVT_VALUE_FBU", "SVT_VALUE_TRR", "SVT_VALUE_FVE", "SVT_VALUE_ELE", "SVT_VALUE_FIN", "RECTANGLE", "COUNTRY", "QUARTER", "MESH_SIZE_RANGE", "METIER_7", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "RECTANGLE_TYPE", "C_SQUARE")
 
@@ -339,19 +350,22 @@ akt1 <- aktiviteetti_all |>
           )) #tehdään tarkaste myöhemmin!
 
 
-akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |> 
+akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |>
   mutate(TAG = case_when(
     HRSEA < 0 ~ "NEGATIVE",
     HRSEA == 0 ~ "ZERO",
     HRSEA > 0 & HRSEA <= 200 ~ "POSITIVE <= 200",
-    HRSEA > 200 ~ "TOO BIG > 200"
+    HRSEA > 200 ~ "TOO BIG > 200",
+    is.na(HRSEA) ~ "MISSING"
   )) |>
-  count(FISHING_TECH, TAG) |> flextable::flextable() |> flextable::autofit()
+  count(FISHING_TECH, TAG) |> flextable::flextable() |> flextable::autofit() |> flextable::theme_zebra() |>
+  flextable::set_caption( "Number of sea day records by definition (NEGATIVE, ZERO, POSITIVE, TOO BIG, MISSING)")
 
 ggplot(akt1, aes(x=HRSEA)) + geom_histogram() + facet_wrap(~FISHING_TECH) + ggtitle("DCPROD HRSEA by fishing tech")
 ```
 
 
+## Add lon/lat and create valid metiers
 
 ```{r spatial}
 # Create variables LATITUDE and LONGITUDE:
@@ -368,14 +382,29 @@ akt1 <- left_join(akt1, midpoints,copy = TRUE)
 akt1 <- akt1 %>% rename(LATITUDE = SI_LATI, LONGITUDE = SI_LONG) %>% select(-ID, RECTANGLE)
 
 # Extract valid level 6 metiers 
-valid_metiers <<- data.table::fread("https://raw.githubusercontent.com/ices-eg/RCGs/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv")$Metier_level6
-valid_metiers <<- as.data.frame(valid_metiers)
+# valid_metiers <<- data.table::fread("https://raw.githubusercontent.com/ices-eg/RCGs/master/Metiers/Reference_lists/RDB_ISSG_Metier_list.csv")$Metier_level6
+# valid_metiers <<- as.data.frame(valid_metiers)
+
+# Extract valid level 6 metiers 
+metier_url <- "https://raw.githubusercontent.com/ices-eg/ICES-VMS-and-Logbook-Data-Call/main/resources/RDB_ISSG_Metier_list.csv"
+## we have moved the metier list to the VMS data call github, to avoid the risk of changes
+
+metier_table <- tryCatch(
+  data.table::fread(metier_url),
+  error = function(e) stop("Failed to fetch metier reference list: ", e$message)
+)
+
+stopifnot("Metier_level6" %in% names(metier_table))
+valid_metiers <- data.frame(valid_metiers = metier_table$Metier_level6)
+
 
 # Check for any metiers that are not valid
 metier <- akt1 %>% dplyr::select(METIER) %>% distinct()
 metier_check <- metier %>% left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
 missing <- metier_check %>% filter(is.na(valid_metiers))
-print(missing)
+
+missing |> flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::set_caption( "Metiers in AKT1 that are not valid")
 
 # JCD: need to match SAS methodology
 # Change the needed metiers into new format
@@ -399,16 +428,20 @@ akt1  <- akt1 |>
               FROM > 0 & TO != Inf ~ paste0(METIER5, "_", FROM, "-", TO, "_0_0"),
               (MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA") & !METIER4 %in% c("LLD","LLS","MIS","LHP")~ paste0(METIER5,"_>0_0_0"),
               (MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
-            )
+            ) |>
+            select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS, -LAHTOPVM, -LAHTOAIKA, -PALUUPVM, -PALUUAIKA, -LAHTO, -PALUU)
 
 # akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
 # akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
 
 # AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
 
-akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
+akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> flextable::autofit() |> 
+  flextable::theme_zebra() |>
+  flextable::set_caption( "Mesh size to metier conversion AKT1")
 
 # load sas data
+# NEW FILE HERE ####
 sas <- readRDS(file = file.path(gsub("2026", "2025",path_der),"logbook_2013_15.rds")) |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
   select(YEAR, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, 
@@ -430,7 +463,10 @@ sas <- readRDS(file = file.path(gsub("2026", "2025",path_der),"logbook_2013_15.r
 akt1_all <- rbind(akt1, sas)
 
 #just checking data types
-sapply(akt1_all, class)
+as.data.frame(sapply(akt1_all, class)) |> rownames_to_column() |> rename(format = 2) |> 
+  flextable::flextable() |> 
+  flextable::theme_zebra() |>
+  flextable::set_caption( "Column formatting of AKT1_ALL")
 
 #cast QUARTER as integer
 akt1_all$QUARTER <- as.integer(akt1_all$QUARTER)
@@ -471,8 +507,24 @@ akt1_all <- akt1_all |> mutate(
   TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE),
   GEAR_TYPE = if_else(GEAR_TYPE == "MIS", "NK", GEAR_TYPE))
 
-akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
+akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> 
+  flextable::autofit() |> flextable::autofit() |> 
+  flextable::theme_zebra() |>
+  flextable::set_caption( "Mesh size to metier conversion AKT1_all")
 
+
+metier <- akt1_all %>% dplyr::select(METIER) %>% distinct()
+metier_check <- metier %>% left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
+missing <- metier_check %>% filter(is.na(valid_metiers))
+
+missing |> flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::set_caption( "Metiers in AKT1_all that are not valid")
+
+```
+
+
+
+```{r clean_capacity}
 # clean against capacity table
 kap <- kapasiteetti %>% filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) %>% select(
   YEAR = VUOSI,
