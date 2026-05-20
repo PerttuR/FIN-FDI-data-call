@@ -2,6 +2,7 @@
 db_params*.R
 #RDS files
 *.rds
+*.Renviron
 # Mongo params
 mongo_params.R
 # Data files
