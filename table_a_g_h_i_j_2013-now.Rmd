@@ -8,9 +8,11 @@ author:
 - Antti Sykkö
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  word_document: default
   pdf_document:
     latex_engine: xelatex
-  # word_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 
 
@@ -50,14 +52,14 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx2)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
 
 # memory hungry packages and rarely used packages, need to be prefixed! e.g. sf::
 # pacman::p_install seems to have a bug, so use base R instead
-pkg_list <- c("icesVocab")
+pkg_list <- c("icesVocab","flextable", "conflicted")
 
 to_install <- pkg_list[!pkg_list %in% rownames(installed.packages())]
 
@@ -109,11 +111,14 @@ knitr::opts_knit$set(root.dir = path)
 
 ```{r import}
 source(file.path(path, "db.R"))
+source("spatial.R")
 ```
 
-# Run code
+# Data preparation
 
-```{r}
+## Import data
+
+```{r import_data}
 ## Read in data
 ### JCD: get newest postgres schema date ####
 table.list <- list.dbTable("kake_siirto")[,1] |> as.character(table)
@@ -154,12 +159,24 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
+
+kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
+  pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
+  flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra()
+
 # TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
 
 # Discards excel
-discards <- read.xlsx(file.path(path_orig, "Vaurioitetut lohet 2016-2024.xlsx"))
+# NEW FILE HERE ####
+discards <- read.xlsx(file.path(gsub("2026", "2025", path_orig), "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
 
+
+discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |> 
+  pivot_wider(names_from = TARGET_ASSEMBLAGE, values_from = n) |>
+  flextable::flextable() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |> flextable::theme_zebra()
+  
 #Table A years 2013-2015 - see import_sas_metier_2013-15.R
 # tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
 # tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
@@ -190,153 +207,156 @@ aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
 # Select and mutate all the needed variables for tables H and I ####
 # We seem to be missing "SVT_KG_PLE" and "SVT_KG_WHG"
 
-akt1 <- aktiviteetti_all %>% 
-  select(YEAR = KALASTUSVUOSI,
-         ULKOINENTUNNUS,
-         KALASTUSPAIVAT,
-         MERIPAIVAT,
-         PAAKONETEHO,
-         VETOISUUS,
-         KALASTUSAIKAHH,
-         LAHTOPVM, LAHTOAIKA,   # need to create timestamp and difference in hours
-         PALUUPVM, PALUUAIKA,
-         FT_REF, #trip id
-         MONTH = kalastus_kk,
-         VESSEL_LENGTH = VLENGTH_AER_NEW,
-         FISHING_TECH = FT,
-         GEAR_TYPE = GEAR,
-         TARGET_ASSEMBLAGE = LEVEL5,
-         MESH_SIZE = SILMAKOKO,
-         PYYDYS,
-         METIER,
-         ICES,
-         contains("SVT_KG_"),    # LE_KG_ if SVT_KG_ is missing ???
-         contains("SVT_VALUE_"), # LE_VALUE_ if SVT_KG is missing ???
-         -contains("SVT_KG_IND_"),
-         -contains("SVT_KG_HUC_"),
-         -contains("SVT_VALUE_HUC_"),
-         -contains("SVT_VALUE_IND_"),
-         RECTANGLE) %>% 
-  mutate(
-    COUNTRY = "FIN",
-    QUARTER = case_when(
-      MONTH %in% c("01","02","03") ~ 1,
-      MONTH %in% c("04","05","06") ~ 2,
-      MONTH %in% c("07","08","09") ~ 3,
-      MONTH %in% c("10","11","12") ~ 4),
-    TARGET_ASSEMBLAGE = case_when(
-      TARGET_ASSEMBLAGE == "Small pelagic" ~ "SPF",
-      TARGET_ASSEMBLAGE == "Activity missing" ~ "NK",
-      TARGET_ASSEMBLAGE == "Freshwater" ~ "FWS",
-      TARGET_ASSEMBLAGE == "Anadromous" ~ "ANA",
-      TARGET_ASSEMBLAGE == "Finfish" ~ "FIF"),
-    TARGET_ASSEMBLAGE = replace_na(TARGET_ASSEMBLAGE, "NK"),
-    FISHING_TECH = case_when(
-      is.na(FISHING_TECH) & (GEAR_TYPE == "LLS" | GEAR_TYPE == "LLD") ~ "PG",
-      TRUE ~ FISHING_TECH
-    ),
-    MESH_SIZE_RANGE = case_when(
-      FISHING_TECH == "TM" & MESH_SIZE < 16 ~ "00D16",
-      FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
-      FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ "32D90",
-      FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ "90D105",
-      FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ "105D110",
-      FISHING_TECH == "TM" & 110 <= MESH_SIZE ~ "110DXX",
-      FISHING_TECH == "PG" & MESH_SIZE < 16 ~ "00D16",
-      FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
-      FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ "32D90",
-      FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ "90D110",
-      FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ "110D157",
-      FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ "157DXX",
-      #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
-      is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ "16D32",
-      is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ "32D90",
-      is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ "90D110",
-      is.na(MESH_SIZE) & PYYDYS == 13 ~ "110D157",
-      is.na(MESH_SIZE) & PYYDYS == 22 ~ "157DXX",
-      is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
-      TRUE ~ "NK"),
-    # add mesh size range to se for metier cleaning
-    FROM = case_when(
-      FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 0,
-      FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
-      FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 32,
-      FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ 90,
-      FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ 105,
-      FISHING_TECH == "TM" & 110 <= MESH_SIZE ~  110,
-      FISHING_TECH == "PG" & MESH_SIZE < 16 ~ 0,
-      FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
-      FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 32,
-      FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ 90,
-      FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ 110,
-      FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ 157,
-      #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
-      is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 16,
-      is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 32,
-      is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ 90,
-      is.na(MESH_SIZE) & PYYDYS == 13 ~ 110,
-      is.na(MESH_SIZE) & PYYDYS == 22 ~ 157,
-      is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 16,
-      TRUE ~ NA),
-    TO = case_when(
-      FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 15,
-      FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 31,
-      FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 89,
-      FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ 104,
-      FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ 109,
-      FISHING_TECH == "TM" & 110 <= MESH_SIZE ~ Inf,
-      FISHING_TECH == "PG" & MESH_SIZE < 16 ~ 15,
-      FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 31,
-      FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 89,
-      FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ 109,
-      FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ 156,
-      FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ Inf,
-      #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
-      is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 31,
-      is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 89,
-      is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ 109,
-      is.na(MESH_SIZE) & PYYDYS == 13 ~ 156,
-      is.na(MESH_SIZE) & PYYDYS == 22 ~ Inf,
-      is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 31,
-      TRUE ~ NA),
-    ICES = case_when(
-      ICES == 19 ~ 29, # bugi, korjataan myöhemmin dcprodiin!!
-      TRUE ~ ICES
-    ),
-    METIER_7 = "NA",
-    SUPRA_REGION = "NAO",
-    SUB_REGION = paste("27.3.d.", ICES, sep = ""),
-    EEZ_INDICATOR = "NA",
-    GEO_INDICATOR = "NGI",
-    SPECON_TECH = "NA",
-    DEEP = "NA",
-    RECTANGLE_TYPE = "05*1",
-    C_SQUARE = "NA",
-    LAHTO =as.POSIXct(paste(LAHTOPVM, LAHTOAIKA), format="%Y-%m-%d %H:%M"),
-    PALUU =as.POSIXct(paste(PALUUPVM, PALUUAIKA), format="%Y-%m-%d %H:%M"),
-    HRSEA = as.integer(difftime(PALUU, LAHTO, unit = 'hour')),
-    HRSEA = if_else(HRSEA > 0 & HRSEA <= 200, HRSEA, NA)) %>% 
-  select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS, -LAHTOPVM, -LAHTOAIKA, -PALUUPVM, -PALUUAIKA, -LAHTO, -PALUU
-         ) %>% mutate(
-    SUB_REGION = case_when(
-      SUB_REGION == "27.3.d.28" ~ "27.3.d.28.2", #Vaihtoehtoinen 28.1 ja 28.2 ja jälkimmäinen pääallas, jolla Suomi kalastaa
-      TRUE ~ SUB_REGION
-    )) #tehdään tarkaste myöhemmin!
+akt1 <- aktiviteetti_all |> 
+          select(YEAR = KALASTUSVUOSI,
+                 ULKOINENTUNNUS,
+                 KALASTUSPAIVAT,
+                 MERIPAIVAT,
+                 PAAKONETEHO,
+                 VETOISUUS,
+                 KALASTUSAIKAHH,
+                 LAHTOPVM, LAHTOAIKA,   # need to create timestamp and difference in hours
+                 PALUUPVM, PALUUAIKA,
+                 FT_REF, #trip id
+                 MONTH = kalastus_kk,
+                 VESSEL_LENGTH = VLENGTH_AER_NEW,
+                 FISHING_TECH = FT,
+                 GEAR_TYPE = GEAR,
+                 TARGET_ASSEMBLAGE = LEVEL5,
+                 MESH_SIZE = SILMAKOKO,
+                 PYYDYS,
+                 METIER,
+                 ICES,
+                 contains("SVT_KG_"),    # LE_KG_ if SVT_KG_ is missing ???
+                 contains("SVT_VALUE_"), # LE_VALUE_ if SVT_KG is missing ???
+                 -contains("SVT_KG_IND_"),
+                 -contains("SVT_KG_HUC_"),
+                 -contains("SVT_VALUE_HUC_"),
+                 -contains("SVT_VALUE_IND_"),
+                 RECTANGLE) |>  
+          mutate(
+            COUNTRY = "FIN",
+            QUARTER = case_when(
+              MONTH %in% c("01","02","03") ~ 1,
+              MONTH %in% c("04","05","06") ~ 2,
+              MONTH %in% c("07","08","09") ~ 3,
+              MONTH %in% c("10","11","12") ~ 4),
+            TARGET_ASSEMBLAGE = case_when(
+              TARGET_ASSEMBLAGE == "Small pelagic" ~ "SPF",
+              TARGET_ASSEMBLAGE == "Activity missing" ~ "NK",
+              TARGET_ASSEMBLAGE == "Freshwater" ~ "FWS",
+              TARGET_ASSEMBLAGE == "Anadromous" ~ "ANA",
+              TARGET_ASSEMBLAGE == "Finfish" ~ "FIF"),
+            TARGET_ASSEMBLAGE = replace_na(TARGET_ASSEMBLAGE, "NK"),
+            FISHING_TECH = case_when(
+              is.na(FISHING_TECH) & (GEAR_TYPE == "LLS" | GEAR_TYPE == "LLD") ~ "PG",
+              TRUE ~ FISHING_TECH),
+            MESH_SIZE_RANGE = case_when(
+              FISHING_TECH == "TM" & MESH_SIZE < 16 ~ "00D16",
+              FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
+              FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ "32D90",
+              FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ "90D105",
+              FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ "105D110",
+              FISHING_TECH == "TM" & 110 <= MESH_SIZE ~ "110DXX",
+              FISHING_TECH == "PG" & MESH_SIZE < 16 ~ "00D16",
+              FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ "16D32",
+              FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ "32D90",
+              FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ "90D110",
+              FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ "110D157",
+              FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ "157DXX",
+              #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+              is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ "16D32",
+              is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ "32D90",
+              is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ "90D110",
+              is.na(MESH_SIZE) & PYYDYS == 13 ~ "110D157",
+              is.na(MESH_SIZE) & PYYDYS == 22 ~ "157DXX",
+              is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ "16D32",
+              TRUE ~ "NK"),
+            # add mesh size range to se for metier cleaning
+            FROM = case_when(
+              FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 0,
+              FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
+              FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 32,
+              FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ 90,
+              FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ 105,
+              FISHING_TECH == "TM" & 110 <= MESH_SIZE ~  110,
+              FISHING_TECH == "PG" & MESH_SIZE < 16 ~ 0,
+              FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 16,
+              FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 32,
+              FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ 90,
+              FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ 110,
+              FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ 157,
+              #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+              is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 16,
+              is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 32,
+              is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ 90,
+              is.na(MESH_SIZE) & PYYDYS == 13 ~ 110,
+              is.na(MESH_SIZE) & PYYDYS == 22 ~ 157,
+              is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 16,
+              TRUE ~ NA),
+            TO = case_when(
+              FISHING_TECH == "TM" & MESH_SIZE < 16 ~ 15,
+              FISHING_TECH == "TM" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 31,
+              FISHING_TECH == "TM" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 89,
+              FISHING_TECH == "TM" & 90 <= MESH_SIZE & MESH_SIZE < 105 ~ 104,
+              FISHING_TECH == "TM" & 105 <= MESH_SIZE & MESH_SIZE < 110 ~ 109,
+              FISHING_TECH == "TM" & 110 <= MESH_SIZE ~ Inf,
+              FISHING_TECH == "PG" & MESH_SIZE < 16 ~ 15,
+              FISHING_TECH == "PG" & 16 <= MESH_SIZE & MESH_SIZE < 32 ~ 31,
+              FISHING_TECH == "PG" & 32 <= MESH_SIZE & MESH_SIZE < 90 ~ 89,
+              FISHING_TECH == "PG" & 90 <= MESH_SIZE & MESH_SIZE < 110 ~ 109,
+              FISHING_TECH == "PG" & 110 <= MESH_SIZE & MESH_SIZE < 157 ~ 156,
+              FISHING_TECH == "PG" & 157 <= MESH_SIZE ~ Inf,
+              #HUOM, jos silmakoko puuttuu (rannikkokalastus) niin laitetaan jaottelu Pirkon koodien mukaan
+              is.na(MESH_SIZE) & PYYDYS %in% c(5, 16,17,18,19,20,21) ~ 31,
+              is.na(MESH_SIZE) & PYYDYS %in% c(8,9,10,44,45,32) ~ 89,
+              is.na(MESH_SIZE) & PYYDYS %in% c(11,12) ~ 109,
+              is.na(MESH_SIZE) & PYYDYS == 13 ~ 156,
+              is.na(MESH_SIZE) & PYYDYS == 22 ~ Inf,
+              is.na(MESH_SIZE) & GEAR_TYPE %in% c("FPN", "FYK", "SSC") ~ 31,
+              TRUE ~ NA),
+            ICES = case_when(
+              ICES == 19 ~ 29, # bugi, korjataan myöhemmin dcprodiin!!
+              TRUE ~ ICES),
+            METIER_7 = "NA",
+            SUPRA_REGION = "NAO",
+            SUB_REGION = paste("27.3.d.", ICES, sep = ""),
+            EEZ_INDICATOR = "NA",
+            GEO_INDICATOR = "NGI",
+            SPECON_TECH = "NA",
+            DEEP = "NA",
+            RECTANGLE_TYPE = "05*1",
+            C_SQUARE = "NA",
+            LAHTO =as.POSIXct(paste(LAHTOPVM, LAHTOAIKA), format="%Y-%m-%d %H:%M"),
+            PALUU =as.POSIXct(paste(PALUUPVM, PALUUAIKA), format="%Y-%m-%d %H:%M"),
+            HRSEA = as.integer(difftime(PALUU, LAHTO, unit = 'hour')),
+            HRSEA = if_else(HRSEA > 0 & HRSEA <= 200, HRSEA, NA)) |>  
+        # select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS, -LAHTOPVM, -LAHTOAIKA, -PALUUPVM, -PALUUAIKA, -LAHTO, -PALUU) |>  
+        mutate(
+          SUB_REGION = case_when(
+            SUB_REGION == "27.3.d.28" ~ "27.3.d.28.2", #Vaihtoehtoinen 28.1 ja 28.2 ja jälkimmäinen pääallas, jolla Suomi kalastaa
+            TRUE ~ SUB_REGION
+          )) #tehdään tarkaste myöhemmin!
 
-# akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |> 
-#   mutate(TAG = case_when(
-#     HRSEA < 0 ~ "NEGATIVE",
-#     HRSEA == 0 ~ "ZERO",
-#     HRSEA > 0 & HRSEA <= 200 ~ "POSITIVE <= 200",
-#     HRSEA > 200 ~ "TOO BIG > 200"
-#   )) |>
-#   count(FISHING_TECH, TAG) |> flextable() |> autofit()
+
+akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |> 
+  mutate(TAG = case_when(
+    HRSEA < 0 ~ "NEGATIVE",
+    HRSEA == 0 ~ "ZERO",
+    HRSEA > 0 & HRSEA <= 200 ~ "POSITIVE <= 200",
+    HRSEA > 200 ~ "TOO BIG > 200"
+  )) |>
+  count(FISHING_TECH, TAG) |> flextable::flextable() |> flextable::autofit()
 
 ggplot(akt1, aes(x=HRSEA)) + geom_histogram() + facet_wrap(~FISHING_TECH) + ggtitle("DCPROD HRSEA by fishing tech")
+```
 
+
+
+```{r spatial}
 # Create variables LATITUDE and LONGITUDE:
 # .. define coordinates 
-source("spatial.R")
+
 
 midpoints <- latlon(akt1$RECTANGLE,midpoint=TRUE)
 
@@ -389,7 +409,7 @@ akt1  <- akt1 |>
 akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable() |> autofit()
 
 # load sas data
-sas <- readRDS(file = paste0(path_der,"logbook_2013_15.rds")) |>
+sas <- readRDS(file = file.path(gsub("2026", "2025",path_der),"logbook_2013_15.rds")) |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
   select(YEAR, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, 
          VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
