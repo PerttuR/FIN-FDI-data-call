@@ -117,6 +117,8 @@ source(file.path(path, "db.R"))
 
 # Data preparation
 
+## Table A and IC data
+
 ```{r table_a_ic}
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
