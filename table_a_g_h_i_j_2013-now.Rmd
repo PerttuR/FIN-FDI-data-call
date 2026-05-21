@@ -765,7 +765,7 @@ table_A <- a11 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH,
 # 
 # 
 # # Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_A, file = paste0(path_der,"table_A.rds"))
+saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
 # 
 # # Write the resulting table A
  openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
