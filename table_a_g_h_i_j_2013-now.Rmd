@@ -93,7 +93,10 @@ path_out  <- here::here("results", run.year)
 path_orig  <- here::here("orig") 
 plotPath  <- here::here("Plots", run.year)
 
-# Ensure outpath exists
+# Ensure path exists
+ifelse(!dir.exists(path_der), 
+          dir.create(path_der, recursive=TRUE), FALSE)
+
 ifelse(!dir.exists(path_out), 
           dir.create(path_out, recursive=TRUE), FALSE)
 
