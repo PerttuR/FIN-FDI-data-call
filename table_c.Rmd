@@ -1,0 +1,156 @@
+---
+title: "Table c"
+author:
+- Perttu Rantanen
+- Petri Sarvamaa
+- Mira Sustar
+- Joanne Demmler
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  word_document: default
+  pdf_document:
+    latex_engine: xelatex
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```
+Creation Date: JUL-2019 (Petri and Perttu)
+Updated: April 2022 (Perttu)
+Updated: Jun 2023 (Perttu, Petri)
+Updated: Jun 2024 (Mira, Perttu, Petri)
+updated: Jun 2025 (Perttu, Joanne and Petri)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings=FALSE, errors=FALSE)
+rStudio=TRUE
+```
+
+```{r environment, eval=rStudio}
+# only works in R Studio (--> Restart R)
+rm(list=ls())
+invisible(gc)
+#.rs.restartR()
+```
+
+# Prep
+## Load libraries and functions
+
+```{r libraries_source}
+## TO DO
+## check which packages are actually needed in this script !!!
+
+# Check if installed, install if missing, and load pacman
+if (!require("pacman", quietly = TRUE)) {
+  install.packages("pacman")
+}
+
+# check installation and load libraries
+# tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, mongolite)
+
+# if installation is from github repo instead
+pacman::p_load_gh("lukefi-private/luketools")
+
+# memory hungry packages and rarely used packages, need to be prefixed! e.g. sf::
+# pacman::p_install seems to have a bug, so use base R instead
+pkg_list <- c("icesVocab","flextable", "conflicted")
+
+to_install <- pkg_list[!pkg_list %in% rownames(installed.packages())]
+
+if (length(to_install)) {
+  install.packages(to_install)
+}
+
+# Force functions: select, filter and mutate from dplyr::
+conflicted::conflicts_prefer(
+  dplyr::select,
+  dplyr::filter,
+  dplyr::mutate,
+  dplyr::lag
+)
+
+
+```
+
+## Set paths
+
+```{r output}
+# ...to display numeric values normally, i.e., not scientific notation 
+options(scipen = 999)
+
+run.year = 2026
+years <- seq(2013, run.year-1)
+
+path <- here::here()
+path_der  <- here::here("der", run.year) 
+path_out  <- here::here("results", run.year) 
+path_orig  <- here::here("orig") 
+plotPath  <- here::here("Plots", run.year)
+
+# Ensure outpath exists
+ifelse(!dir.exists(path_out), 
+          dir.create(path_out, recursive=TRUE), FALSE)
+
+ifelse(!dir.exists(path_orig), 
+          dir.create(path_orig, recursive=TRUE), FALSE)
+
+ifelse(!dir.exists(plotPath), 
+          dir.create(plotPath, recursive=TRUE), FALSE)
+#Ensure that wd is in path from now on
+knitr::opts_knit$set(root.dir = path)
+
+```
+
+## Get saved local data
+
+```{r import}
+source(file.path(path, "db.R"))
+```
+
+# Data preparation
+
+```{r get_table_a}
+#-------------------------------------------------------------------------------
+#                       1. Import data for 2023 C table needs                    
+#-------------------------------------------------------------------------------
+
+# import table A
+table_A <- readRDS(file.path(path_der, "table_A.rds"))
+
+
+#-------------------------------------------------------------------------------
+#                   2. TABLE C (NAO OFR. Discards age data)                       
+#-------------------------------------------------------------------------------
+
+table_C <- table_A |> 
+  select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
+  filter(SPECIES %in% c("HER", "SPR", "SAL")) |>
+  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) |>
+  summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
+            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
+            DISCARD_CV = "NK",
+            DISCARD_CI_UPPER = "NK",
+            DISCARD_CI_LOWER = "NK",
+            TOTAL_TRIPS = "NK",
+            TOTAL_SAMPLED_TRIPS = "NK",
+            NO_AGE_MEASUREMENTS = "NK",
+            AGE_MEASUREMENTS_PROP = "NA",
+            MIN_AGE = "NK",
+            MAX_AGE = "NK",
+            AGE = "NK",
+            NO_AGE = "NK",
+            MEAN_WEIGHT = "NK",
+            WEIGHT_UNIT = "NK",
+            MEAN_LENGTH = "NK",
+            LENGTH_UNIT = "NK",
+            .groups = "drop"
+  )
+
+
+openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
+
+```
