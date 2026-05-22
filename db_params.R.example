@@ -1,7 +1,7 @@
 # Example db_params file, copy to db_params.R and fill in the correct values
 # https://github.com/lukefi-private/luketools
 # library(luketools)
-# handle_credentials(method = "set", service = "NAME")
+# handle_credentials(method = "set", service = "SERVICE")
 # 
 # setup for host
 # library(usethis)
@@ -10,8 +10,8 @@
 # HOST_DB2PROD = your_host_name_here
 # usethis::use_git_ignore(".Renviron")
 
-dbname <- "other"
-schema <- "otherschema"
-host <- Sys.getenv("HOST_AZURE_POSTGRES", unset = NA_character_)
+dbname <- "name"
+schema <- "schema"
+host <- Sys.getenv("HOST_DB2PROD", unset = NA_character_)
 port <- 5432
-service <- "otherservice"
+service <- "SERVICE"
