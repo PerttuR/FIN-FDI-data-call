@@ -149,9 +149,9 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 #table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 ```
 
-## Suomu cloud data
+## Suomu data
 
-```{r suomu-cloud-data}
+```{r suomu-data}
 #-------------------------------------------------------------------------------
 #                       2. SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
@@ -161,8 +161,6 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
 
 # import data from samples (Suomu), length classes from national DCF database
-
-source("db.R")
 
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
