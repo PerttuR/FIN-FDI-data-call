@@ -117,135 +117,49 @@ Table B data is from Finish eu-dcf sampling database Suomu sampling frame data f
 
 ## Get Suomu data
 
-## SUOMU-CLOUD data
-
 ```{r suomu-cloud data}
-library(mongolite)
-library(dplyr)
-#library(openxlsx)
-
-get.suomu.cloud.data <- function() {
-
-  source(file.path(path, "mongo.R"))
-
-  # does this need to be connected through ind --> batch --> fisher as in RDBES???
-  
-  
-  
-  sampling_result <- read.mongoCollection("sampling_result")
-  sampling_source <- read.mongoCollection("sampling_source")  
-  sampling_source_weight <- read.mongoCollection("sampling_source_weight") 
-  
-  species <- read.mongoCollection("species")
-  species <- species$find(fields = "{}")
-  species <- species |> rename("species_id" = "_id") |> distinct(laji, .keep_all = TRUE)
-  species$laji <- as.character(species$laji)
-
-  gear <- read.mongoCollection("gear")
-  seurantataulukot <- read.mongoCollection("tracking_metier_name")
-  tracking_metier <- read.mongoCollection("tracking_metier")  
-  tracking_species <- read.mongoCollection("tracking_species")    
-  metier <- read.mongoCollection("metier")   
-  trip <- read.mongoCollection("trip") 
-  haul <- read.mongoCollection("haul") 
-  
-  # data need to be collated to data.frame/tibble here !!!
-  
-  
-  
-  
-  #set reference year PSU counts to sampling year. 
-  sampling_source_fixed_year <- sampling_source |> mutate(year = year+1)
-  
-  #lottery status levels map table:
-  sampling_result_status_map <- data.frame(key=seq(from=0,to=7),value=c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"))
-  
-  #join status to sampling PSU source data
-  sampling_result_source_fixed_year <- sampling_result |>
-    left_join(sampling_source_fixed_year, by=c("sample_source_fk"="id")) |>
-    left_join(sampling_result_status_map, by=c("status" = "key")) |> mutate(status = value)
-  
-  
-  #lottery machine was operational since 2018 Q4 in SD30 and in all SD since 2019
-  trip_selected <- trip |> filter(!is.na(target_species_fk) & year >= 2018)
-  trip_haul <- trip_selected |> left_join(haul, by=c("id" = "trip_fk"))
-  
-  #join trip haul and metier to form SAMPLING_FRAME column:
-  #-----
-  trip_haul_metier <- trip_haul |> left_join(metier, by=c("metier_fk" = "id"))
-  
-  species_gear_code <- trip_haul_metier |> select(target_species_fk, level5)
-  
-  species_gear_code_tally <- species_gear_code |> group_by(target_species_fk, level5) |> tally()
-  
-  species_gear_code_tally2 <- species_gear_code_tally |> top_n(1, n)
-  
-  species_gear_code_tally3 <- species_gear_code_tally2 |> mutate(frame = case_when(
-    (target_species_fk == 22 | target_species_fk == 45) & (level5 == "OTM_SPF" | level5 == "PTM_SPF") ~ "Pelagic trawl(OTM/PTM)",
-    target_species_fk == 1 & (level5 == "OTM_FWS" | level5 == "PTM_FWS") ~ "Freshwater trawl(Vendace)",
-    TRUE ~ ""))
-  
-  species_metier_map <- species_gear_code_tally3
-
-  }
-
-suomu_cloud_data <- get.suomu.cloud.data()
-
-suomu_cloud_data |> group_by(project_number, project_name) |> tally() |> print()
-suomu_cloud_data <- suomu_cloud_data |> filter(project_number == 0)
-
-tableRowSC <- data.frame(c("suomu-cloud"), c(nrow(suomu_cloud_data)))
-names(tableRowSC) <- c("table", "rows")
-tableRowSC
-```
-
-<!--
-# old code here
-
-```{r suomu}
-
-#Fetch sampling lottery tables from SUOMU sampling database
+# Fetch sampling lottery tables from SUOMU sampling database
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
 sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
 species <- read.dbTable("suomu","species")
 gear <- read.dbTable("suomu","gear")
-#follow up tables from database
+# follow up tables from database
 seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
 tracking_metier <- read.dbTable("suomu","tracking_metier")
 tracking_species <- read.dbTable("suomu", "tracking_species");
 metier <- read.dbTable("suomu","metier")
-#get trip and haul data from database
+# get trip and haul data from database
 trip <- read.dbTable("suomu", "trip")
 haul <- read.dbTable("suomu", "haul")
 
-#set reference year PSU counts to sampling year. 
-sampling_source_fixed_year <- sampling_source |> mutate(year = year+1)
+# set reference year PSU counts to sampling year. 
+sampling_source_fixed_year <- sampling_source %>% mutate(year = year+1)
 
-#lottery status levels map table:
+# lottery status levels map table:
 sampling_result_status_map <- data.frame(key=seq(from=0,to=7),value=c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"))
 
-#join status to sampling PSU source data
-sampling_result_source_fixed_year <- sampling_result |>
-  left_join(sampling_source_fixed_year, by=c("sample_source_fk"="id")) |>
-  left_join(sampling_result_status_map, by=c("status" = "key")) |> mutate(status = value)
+# join status to sampling PSU source data
+sampling_result_source_fixed_year <- sampling_result %>%
+  left_join(sampling_source_fixed_year, by=c("sample_source_fk"="id")) %>%
+  left_join(sampling_result_status_map, by=c("status" = "key")) %>% mutate(status = value)
 
 
-#lottery machine was operational since 2018 Q4 in SD30 and in all SD since 2019
-trip_selected <- trip |> filter(!is.na(target_species_fk) & year >= 2018)
-trip_haul <- trip_selected |> left_join(haul, by=c("id" = "trip_fk"))
+# lottery machine was operational since 2018 Q4 in SD30 and in all SD since 2019
+trip_selected <- trip %>% filter(!is.na(target_species_fk) & year >= 2018)
+trip_haul <- trip_selected %>% left_join(haul, by=c("id" = "trip_fk"))
 
-#join trip haul and metier to form SAMPLING_FRAME column:
+# join trip haul and metier to form SAMPLING_FRAME column:
 #-----
-trip_haul_metier <- trip_haul |> left_join(metier, by=c("metier_fk" = "id"))
+trip_haul_metier <- trip_haul %>% left_join(metier, by=c("metier_fk" = "id"))
 
-species_gear_code <- trip_haul_metier |> select(target_species_fk, level5)
+species_gear_code <- trip_haul_metier %>% select(target_species_fk, level5)
 
-species_gear_code_tally <- species_gear_code |> group_by(target_species_fk, level5) |> tally()
+species_gear_code_tally <- species_gear_code %>% group_by(target_species_fk, level5) %>% tally()
 
-species_gear_code_tally2 <- species_gear_code_tally |> top_n(1, n)
+species_gear_code_tally2 <- species_gear_code_tally %>% top_n(1, n)
 
-species_gear_code_tally3 <- species_gear_code_tally2 |> mutate(frame = case_when(
+species_gear_code_tally3 <- species_gear_code_tally2 %>% mutate(frame = case_when(
   (target_species_fk == 22 | target_species_fk == 45) & (level5 == "OTM_SPF" | level5 == "PTM_SPF") ~ "Pelagic trawl(OTM/PTM)",
   target_species_fk == 1 & (level5 == "OTM_FWS" | level5 == "PTM_FWS") ~ "Freshwater trawl(Vendace)",
   TRUE ~ ""))
@@ -253,10 +167,10 @@ species_gear_code_tally3 <- species_gear_code_tally2 |> mutate(frame = case_when
 species_metier_map <- species_gear_code_tally3
 ```
 
--->
 
+## Adding variables and save
 
-```{r}
+```{r add_vars}
 # tekstiä
 
 #wp_gears <- c("OTM", "PTM", "FYK", "GNS")
