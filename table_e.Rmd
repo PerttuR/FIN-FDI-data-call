@@ -234,9 +234,9 @@ openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", c
 ```
 
 
-## Suomu cloud data
+## Suomu data
 
-```{r suomu-cloud-data}
+```{r suomu-data}
 
 ## SUOMU sample data for age numbers
 
