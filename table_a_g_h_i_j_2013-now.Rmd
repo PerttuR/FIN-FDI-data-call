@@ -468,6 +468,7 @@ akt1_all <- rbind(akt1, sas)
 #just checking data types
 as.data.frame(sapply(akt1_all, class)) |> rownames_to_column() |> rename(format = 2) |> 
   flextable::flextable() |> 
+  flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::set_caption( "Column formatting of AKT1_ALL")
 
@@ -514,7 +515,7 @@ akt1_all <- akt1_all |> mutate(
   GEAR_TYPE = if_else(GEAR_TYPE == "MIS", "NK", GEAR_TYPE))
 
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> 
-  flextable::autofit() |> flextable::autofit() |> 
+  flextable::autofit() |> 
   flextable::theme_zebra() |>
   flextable::set_caption( "Mesh size to metier conversion AKT1_all")
 
@@ -523,8 +524,9 @@ metier <- akt1_all |> dplyr::select(METIER) |> distinct()
 metier_check <- metier |> left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
 missing <- metier_check |> filter(is.na(valid_metiers))
 
-missing |> flextable::flextable() |> flextable::theme_zebra() |>
-  flextable::set_caption( "Metiers in AKT1_all that are not valid")
+# final test
+# missing |> flextable::flextable() |> flextable::theme_zebra() |>
+#  flextable::set_caption( "Metiers in AKT1_all that are not valid")
 
 ```
 
@@ -545,6 +547,12 @@ dup <- kap |>
   group_by(YEAR, ULKOINENTUNNUS) |> 
   filter(n()>1)
 
+dup |> ungroup() |>  select(YEAR, ULKOINENTUNNUS) |> distinct() |> 
+  count(YEAR) |> flextable::flextable() |> 
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Number of vessels with multiple vessel lengths by year")
+
 kap2 <- kap |> arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
   summarise(VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), 
@@ -555,11 +563,20 @@ akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> left_join(kap2, by
 
 # Aggregating all passive gears to PG
 
-akt1_all2 <- akt1_all2 |> mutate(FISHING_TECH = case_when(
-  FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
-  TRUE ~ FISHING_TECH
-))
+akt1_all2 <- akt1_all2 |> 
+              mutate(FISHING_TECH = case_when(
+                FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
+                TRUE ~ FISHING_TECH
+            ))
 
+
+akt1_all2 |> count(YEAR, FISHING_TECH) |>
+  pivot_wider(values_from = n, names_from =YEAR) |>
+  flextable::flextable() |> 
+  flextable::fontsize(size = 8, part = "all") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::set_caption( "Number of fishing tech by year")
 
 # lookup METIER classs
 # lookup <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |> 
@@ -765,7 +782,13 @@ disc_joined <- a11 |> filter(DISCARDS > 0)
 # # Put the variables in the correct order:
 table_A <- a11 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 # 
-# 
+table_A |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_A), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE A")
 # 
 # # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
@@ -867,6 +890,13 @@ message(paste("Mismatches in TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
 # Put the variables in the correct order:
 table_G <- g4 |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, TOTVES, CONFIDENTIAL)
 
+table_G |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_G), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE G")
 
 # Write the resulting table G
 write.xlsx(table_G, file.path(path_out,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
@@ -937,6 +967,13 @@ h8 <- h7 |> filter(SPECIES != "TOTAL")
 # Put the variables in the correct order:
 table_H <- h8 |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
 
+table_H |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_H), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE H")
 
 # Write the resulting table H
 openxlsx::write.xlsx(table_H, file.path(path_out,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
@@ -964,6 +1001,14 @@ table_I <- i2 |> filter(TOTFISHDAYS > 0) |> mutate(
   CONFIDENTIAL = case_when(
     n2 < 3 ~ "Y",
     n2 >= 3 ~ "N")) |> select(-n2)
+
+table_I |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_I), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE I")
 
 # Write the resulting table I
 openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
@@ -1167,6 +1212,13 @@ j10 <- j9 |> mutate(FISHING_TECH = case_when(
 # Put the variables in the correct order:
 table_J <- j10 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
 
+table_J |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_J), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE J")
 
 # Write the resulting table J
 write.xlsx(table_J, file.path(path_out, "FIN_TABLE_J_CAPACITY.xlsx"), 
