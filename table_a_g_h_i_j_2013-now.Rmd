@@ -12,7 +12,7 @@ output:
   pdf_document:
     latex_engine: xelatex
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 
@@ -463,6 +463,8 @@ sas <- readRDS(file = file.path(gsub("2026", "2025",path_der),"logbook_2013_15.r
          EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, 
          C_SQUARE, HRSEA, LATITUDE, LONGITUDE, metier6_orig, METIER4, METIER5)
 
+# TO DO !!! ####
+# fix vessel length categories first here ####
 akt1_all <- rbind(akt1, sas)
 
 #just checking data types
