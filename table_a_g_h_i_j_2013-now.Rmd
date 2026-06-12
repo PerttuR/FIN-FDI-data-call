@@ -168,12 +168,14 @@ kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(U
   flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra() |>
   flextable::set_caption( "Number of vessels by vessel length in KAPASITEETI")
 
-# TODO ask 2024 data from Pirkko /or Tapsa? to update the excel ####
+# TODO each year ask data from Pirkko to update the excel ####
 
 # Discards excel
 # NEW FILE HERE ####
 discards <- read.xlsx(file.path(gsub("2026", "2025", path_orig), "Vaurioitetut lohet 2016-2024.xlsx"))
 names(discards) <- toupper(names(discards))
+
+discards$DISCARDS_TONNES <- discards$DISCARDS_KG/1000
 
 
 discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |> 
@@ -203,8 +205,8 @@ aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
            TRUE ~ kalastus_kk
          ))
 
-aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
-  pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
+aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_AER_NEW) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
+  pivot_wider(names_from = VLENGTH_AER_NEW, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> flextable::theme_zebra() |>
   flextable::set_caption( "Number of vessels by vessel length in AKTIVITEETTI")
 ```
@@ -676,7 +678,7 @@ a9 <- a8 |> filter(TOTVALLANDG != "NK")
 # -------------- 
 # Add the discard data
 
-discards2 <- discards |> select(-MESH_SIZE_RANGE) |> rename(DISCARDS = DISCARDS_KG) 
+discards2 <- discards |> select(-MESH_SIZE_RANGE) |> rename(DISCARDS = DISCARDS_TONNES) 
 
 # Step 1: Add a row identifier in a9 to preserve row order
 a9 <- a9 |> mutate(row_id = row_number())
