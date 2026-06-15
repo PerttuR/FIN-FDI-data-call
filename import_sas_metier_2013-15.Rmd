@@ -12,7 +12,7 @@ output:
   pdf_document:
     latex_engine: xelatex
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```
@@ -112,6 +112,7 @@ source(file.path(path, "db.R"))
 ## Get functions 
 
 ```{r validate_metier}
+#| eval: true
 #-------------------------------------------------------------------------------
 #
 # Function for METIER validation
@@ -164,6 +165,7 @@ validateMetierOverall <- function(D, codelist) {
   
 }
 
+codelist <- icesVocab::getCodeList("Metier6_FishingActivity", date = NULL)
 ```
 
 ## Data extraction from SAS
@@ -410,12 +412,12 @@ saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15_raw.rds"))
 # invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shorelogs_raw_2013_15", shore_2013_15, overwrite = FALSE))
 ```
 
-### Add DPCROD data
+### Connect to DPCROD
 
-Data saved to DCPROD: species_lookup
+* rerun 2026
 
 ```{r find_dcprod}
-#| eval: false
+#| eval: true
 
 #' #################################
 # DO NOT RUN
@@ -437,20 +439,20 @@ message("Newest schema is from: ", schemadate)
 ## Write combined metier datafiles 2013-2015 output data to Luke LOGBOOK database
 #
 dcprodschema <- paste0(schemadate, "-dcprod")
-
-# SAVEPOINT -------- ####
-# uncomment and save to DB if renewed
-#invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = TRUE))
 ```
 
 ## add metier table
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   2. add vars to 2013.-2015 metier table                  ####              
-#.------------------------------------------------------------------------------
+* rerun 2025 raw data from DCPROD database
+
+```{r add-metier}
+#| eval: true
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
+
+# get 2025 prep data from DB
+metier_2013_15 <- read.dbTable(schema="2025-04-10-dcprod", table="metier_sas_files_2013_15", dbname = "kake_siirto")
+shore_2013_15 <- read.dbTable(schema="2025-04-10-dcprod", table="sas_shore_raw_2013_15", dbname = "kake_siirto")
 
 logbook_13_15 <- metier_2013_15 |> 
                   mutate(
@@ -530,9 +532,7 @@ rm(shore_2013_15); invisible(gc())
 ## correct vessel length
 
 ```{r correct-vessel-length}
-#.------------------------------------------------------------------------------
-#                   3. correct vessel lengths                               ####           
-#.------------------------------------------------------------------------------
+#| eval: true
 
 # we are cross-validation the capacity length categories - if they are different use the
 # ones in kapasiteetti table instead
@@ -552,7 +552,6 @@ tablename <- tablename[length(tablename)-1]
 
 message(paste("Reading table:", tablename))
 
-# !!!HERE!!! ####
 # in kapasittetti there are 
 # duplicate names for the same VUOSI, ULKOINENTUNNUS
 # other duplicates by VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI
@@ -565,8 +564,9 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 
 ## clean logbook
 
-```{r}
-### 3.1 clean logbook ####
+```{r clean-logbook}
+#| eval: true
+
 ship.length <- logbook_13_15 |> select(KALASTUSVUOSI, ALUS, ALUSNIMI, VESSEL_LENGTH) |> 
   mutate(ALUSNIMI = toupper(ALUSNIMI)) |> distinct() |>
   left_join(kapasiteetti, 
@@ -589,17 +589,20 @@ logbook_13_15 <- logbook_13_15 |> rename(length_orig=VESSEL_LENGTH) |>
                     relocate(VESSEL_LENGTH, .after = QUARTER)
 
 # checking records
-logbook_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_hauls=n) |> flextable() |> 
-  set_caption("Check length_orig classes in logbook_13_15")
+logbook_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_hauls=n) |> flextable::flextable() |> 
+  flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
+  flextable::set_caption("Check length_orig classes in logbook_13_15")
 
-logbook_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_hauls=n) |> flextable() |> 
-  set_caption("Check VESSEL_LENGTH classes in logbook_13_15")
+logbook_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_hauls=n) |> flextable::flextable() |>
+    flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
+  flextable::set_caption("Check VESSEL_LENGTH classes in logbook_13_15")
 ```
 
 ## clean shorelogs
 
-```{r}
-### 3.2 clean shorelogs ####
+```{r clean-shorelogs}
+#| eval: true
+
 # missing vessel identifiers
 # only owners can be identified, but there's no way to link to capacity table
 # shorelogs_13_15 |> filter(ALUS == "") |> select(NIMI) |> distinct() |> pull(NIMI) -> tmp
@@ -626,26 +629,39 @@ shorelogs_13_15 <- shorelogs_13_15 |> rename(length_orig=VESSEL_LENGTH, OMISTAJA
   mutate(VESSEL_LENGTH = if_else(VESSEL_LENGTH == "NA", "NK", VESSEL_LENGTH))
 
 # checking records
-shorelogs_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_recs=n) |> flextable() |> 
-  set_caption("Check length_orig classes in shorelogs_13_15")
+shorelogs_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_recs=n) |> flextable::flextable() |> 
+  flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
+  flextable::set_caption("Check length_orig classes in shorelogs_13_15")
 
-shorelogs_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_recs=n) |> flextable() |> 
-  set_caption("Check VESSEL_LENGTH classes in shorelogs_13_15")
+shorelogs_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_recs=n) |> flextable::flextable() |> 
+  flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
+  flextable::set_caption("Check VESSEL_LENGTH classes in shorelogs_13_15")
+
+# ok this needs fixing! (2026)
+
+shorelogs_13_15 <- shorelogs_13_15 |>
+                    mutate(VESSEL_LENGTH = case_when(
+                      VESSEL_LENGTH == "VL0010" ~ "VL0008",
+                      VESSEL_LENGTH == "NK" ~ "VL0008",
+                      .default = VESSEL_LENGTH
+                    ))
+
+shorelogs_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_recs=n) |> flextable::flextable() |> 
+  flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
+  flextable::set_caption("Check VESSEL_LENGTH classes again - VL0010 should now be VL0008")
 
 ```
 
 ## mesh size lookup
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   4. mesh size lookup                                     ####    
-#.------------------------------------------------------------------------------
+```{r mesh-size-lookup}
+#| eval: true
 
 active.passive <- data.frame(TYPE = c(rep("passive",5), rep("active", 4)),
                              METIER4 = c("FPO", "FYK", "GNS", "LLD", "LLS", "MIS", "OTB", "OTM", "PTM"),
                              MESH    = c("YES", "YES", "YES", "NO", "NO", "PERHAPS", "YES", "YES", "YES"))
 
-active.passive |> flextable() |> autofit() |> set_caption("METIER4 lookup for active and passive gears")
+active.passive |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("METIER4 lookup for active and passive gears")
 
 mesh.sizes <- data.frame(TYPE = c(rep("passive",6), rep("active", 6)),
                          GEARS = c("Diamond mesh <16 mm",
@@ -667,7 +683,7 @@ mesh.sizes <- data.frame(TYPE = c(rep("passive",6), rep("active", 6)),
                     mutate(TO = as.numeric(TO),
                            FROM = as.numeric(FROM))
 
-mesh.sizes |> flextable() |> autofit() |> hline(i=6) |> set_caption("Mesh size ranges for Baltic")
+mesh.sizes |> flextable::flextable() |> flextable::autofit() |> flextable::hline(i=6) |> flextable::set_caption("Mesh size ranges for Baltic")
 
 # baseline
 mesh.lookup1 <- active.passive |> filter(MESH != "NO") |> left_join(mesh.sizes, by=c("TYPE"="TYPE"))
@@ -684,7 +700,7 @@ mesh.lookup3 <- mesh.lookup1 |> select(TYPE, METIER4, MESH) |> distinct() |>
 # glue together
 mesh.lookup <- bind_rows(mesh.lookup1, mesh.lookup2, mesh.lookup3) |> arrange(TYPE, METIER4,FROM)
 
-mesh.lookup |> flextable() |> autofit() |> set_caption("all possible mesh size combinations")
+mesh.lookup |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("all possible mesh size combinations")
 
 rm(active.passive, mesh.sizes, mesh.lookup1, mesh.lookup2, mesh.lookup3)
 invisible(gc())
@@ -697,8 +713,8 @@ invisible(gc())
 
 ## logbook mesh sizes
 
-```{r}
-### 4.1 logbook mesh sizes ####
+```{r logbook-mesh-sizes}
+#| eval: true
 
 logbook_13_15 <- logbook_13_15 |> mutate(METIER6 = METIER,
                                          METIER5 = stringr::str_sub(METIER, 1,7),
@@ -745,16 +761,15 @@ logbook_13_15  <- logbook_13_15 |> rename(metier6_orig=METIER6) |>
                       (CODE == "NK" | CODE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
                     )
 
-logbook_13_15 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
-logbook_13_15 |> count(METIER6) |> flextable() |> autofit() |> set_caption("after cleaning") 
+logbook_13_15 |> count(metier6_orig) |> flextable::flextable() |> flextable::set_caption("before cleaning")                    
+logbook_13_15 |> count(METIER6) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("after cleaning") 
 ```
 
 ## shorelogs mesh sizes
 
-```{r}
-### 4.2 shorelogs mesh sizes ####
+```{r shorelogs-mesh-sizes}
+#| eval: true
 
-### !!!HERE!!! ####
 # need to find or derive mesh sizes before we can continue here
 shorelogs_13_15 <- shorelogs_13_15 |> mutate(METIER6 = METIER,
                                          METIER5 = stringr::str_sub(METIER, 1,7),
@@ -777,37 +792,34 @@ shorelogs_13_15  <- shorelogs_13_15 |> rename(metier6_orig=METIER6) |>
     (CODE == "NK" | CODE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
   )
 
-shorelogs_13_15 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
-shorelogs_13_15 |> count(METIER6) |> flextable() |> autofit() |> set_caption("after cleaning") 
+shorelogs_13_15 |> count(metier6_orig) |> flextable::flextable() |> flextable::set_caption("before cleaning")                    
+shorelogs_13_15 |> count(METIER6) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("after cleaning") 
 
-# !!!HERE!!! ####
-# create reasonble lookup for meshsizes based on metier and species and impute meshsize
+# create reasonable lookup for meshsizes based on metier and species and impute meshsize
 
-rm(mesh.sizes, mesh.lookup, active.passive, metier_check, metier.lookup, metier.lookup.fin)
+#rm(mesh.sizes, mesh.lookup, active.passive, metier_check, metier.lookup, metier.lookup.fin)
 invisible(gc())
 
 ```
 
 ## add ICES areas
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   5. ADD ICES AREAS                                       ####    
-#.------------------------------------------------------------------------------
+```{r add-ices-areas}
+#| eval: true
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
 areas <- seq(22,32)
 
 ewkb_to_sf <- function(data) {
-  return(st_as_sfc(structure(data, class="WKB"), EWKB=T))
+  return(sf::st_as_sfc(structure(data, class="WKB"), EWKB=T))
 }
 
 icesRectangle <- read.dbTable(schema='rek', table='ices_rectangle', dbname = "rktl")
 icesRectangle <- icesRectangle[icesRectangle$statistical_area_name %in% areas,]
 icesRectangle$geometry <- ewkb_to_sf(icesRectangle$geometry)
 
-icesRectangle <- st_as_sf(icesRectangle) |> st_transform(epsg = 4326)
+icesRectangle <- sf::st_as_sf(icesRectangle) |> sf::st_transform(epsg = 4326)
 
 # test statistical areas
 # plot(icesRectangle["statistical_area_name"])
@@ -827,17 +839,17 @@ icesRectangle$rktl_name <- as.numeric(icesRectangle$rktl_name)
 # join to sas data
 logbook_13_15 <- logbook_13_15 |> 
   left_join(icesRectangle |> 
-              select(rktl_name, ices_name, area_code_full) |> st_drop_geometry(), 
+              select(rktl_name, ices_name, area_code_full) |> sf::st_drop_geometry(), 
             by=c("RUUTU"="rktl_name"))
 
 shorelogs_13_15 <- shorelogs_13_15 |> 
   left_join(icesRectangle |> 
-              select(rktl_name, ices_name, area_code_full) |> st_drop_geometry(), 
+              select(rktl_name, ices_name, area_code_full) |> sf::st_drop_geometry(), 
             by=c("RUUTU"="rktl_name"))
 
 # testing
-logbook_13_15 |> count(area_code_full,ices_name) |> flextable()
-shorelogs_13_15 |> count(area_code_full,ices_name) |> flextable()
+logbook_13_15 |> count(area_code_full,ices_name) |> flextable::flextable()
+shorelogs_13_15 |> count(area_code_full,ices_name) |> flextable::flextable()
 
 # save to der folder
 # saveRDS(metier_2013_15, file = paste0(path_der,"metier_2013_15.rds"))
@@ -849,10 +861,8 @@ invisible(gc())
 
 ## longitude / latitude
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   6. longitude / latitude                                 ####    
-#.------------------------------------------------------------------------------
+```{r lat-lon}
+#| eval: true
 
 # metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
 
@@ -888,21 +898,27 @@ invisible(gc())
 
 ```
 
-## fish column names
+## species lookup table
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   7. fish column names                                   ####    
-#.------------------------------------------------------------------------------
+```{r fish-columns}
+#| eval: false
 
 #import species lookup table ASFIS_sp_2024.xlsx
 
-# species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
+species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
 # head(species_lookup)
 # 
 # # save it as .rds
 # saveRDS(species_lookup, file = paste0(path_der,"species_lookup.rds"))
 
+# SAVEPOINT -------- ####
+# uncomment and save to DB if renewed
+#invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = TRUE))
+```
+
+
+```{r fish-columns-2}
+#| eval: true
 # https://www.fao.org/fishery/en/collection/asfis
 # lookup table for Finnish fish names
 
@@ -1011,10 +1027,8 @@ shorelogs_13_15 <- shorelogs_13_15 |> mutate(
 
 ## FT TRIPS
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   8. FT_TRIP                                              ####    
-#.------------------------------------------------------------------------------
+```{r ft-trips}
+#| eval: true
 
 ## logbooks ####
 # DCPROD script 1
@@ -1115,10 +1129,8 @@ shorelogs_13_15$FT <- ifelse(shorelogs_13_15$FT != "PG", "PG", shorelogs_13_15$F
 
 ## trip and haul ID
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   8.1 trip and haul ID                                     ####    
-#.------------------------------------------------------------------------------
+```{r trip-haul-id}
+#| eval: true
 
 # logdata ####
 # drop 13 records without hauls
@@ -1150,10 +1162,8 @@ shorelogs_13_15 <- shorelogs_13_15 |> left_join(tmp, by=c("KALASTUSVUOSI", "KK",
 
 ## fecR for logbooks only 
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   8.2. fecR for logbooks only                             ####    
-#.------------------------------------------------------------------------------
+```{r fecR-logbooks}
+#| eval: true
 
 library(fecR, lib.loc = paste0(getwd(), "/fecR-LOCAL"))
 
@@ -1559,11 +1569,15 @@ LOGBOOK$LOMAKE <- "KALASTUSPAIVAKIRJA"
 # LOGBOOK |> filter(ID %in% tmp$ID) |> 
 #   select(KALASTUSVUOSI, KK, ALUS, GEAR, LAHTOPVM, PALUUPVM, KALASTUSKERTATUNNUS,trip_id,ID) |> View()
 
+
+# save clean logbook data:
 ```
 
 ## fishing, seadays fec.R - shore 
 
-```{r}
+```{r shore-effort}
+#| eval: true
+
 # in script 4
 shorelogs_13_15$KALASTUSPAIVAT <- ifelse(shorelogs_13_15$PYYNTIPV==0, 1, shorelogs_13_15$PYYNTIPV)
 shorelogs_13_15$MERIPAIVAT <- shorelogs_13_15$KALASTUSPAIVAT
@@ -1574,7 +1588,8 @@ shorelogs_13_15 <- shorelogs_13_15 |> mutate(ID=1:n())
 
 ## join datasets and save for table J 
 
-```{r}
+```{r join-datasets}
+#| eval: false
 # cat(intersect(colnames(LOGBOOK), colnames(shorelogs_13_15)), sep=", ")
 same <- intersect(colnames(LOGBOOK), colnames(shorelogs_13_15))
 all <- names(shorelogs_13_15)
@@ -1704,12 +1719,9 @@ saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds")
 
 ## add fish pricing data 
 
-```{r}
-#.------------------------------------------------------------------------------
-#                   11. add fish pricing data                               ####    
-#.------------------------------------------------------------------------------
+```{r fish-pricing}
+#| eval: false
 
-# !!! I AM HERE !!! ####
 # wide to long table ####
 
 KALASTUSAKTIVITEETTI_13_15 <- tibble::rowid_to_column(KALASTUSAKTIVITEETTI_13_15, "ID2")
@@ -1793,3 +1805,5 @@ KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
 saveRDS(KALASTUSAKTIVITEETTI_13_15, file = paste0(path_der,"logbook_2013_15.rds"))
 
 ```
+
+* TO DO: do we need to use the cleaned SAS data for table H ???
