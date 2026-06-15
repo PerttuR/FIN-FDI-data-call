@@ -596,6 +596,21 @@ logbook_13_15 |> count(KALASTUSVUOSI, length_orig) |> rename(n_hauls=n) |> flext
 logbook_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_hauls=n) |> flextable::flextable() |>
     flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
   flextable::set_caption("Check VESSEL_LENGTH classes in logbook_13_15")
+
+# compare now with PITUUS (real length of vessel)
+logbook_13_15 <- logbook_13_15 |>
+                    mutate(test = case_when(
+                      between(PITUUS,0,799)  ~ "VL0008",
+                      between(PITUUS,800,1199) ~ "VL0812",
+                      between(PITUUS, 1200, 1799) ~ "VL1218",
+                      between(PITUUS, 1800, 2399) ~ "VL1824",
+                      between(PITUUS, 2400, 3999) ~ "VL2440",
+                      between(PITUUS, 3999, 10000) ~ "VL40XX",
+                      .default = as.character(PITUUS)
+                    ))
+
+logbook_13_15 |> count(test, VESSEL_LENGTH) |> flextable::flextable() |> 
+  flextable::set_caption("Check vessel length derived from PITUUS (test) and VESSEL_LENGTH")
 ```
 
 ## clean shorelogs
