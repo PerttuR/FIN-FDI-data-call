@@ -12,7 +12,7 @@ output:
   pdf_document:
     latex_engine: xelatex
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 
@@ -37,6 +37,7 @@ rStudio=TRUE
 rm(list=ls())
 invisible(gc)
 #.rs.restartR()
+unlink(list.files("DATA-CACHE", full.names = TRUE))
 ```
 
 # Prep
@@ -173,7 +174,7 @@ kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(U
 
 # Discards excel
 # NEW FILE HERE ####
-discards <- read.xlsx(file.path(gsub("2026", "2025", path_orig), "Vaurioitetut lohet 2013-2025.xlsx"))
+discards <- read.xlsx(file.path(path_orig, "Vaurioitetut lohet 2013-2025.xlsx"))
 names(discards) <- toupper(names(discards))
 
 discards$DISCARDS_TONNES <- discards$DISCARDS_KG/1000
@@ -193,18 +194,76 @@ discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |>
 # tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
 # names(tableA1315) <- toupper(names(tableA1315))
 
+aktiviteetti <- aktiviteetti |> filter(!KALASTUSVUOSI %in% c(2013,2014,2015)) |>
+                  select(
+                    KALASTUSVUOSI,
+                    ULKOINENTUNNUS,
+                    FT_REF,
+                    KALASTUSPAIVAT,
+                    MERIPAIVAT,
+                    KALASTUSAIKAHH,
+                    PAAKONETEHO,
+                    VETOISUUS,
+                    LAHTOPVM, LAHTOAIKA,
+                    PALUUPVM, PALUUAIKA,
+                    VLENGTH_AER_NEW,
+                    FT,
+                    GEAR,
+                    LEVEL5,
+                    SILMAKOKO,
+                    PYYDYS,
+                    METIER,
+                    ICES,
+                    RECTANGLE,
+                    contains("SVT_KG_"),
+                    contains("SVT_VALUE_"),
+                   -contains("SVT_KG_IND_"),
+                   -contains("SVT_KG_HUC_"),
+                   -contains("SVT_VALUE_HUC_"),
+                   -contains("SVT_VALUE_IND_")
+                  )
+
+sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname = "kake_siirto")
+
+sas <- sas |> select(KALASTUSVUOSI,
+                    ULKOINENTUNNUS,
+                    FT_REF,
+                    KALASTUSPAIVAT,
+                    MERIPAIVAT,
+                    KALASTUSAIKAHH,
+                    PAAKONETEHO,
+                    VETOISUUS,
+                    LAHTOPVM, LAHTOAIKA,
+                    PALUUPVM, PALUUAIKA,
+                    VLENGTH_AER_NEW,
+                    FT,
+                    GEAR,
+                    LEVEL5,
+                    SILMAKOKO,
+                    PYYDYS,
+                    METIER,
+                    ICES,
+                    RECTANGLE,
+                    contains("SVT_KG_"),
+                    contains("SVT_VALUE_"),
+                   -contains("SVT_KG_IND_"),
+                   -contains("SVT_KG_HUC_"),
+                   -contains("SVT_VALUE_HUC_"),
+                   -contains("SVT_VALUE_IND_")
+                  )
 
 #--------------------------
 
 # Read in data from the correct year
 aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
-  mutate(kalastus_kk = format(PALUUPVM, "%m"), #get the correct month in order to make quarters later on
-         kalastus_vuosi = format(PALUUPVM,"%Y"),
-         kalastus_kk = case_when(
-           kalastus_vuosi == as.character(as.numeric(KALASTUSVUOSI) - 1) ~ "01",  # Previous year, set to January
-           kalastus_vuosi == as.character(as.numeric(KALASTUSVUOSI) + 1) ~ "12",  # Next year, set to December
-           TRUE ~ kalastus_kk
+  mutate(KALASTUS_KK = format(PALUUPVM, "%m"), #get the correct month in order to make quarters later on
+         KALASTUS_VUOSI = format(PALUUPVM,"%Y"),
+         KALASTUS_KK = case_when(
+           KALASTUS_VUOSI == as.character(as.numeric(KALASTUSVUOSI) - 1) ~ "01",  # Previous year, set to January
+           KALASTUS_VUOSI == as.character(as.numeric(KALASTUSVUOSI) + 1) ~ "12",  # Next year, set to December
+           TRUE ~ KALASTUS_KK
          ))
+
 
 aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_AER_NEW) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_AER_NEW, values_from = vessels) |> flextable::flextable() |>
@@ -215,11 +274,6 @@ aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_AER_NEW) |> summarise(vessel
 ## Prepare vars for table H and I
 
 ```{r vars-h-i}
-# akt_2013_2015_headers <- c("YEAR", "ULKOINENTUNNUS", "KALASTUSPAIVAT", "MERIPAIVAT", "PAAKONETEHO", "VETOISUUS", "KALASTUSAIKAHH", "FT_REF", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "METIER", "SVT_KG_HER", "SVT_KG_SPR", "SVT_KG_COD", "SVT_KG_FLE", "SVT_KG_TUR", "SVT_KG_PLN", "SVT_KG_SAL", "SVT_KG_TRS", "SVT_KG_SME", "SVT_KG_FBM", "SVT_KG_FID", "SVT_KG_FRO", "SVT_KG_FPI", "SVT_KG_FPE", "SVT_KG_FPP", "SVT_KG_FBU", "SVT_KG_TRR", "SVT_KG_FVE", "SVT_KG_ELE", "SVT_KG_FIN", "SVT_KG_TOTAL", "SVT_VALUE_HER", "SVT_VALUE_SPR", "SVT_VALUE_COD", "SVT_VALUE_FLE", "SVT_VALUE_TUR", "SVT_VALUE_PLN", "SVT_VALUE_SAL", "SVT_VALUE_TRS", "SVT_VALUE_SME", "SVT_VALUE_FBM", "SVT_VALUE_FID", "SVT_VALUE_FRO", "SVT_VALUE_FPI", "SVT_VALUE_FPE", "SVT_VALUE_FPP", "SVT_VALUE_FBU", "SVT_VALUE_TRR", "SVT_VALUE_FVE", "SVT_VALUE_ELE", "SVT_VALUE_FIN", "RECTANGLE", "COUNTRY", "QUARTER", "MESH_SIZE_RANGE", "METIER_7", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "RECTANGLE_TYPE", "C_SQUARE")
-# metier_sas_2013_2015_headers <- c("KALASTUSVUOSI", "ALUS", "TODO: from here: KALASTUSPAIVAT", "MERIPAIVAT", "PAAKONETEHO", "VETOISUUS", "KALASTUSAIKAHH", "FT_REF", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "TARGET_ASSEMBLAGE", "METIER", "SVT_KG_HER", "SVT_KG_SPR", "SVT_KG_COD", "SVT_KG_FLE", "SVT_KG_TUR", "SVT_KG_PLN", "SVT_KG_SAL", "SVT_KG_TRS", "SVT_KG_SME", "SVT_KG_FBM", "SVT_KG_FID", "SVT_KG_FRO", "SVT_KG_FPI", "SVT_KG_FPE", "SVT_KG_FPP", "SVT_KG_FBU", "SVT_KG_TRR", "SVT_KG_FVE", "SVT_KG_ELE", "SVT_KG_FIN", "SVT_KG_TOTAL", "SVT_VALUE_HER", "SVT_VALUE_SPR", "SVT_VALUE_COD", "SVT_VALUE_FLE", "SVT_VALUE_TUR", "SVT_VALUE_PLN", "SVT_VALUE_SAL", "SVT_VALUE_TRS", "SVT_VALUE_SME", "SVT_VALUE_FBM", "SVT_VALUE_FID", "SVT_VALUE_FRO", "SVT_VALUE_FPI", "SVT_VALUE_FPE", "SVT_VALUE_FPP", "SVT_VALUE_FBU", "SVT_VALUE_TRR", "SVT_VALUE_FVE", "SVT_VALUE_ELE", "SVT_VALUE_FIN", "RECTANGLE", "COUNTRY", "QUARTER", "MESH_SIZE_RANGE", "METIER_7", "SUPRA_REGION", "SUB_REGION", "EEZ_INDICATOR", "GEO_INDICATOR", "SPECON_TECH", "DEEP", "RECTANGLE_TYPE", "C_SQUARE")
-
-
-# akt_2013_2015_dataframe <- data.frame(akt_2013_2015_headers, metier_sas_2013_2015_headers)
 
 # Select and mutate all the needed variables for tables H and I ####
 # We seem to be missing "SVT_KG_PLE" and "SVT_KG_WHG"
@@ -787,6 +841,7 @@ write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
 # 
 # # Put the variables in the correct order:
 table_A <- a11 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+ 
 # 
 table_A |> head() |> flextable::flextable() |>
   flextable::fontsize(size = 3, part = "all") |>
