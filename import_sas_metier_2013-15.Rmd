@@ -45,7 +45,7 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, janitor)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
@@ -650,6 +650,28 @@ shorelogs_13_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> rename(n_recs=n) |> fl
   flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> 
   flextable::set_caption("Check VESSEL_LENGTH classes again - VL0010 should now be VL0008")
 
+# compare now with PITUUS (real length of vessel)
+shorelogs_13_15 <- shorelogs_13_15 |>
+                    mutate(test = case_when(
+                      between(PITUUS,0,799)  ~ "VL0008",
+                      between(PITUUS,800,1199) ~ "VL0812",
+                      between(PITUUS, 1200, 1799) ~ "VL1218",
+                      .default = as.character(PITUUS)
+                    ))
+
+shorelogs_13_15 |> count(test, VESSEL_LENGTH) |> flextable::flextable() |> 
+  flextable::set_caption("Check vessel length derived from PITUUS (test) and VESSEL_LENGTH")
+
+shorelogs_13_15 <- shorelogs_13_15 |>
+                    mutate(VESSEL_LENGTH = case_when(
+                      test == "VL0812" & VESSEL_LENGTH == "VL0008" ~ "VL0812",
+                      .default = VESSEL_LENGTH))
+
+shorelogs_13_15 |> count(test, VESSEL_LENGTH) |> flextable::flextable() |> 
+  flextable::set_caption("Check vessel length derived from PITUUS (test) and VESSEL_LENGTH again")
+
+# drop test column
+shorelogs_13_15 <- shorelogs_13_15 |> select(-test)
 ```
 
 ## mesh size lookup
@@ -1570,7 +1592,10 @@ LOGBOOK$LOMAKE <- "KALASTUSPAIVAKIRJA"
 #   select(KALASTUSVUOSI, KK, ALUS, GEAR, LAHTOPVM, PALUUPVM, KALASTUSKERTATUNNUS,trip_id,ID) |> View()
 
 
-# save clean logbook data:
+# SAVEPOINT -------- ####
+# uncomment and save to DB if renewed
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_logbook_clean_2013_15", LOGBOOK, overwrite = FALSE))
+
 ```
 
 ## fishing, seadays fec.R - shore 
@@ -1584,12 +1609,16 @@ shorelogs_13_15$MERIPAIVAT <- shorelogs_13_15$KALASTUSPAIVAT
 
 shorelogs_13_15$LOMAKE = "KKILMOITUS"
 shorelogs_13_15 <- shorelogs_13_15 |> mutate(ID=1:n())
+
+# SAVEPOINT -------- ####
+# uncomment and save to DB if renewed
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shorelogs_clean_2013_15", shorelogs_13_15, overwrite = FALSE))
 ```
 
 ## join datasets and save for table J 
 
 ```{r join-datasets}
-#| eval: false
+#| eval: true
 # cat(intersect(colnames(LOGBOOK), colnames(shorelogs_13_15)), sep=", ")
 same <- intersect(colnames(LOGBOOK), colnames(shorelogs_13_15))
 all <- names(shorelogs_13_15)
@@ -1686,7 +1715,7 @@ KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
                 TRUE ~ "NK"),
             CODE = if_else(CODE %in% c("NK","NA"), MESH_SIZE_RANGE, CODE))
 
-# not fix FROM and TO for imputed MESH SIZES
+# now fix FROM and TO for imputed MESH SIZES
 KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
             mutate(FROM = case_when(
                 is.na(FROM) & CODE == "16D32" ~ 16,
@@ -1715,12 +1744,15 @@ logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, 
 
 saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
+# SAVEPOINT -------- ####
+# uncomment and save to DB if renewed
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "logbook_13_15_for_J", logbook_13_15_for_J, overwrite = FALSE))
 ```
 
 ## add fish pricing data 
 
 ```{r fish-pricing}
-#| eval: false
+#| eval: true
 
 # wide to long table ####
 
@@ -1732,7 +1764,7 @@ metier.fish <- KALASTUSAKTIVITEETTI_13_15 |> select(ID2, YEAR, ICES, SVT_KG_COD:
 
 # dim(metier.fish)
 # check records
-metier.fish |> count(SPECIES) |> flextable()
+metier.fish |> count(SPECIES) |> flextable::flextable()
 
 # get commercial value from DCPROD lookup table
 commercial.value <- read.dbTable(schema=paste("2025-04-10", "-dcprod", sep = ""), 
@@ -1785,8 +1817,8 @@ metier.fish <- metier.fish |> mutate(VALUE = round(KG*HINTA,2))
 # check formatting
 
 metier.fish |> filter(is.na(VALUE)) |> count(YEAR,ICES, SPECIES) |>
-  adorn_totals("row") |> flextable() |> 
-  set_caption("fish species without commercial value in certain year")
+  adorn_totals("row") |> flextable::flextable() |> 
+  flextable::set_caption("fish species without commercial value in certain year")
 
 # save value to table and add categories
 metier.fish2 <- metier.fish |> select(ID2, SPECIES, ICES, VALUE) |>
@@ -1803,6 +1835,10 @@ KALASTUSAKTIVITEETTI_13_15 <- KALASTUSAKTIVITEETTI_13_15 |>
                                 mutate(SVT_VALUE_TOTAL = if_else(is.na(SVT_VALUE_COD), NA, SVT_VALUE_TOTAL))
 
 saveRDS(KALASTUSAKTIVITEETTI_13_15, file = paste0(path_der,"logbook_2013_15.rds"))
+
+# SAVEPOINT -------- ####
+# uncomment and save to DB if renewed
+# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_combined_clean_2013_15", KALASTUSAKTIVITEETTI_13_15, overwrite = FALSE))
 
 ```
 
