@@ -172,7 +172,7 @@ kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(U
 
 # Discards excel
 # NEW FILE HERE ####
-discards <- read.xlsx(file.path(gsub("2026", "2025", path_orig), "Vaurioitetut lohet 2016-2024.xlsx"))
+discards <- read.xlsx(file.path(gsub("2026", "2025", path_orig), "Vaurioitetut lohet 2013-2025.xlsx"))
 names(discards) <- toupper(names(discards))
 
 discards$DISCARDS_TONNES <- discards$DISCARDS_KG/1000
@@ -713,11 +713,12 @@ a11 <- a10 |> mutate(DISCARDS = case_when(
 disc_joined <- a11 |> filter(DISCARDS > 0)
 
 # Step 1: Perform a left join from discards to a9 to check for non-matches
-#discards_not_joined <- discards2 |> left_join(a9, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES")) |> filter(is.na(row_id)) 
+discards_not_joined <- discards2 |> left_join(a9, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES")) |> filter(is.na(row_id)) 
 
 # Export the filtered data to an Excel file
-#write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
-
+write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
+# # Write the resulting table A
+ openxlsx::write.xlsx(discards_not_joined, file.path(path_out,"discards_not_joined.xlsx"), sheetName = "discards_not_joined", colNames = TRUE, rowNames = FALSE)
 
 #------------------------
 
