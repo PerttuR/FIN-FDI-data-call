@@ -744,8 +744,9 @@ invisible(gc())
 
 # SAVEPOINT -------- ####
 # save to DB if needed
-#invisible(write.dbTable(dbname = 'kake_siirto',dcprodschema, "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE))
+# invisible(write.dbTable(dbname = 'kake_siirto', "vault", "mesh_sizes_DC2024", mesh.lookup, overwrite = FALSE))
 # added to DB by Perttu 19-06-2025
+# readded to vault by Joanne 16/06/2026
 ```
 
 ## logbook mesh sizes
@@ -950,7 +951,7 @@ species_lookup <- read.xlsx("orig/ASFIS_sp_2024.xlsx", sheet = "ASFIS_sp")
 
 # SAVEPOINT -------- ####
 # uncomment and save to DB if renewed
-#invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = TRUE))
+invisible(write.dbTable(dbname = "kake_siirto", dcprodschema, "species_lookup", species_lookup, overwrite = FALSE))
 ```
 
 
