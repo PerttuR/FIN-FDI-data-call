@@ -164,12 +164,15 @@ message(paste("Reading table:", tablename))
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
 
-
 kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra() |>
   flextable::set_caption( "Number of vessels by vessel length in KAPASITEETI")
+```
 
+## add discards
+
+```{r discards}
 # TODO each year ask data from Pirkko to update the excel ####
 
 # Discards excel
@@ -179,25 +182,21 @@ names(discards) <- toupper(names(discards))
 
 discards$DISCARDS_TONNES <- discards$DISCARDS_KG/1000
 
-
 discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |> 
   pivot_wider(names_from = TARGET_ASSEMBLAGE, values_from = n) |>
   flextable::flextable() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |> flextable::theme_zebra() |>
   flextable::set_caption( "Number of vessels by vessel length and target assemblage in DISCARDS")
-  
-#Table A years 2013-2015 - see import_sas_metier_2013-15.R
-# tableA2013 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2013")
-# tableA2014 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2014")
-# tableA2015 <- read.xlsx(paste0(path_orig, "Table A 2013-2015.xlsx"), sheet = "_2015")
-# 
-# tableA1315 <- rbind(tableA2013, tableA2014, tableA2015)
-# names(tableA1315) <- toupper(names(tableA1315))
+```
 
+## prepare logbook data
+
+```{r prepare-akt}
 aktiviteetti <- aktiviteetti |> filter(!KALASTUSVUOSI %in% c(2013,2014,2015)) |>
                   select(
                     KALASTUSVUOSI,
                     ULKOINENTUNNUS,
+                    LOMAKE,       # new
                     FT_REF,
                     KALASTUSPAIVAT,
                     MERIPAIVAT,
@@ -222,37 +221,6 @@ aktiviteetti <- aktiviteetti |> filter(!KALASTUSVUOSI %in% c(2013,2014,2015)) |>
                    -contains("SVT_VALUE_HUC_"),
                    -contains("SVT_VALUE_IND_")
                   )
-
-sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname = "kake_siirto")
-
-sas <- sas |> select(KALASTUSVUOSI,
-                    ULKOINENTUNNUS,
-                    FT_REF,
-                    KALASTUSPAIVAT,
-                    MERIPAIVAT,
-                    KALASTUSAIKAHH,
-                    PAAKONETEHO,
-                    VETOISUUS,
-                    LAHTOPVM, LAHTOAIKA,
-                    PALUUPVM, PALUUAIKA,
-                    VLENGTH_AER_NEW,
-                    FT,
-                    GEAR,
-                    LEVEL5,
-                    SILMAKOKO,
-                    PYYDYS,
-                    METIER,
-                    ICES,
-                    RECTANGLE,
-                    contains("SVT_KG_"),
-                    contains("SVT_VALUE_"),
-                   -contains("SVT_KG_IND_"),
-                   -contains("SVT_KG_HUC_"),
-                   -contains("SVT_VALUE_HUC_"),
-                   -contains("SVT_VALUE_IND_")
-                  )
-
-#--------------------------
 
 # Read in data from the correct year
 aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
@@ -274,13 +242,13 @@ aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_AER_NEW) |> summarise(vessel
 ## Prepare vars for table H and I
 
 ```{r vars-h-i}
-
 # Select and mutate all the needed variables for tables H and I ####
 # We seem to be missing "SVT_KG_PLE" and "SVT_KG_WHG"
 
 akt1 <- aktiviteetti_all |> 
           select(YEAR = KALASTUSVUOSI,
                  ULKOINENTUNNUS,
+                 LOMAKE,      # new
                  KALASTUSPAIVAT,
                  MERIPAIVAT,
                  PAAKONETEHO,
@@ -289,7 +257,7 @@ akt1 <- aktiviteetti_all |>
                  LAHTOPVM, LAHTOAIKA,   # need to create timestamp and difference in hours
                  PALUUPVM, PALUUAIKA,
                  FT_REF, #trip id
-                 MONTH = kalastus_kk,
+                 MONTH = KALASTUS_KK,
                  VESSEL_LENGTH = VLENGTH_AER_NEW,
                  FISHING_TECH = FT,
                  GEAR_TYPE = GEAR,
@@ -425,12 +393,11 @@ ggplot(akt1, aes(x=HRSEA)) + geom_histogram() + facet_wrap(~FISHING_TECH) + ggti
 ```
 
 
-### Add lon/lat and create valid metiers
+## Add lon/lat and create valid metiers
 
 ```{r spatial}
 # Create variables LATITUDE and LONGITUDE:
 # .. define coordinates 
-
 
 midpoints <- latlon(akt1$RECTANGLE,midpoint=TRUE)
 
@@ -499,12 +466,17 @@ akt1  <- akt1 |>
 akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> flextable::autofit() |> 
   flextable::theme_zebra() |>
   flextable::set_caption( "Mesh size to metier conversion AKT1")
+```
 
+## add SAS data for 2013-2015
+
+```{r sas}
 # load sas data
-# NEW FILE HERE ####
-sas <- readRDS(file = file.path(gsub("2026", "2025",path_der),"logbook_2013_15.rds")) |>
+sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname = "kake_siirto")
+
+sas <- sas |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
-  select(YEAR, ULKOINENTUNNUS=ALUS, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, 
+  select(YEAR, ULKOINENTUNNUS=ALUS, LOMAKE, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, # added LOMAKE
          VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
          TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, SVT_KG_SPR, SVT_KG_COD, 
          SVT_KG_FLE, SVT_KG_TUR, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_TRS, 
@@ -520,8 +492,7 @@ sas <- readRDS(file = file.path(gsub("2026", "2025",path_der),"logbook_2013_15.r
          EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, 
          C_SQUARE, HRSEA, LATITUDE, LONGITUDE, metier6_orig, METIER4, METIER5)
 
-# TO DO !!! ####
-# fix vessel length categories first here ####
+# combine sas and DCPROD logbooks
 akt1_all <- rbind(akt1, sas)
 
 #just checking data types
@@ -589,7 +560,7 @@ missing <- metier_check |> filter(is.na(valid_metiers))
 
 ```
 
-### Cleaning data against capacty table
+## Cleaning data against capacity table
 
 ```{r clean_capacity}
 # clean against capacity table
@@ -652,8 +623,6 @@ akt1_all2 |> count(YEAR, FISHING_TECH) |>
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
 #-------------------------------------------------------------------------------
-
-# add new 2013-15 table here
 
 a <- akt1_all2 |> mutate(NEP_SUB_REGION = "NA") |> select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
