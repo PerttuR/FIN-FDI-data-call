@@ -433,17 +433,6 @@ missing <- metier_check |> filter(is.na(valid_metiers))
 missing |> flextable::flextable() |> flextable::theme_zebra() |>
   flextable::set_caption( "Metiers in AKT1 that are not valid")
 
-# JCD: need to match SAS methodology
-# Change the needed metiers into new format
-# akt1 <- akt1 |>  mutate(METIER = case_when(
-#   METIER == "GNS_ANA_0_0_0" ~ "GNS_ANA_>0_0_0",         # typo
-#   METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_32-89_0_0", # old code
-#   METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_16-31_0_0", # old code
-#   METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_16-31_0_0", # old code
-#   METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_105-115_1_120", # old code
-#   METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_105-115_1_120", # old code
-#   TRUE ~ METIER))  # All other values remain unchanged
-
 # clean metier categories based on METIER 5 and mesh size ranges
 akt1  <- akt1 |> 
             mutate(metier6_orig=METIER,
@@ -744,70 +733,7 @@ write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
 # # Write the resulting table A
  openxlsx::write.xlsx(discards_not_joined, file.path(path_out,"discards_not_joined.xlsx"), sheetName = "discards_not_joined", colNames = TRUE, rowNames = FALSE)
 
-#------------------------
 
-# Add years 2013-2015
-
-# tableA20132015 <- tableA1315 |> mutate(SUB_REGION = tolower(SUB_REGION),
-#                                         METIER_7 = "NA", 
-#                                         EEZ_INDICATOR = "NA",
-#                                         SPECON_TECH = "NA",
-#                                         DEEP = "NA",
-#                                         NEP_SUB_REGION = "NA",
-#        GEAR = case_when(startsWith(GEAR_TYPE, "F") ~ "FPO-FPN-FYK",
-#        GEAR_TYPE == "OTM" | GEAR_TYPE == "PTM" ~ "OTM-PTM",
-#        SPECIES == "SPR" & (GEAR_TYPE == "GNS" | GEAR_TYPE == "FYK") ~ "GNS-FYK",
-#        TRUE ~ GEAR_TYPE),
-#        DOMAIN_LANDINGS = paste0(COUNTRY, "_", # country
-#                            QUARTER, "_", # quarter
-#                            SUB_REGION, "_", # region
-#                            GEAR, "_", # gear type
-#                            "all_", # target assemblage
-#                            "all_", # mesh size range
-#                            "NA_", # selective device / metier
-#                            "NA_", # mesh size range of the selective device
-#                            "all_", # vessel length
-#                            SPECIES, "_", # species
-#                            "all" # commercial category
-#                            ),
-#   DOMAIN_DISCARDS = DOMAIN_LANDINGS
-# ) |> select(-GEAR, -METIER7)
-# 
-# # Check for any metiers that are not valid
-# metier2 <- tableA20132015 |> dplyr::select(METIER) |> distinct()
-# metier_check2 <- metier2 |> left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
-# missing2 <- metier_check2 |> filter(is.na(valid_metiers))
-# print(missing2)
-# 
-# # Change the needed metiers into new format and delete one missing value row
-# tableA20132015 <- tableA20132015 |>  mutate(METIER = case_when(
-#   METIER == "MISSING" ~ "NK",
-#   METIER == "GNS_SPF_16-109" ~ "GNS_SPF_>=16_0_0",
-#   METIER == "GNS_SPF_16-109_0_0" ~ "GNS_SPF_>=16_0_0",
-#   METIER == "OTM_SPF_16-104_0_0" ~ "OTM_SPF_>0_0_0",
-#   METIER == "PTM_SPF_16-104_0_0" ~ "PTM_SPF_>0_0_0",
-#   METIER == "OTB_DEF_>=105_1_120" ~ "OTB_DEF_100-119_0_0",
-#   METIER == "OTM_DEF_>=105_1_120" ~ "OTM_DEF_100-119_0_0",
-#   TRUE ~ METIER)) |> filter(!is.na(TOTVALLANDG))
-# 
-# tableA_all <- rbind(a11, tableA20132015) |> 
-#   mutate(DISCARDS = DISCARDS/1000) 
-# 
-# #Rounding discards:
-# tableA_all$DISCARDS <- round(tableA_all$DISCARDS, digits = 3)      
-# 
-# #Rounding landings:
-# tableA_all$TOTWGHTLANDG <- round(tableA_all$TOTWGHTLANDG, digits = 3)
-# 
-# #Rounding value:
-# tableA_all$TOTVALLANDG <- round(as.numeric(tableA_all$TOTVALLANDG), digits = 0)
-#  
-# tableA_all <- tableA_all |> 
-#   mutate (DISCARDS = case_when(
-#   DISCARDS == 0 ~ "NK",
-#   TRUE ~ as.character(DISCARDS)))
-# 
-# 
 # # Put the variables in the correct order:
 table_A <- a11 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
  
@@ -827,6 +753,886 @@ saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
  openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 ```
+
+## Create table B
+
+Table B data is from Finish eu-dcf sampling database Suomu sampling frame data from FIN sample lottery machine system
+
+### Get Suomu data
+
+```{r suomu-cloud data}
+# Fetch sampling lottery tables from SUOMU sampling database
+sampling_result <- read.dbTable("suomu","sampling_result")
+sampling_source <- read.dbTable("suomu","sampling_source")
+sampling_source_weight <- read.dbTable("suomu","sampling_source_weight")
+species <- read.dbTable("suomu","species")
+gear <- read.dbTable("suomu","gear")
+# follow up tables from database
+seurantataulukot <- read.dbTable("suomu","tracking_metier_name")
+tracking_metier <- read.dbTable("suomu","tracking_metier")
+tracking_species <- read.dbTable("suomu", "tracking_species");
+metier <- read.dbTable("suomu","metier")
+# get trip and haul data from database
+trip <- read.dbTable("suomu", "trip")
+haul <- read.dbTable("suomu", "haul")
+
+# set reference year PSU counts to sampling year. 
+sampling_source_fixed_year <- sampling_source %>% mutate(year = year+1)
+
+# lottery status levels map table:
+sampling_result_status_map <- data.frame(key=seq(from=0,to=7),value=c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"))
+
+# join status to sampling PSU source data
+sampling_result_source_fixed_year <- sampling_result %>%
+  left_join(sampling_source_fixed_year, by=c("sample_source_fk"="id")) %>%
+  left_join(sampling_result_status_map, by=c("status" = "key")) %>% mutate(status = value)
+
+
+# lottery machine was operational since 2018 Q4 in SD30 and in all SD since 2019
+trip_selected <- trip %>% filter(!is.na(target_species_fk) & year >= 2018)
+trip_haul <- trip_selected %>% left_join(haul, by=c("id" = "trip_fk"))
+
+# join trip haul and metier to form SAMPLING_FRAME column:
+#-----
+trip_haul_metier <- trip_haul %>% left_join(metier, by=c("metier_fk" = "id"))
+
+species_gear_code <- trip_haul_metier %>% select(target_species_fk, level5)
+
+species_gear_code_tally <- species_gear_code %>% group_by(target_species_fk, level5) %>% tally()
+
+species_gear_code_tally2 <- species_gear_code_tally %>% top_n(1, n)
+
+species_gear_code_tally3 <- species_gear_code_tally2 %>% mutate(frame = case_when(
+  (target_species_fk == 22 | target_species_fk == 45) & (level5 == "OTM_SPF" | level5 == "PTM_SPF") ~ "Pelagic trawl(OTM/PTM)",
+  target_species_fk == 1 & (level5 == "OTM_FWS" | level5 == "PTM_FWS") ~ "Freshwater trawl(Vendace)",
+  TRUE ~ ""))
+
+species_metier_map <- species_gear_code_tally3
+```
+
+
+### Adding variables and save
+
+```{r add_vars}
+# tekstiä
+
+#wp_gears <- c("OTM", "PTM", "FYK", "GNS")
+#metiers <- filter(metier, gear_code %in% wp_gears) 
+
+
+super_round <- function(a) {
+  round(as.numeric(as.character(a)), digits = 2)
+}
+
+sampling_result_source_filtered <- sampling_result_source_fixed_year |> filter(year %in% years)
+
+#join species and metier texts to sampling result table data:
+sampling_result_frame <- sampling_result_source_filtered |>
+  left_join(tracking_species, by="tracking_metier_name_fk") |>
+  left_join(species_metier_map, by=c("species_fk"= "target_species_fk"))
+
+#Set data call columns
+sampling_result_frame_quarter_sd <- sampling_result_frame |> mutate(frame = paste0(frame, ' Q', quarter, ' SD', area))
+sampling_result_frame_quarter_sd$year <- as.factor(sampling_result_frame_quarter_sd$year)
+sampling_result_frame_quarter_sd$frame <- as.factor(sampling_result_frame_quarter_sd$frame)
+sampling_result_frame_quarter_sd$COUNTRY <- "FIN";
+
+#form table B:
+table_b <- sampling_result_frame_quarter_sd |> select(COUNTRY, YEAR=year, SAMPLE_FRAME=frame) |> distinct() |>
+  arrange(YEAR, SAMPLE_FRAME)
+
+#table_b$REFUSAL_RATE <- 0
+table_b$VESSELS_FLEET <- "NK"
+table_b$TRIPS_FLEET <- "NK"
+table_b$TRIPS_SAMPLED_ONBOARD <- 0
+table_b$UNIQUE_VESSELS_SAMPLED <- 0
+#table_b$UNIQUE_VESSELS_CONTACTED <- "NK"
+table_b$NOT_AVAILABLE <- "NK"
+table_b$NO_CONTACT_DETAILS <- 0
+#table_b$NO_ANSWER <- "NK"
+#table_b$OBSERVER_DECLINED <- 0 #Not collected as a status
+#table_b$INDUSTRY_DECLINED <- 0 #Not collected as a status
+table_b$TOT_SELECTIONS <- 0
+
+#Aggragate table B to sampling frame level:
+sampling_result_grouped <- sampling_result_frame_quarter_sd |> mutate(year_frame = paste0(year," ",frame))
+sampling_result_grouped$year_frame <- as.factor(sampling_result_grouped$year_frame)
+sampling_result_grouped <- sampling_result_grouped |> group_by(year_frame, .drop = FALSE) |> arrange(year_frame)
+
+#TODO: call count
+
+#count Refusals & nonresponses
+tally_rejection <- sampling_result_grouped |> filter(status == "rejected") |> tally()
+
+tally_nonresponses <- sampling_result_grouped |> filter(status %in% c("rejected","no_contact_details","no_answer","observer_declined")) |> tally()
+
+#count contacts
+tally_all <- sampling_result_grouped |> summarise(sum=sum(if_else(call_count == 0,1,as.double(call_count))))
+
+#Traverse the sampling_source diamond in the reverse direction
+sampling_diamond_reversal <- sampling_source_fixed_year |>
+  left_join(sampling_source_weight, by=c("id" = "sampling_source_fk")) |>
+  left_join(species_metier_map, by=c("species_fk"="target_species_fk"))
+
+sampling_diamond_reversal <- sampling_diamond_reversal |>
+  mutate(year_frame = paste0(year," ",frame," Q",quarter," SD",area))
+
+sampling_result_grouped$year_frame_character <- as.character(sampling_result_grouped$year_frame)
+
+actual_frames <- sampling_result_grouped |> select(year_frame_character) |> distinct()
+
+sampling_diamond_reversal <- sampling_diamond_reversal |>
+  filter(!is.na(year_frame)) |>
+  filter(year_frame %in% actual_frames$year_frame_character)
+
+unique_vessels_sampled_tally <- sampling_result_grouped |> filter(status == "sampled", .preserve=TRUE)  |> select(sample_source_fk) |> distinct() |> tally()
+
+sampling_diamond_reversal$year_frame <- as.factor(sampling_diamond_reversal$year_frame)
+sampling_diamond_reversal_tally <- sampling_diamond_reversal |>
+  group_by(year_frame) |>
+  tally()
+
+not_available_tally <- sampling_result_grouped |> filter(status == "out of area", .preserve=TRUE) |>
+  distinct(year_frame,sample_source_fk) |> tally()
+
+unique_vessels_contacted_tally <- sampling_result_grouped |> filter(status %in% c("assigned","inactive","rejected","sampled","out of area","no_contact_details","no_answer","observer_declined"), .preserve=TRUE) |> distinct(year_frame,sample_source_fk) |> tally()
+
+no_answer_tally <- sampling_result_grouped |> filter(status %in% c("no_answer"), .preserve=TRUE) |> distinct(year_frame,sample_source_fk) |> tally()
+
+rejected_tally <- sampling_result_grouped |> filter(status %in% c("rejected"), .preserve=TRUE) |> distinct(year_frame,sample_source_fk) |> tally()
+
+observer_declined_tally <- sampling_result_grouped |> filter(status %in% c("observer_declined"), .preserve=TRUE) |> distinct(year_frame,sample_source_fk) |> tally()
+
+observer_onboard_tally <- sampling_result_grouped |> left_join(trip, by=c("id.x" = "sampling_result_fk")) |> filter(observer_onboard) |> tally()
+
+table_b$NOT_AVAILABLE <- not_available_tally$n
+table_b$VESSELS_FLEET <- sampling_diamond_reversal_tally$n
+table_b$TOT_SELECTIONS <- tally_all$sum
+table_b$REFUSAL_RATE <- tally_rejection$n
+table_b <- table_b |> mutate(REFUSAL_RATE = super_round(REFUSAL_RATE/TOT_SELECTIONS))
+table_b$UNIQUE_VESSELS_SAMPLED <- unique_vessels_sampled_tally$n
+table_b$COVERAGE_RATE <- super_round(table_b$UNIQUE_VESSELS_SAMPLED / table_b$VESSELS_FLEET)
+table_b$NONRESPONSE_RATE <- super_round(tally_nonresponses$n / tally_all$sum)
+table_b$UNIQUE_VESSELS_CONTACTED <- unique_vessels_contacted_tally$n
+table_b$NO_ANSWER <- no_answer_tally$n
+table_b$OBSERVER_DECLINED <- rejected_tally$n
+table_b$INDUSTRY_DECLINED <- observer_declined_tally$n
+table_b$TRIPS_SAMPLED_ONBOARD <- observer_onboard_tally$n
+
+#TODO: use trips
+#table_b <- table_b |> mutate(COVERAGE_RATE = super_round(UNIQUE_VESSELS_SAMPLED / VESSELS_FLEET))
+
+# ... order columns 
+table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","UNIQUE_VESSELS_CONTACTED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS")]
+
+openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
+
+```
+
+## Create table C
+
+```{r get_table_a}
+#-------------------------------------------------------------------------------
+#                       1. Import data for 2023 C table needs                    
+#-------------------------------------------------------------------------------
+
+# import table A
+table_A <- readRDS(file.path(path_der, "table_A.rds"))
+
+
+#-------------------------------------------------------------------------------
+#                   2. TABLE C (NAO OFR. Discards age data)                       
+#-------------------------------------------------------------------------------
+
+table_C <- table_A |> 
+  select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
+  filter(SPECIES %in% c("HER", "SPR", "SAL")) |>
+  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) |>
+  summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
+            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
+            DISCARD_CV = "NK",
+            DISCARD_CI_UPPER = "NK",
+            DISCARD_CI_LOWER = "NK",
+            TOTAL_TRIPS = "NK",
+            TOTAL_SAMPLED_TRIPS = "NK",
+            NO_AGE_MEASUREMENTS = "NK",
+            AGE_MEASUREMENTS_PROP = "NA",
+            MIN_AGE = "NK",
+            MAX_AGE = "NK",
+            AGE = "NK",
+            NO_AGE = "NK",
+            MEAN_WEIGHT = "NK",
+            WEIGHT_UNIT = "NK",
+            MEAN_LENGTH = "NK",
+            LENGTH_UNIT = "NK",
+            .groups = "drop"
+  )
+
+
+openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
+
+```
+
+## Create table D
+
+```{r}
+#-------------------------------------------------------------------------------
+#                       1. Import data for 2023 C table needs                    
+#-------------------------------------------------------------------------------
+
+# import table A
+table_A <- readRDS(file.path(path_der, "table_A.rds"))
+
+
+#-------------------------------------------------------------------------------
+#                   2. TABLE C (NAO OFR. Discards length data)                       
+#-------------------------------------------------------------------------------
+
+table_D <- table_A |> 
+  select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
+  filter(SPECIES %in% c("HER", "SPR", "SAL")) |>
+  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) |> 
+  summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
+            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
+            DISCARD_CV = "NK",
+            DISCARD_CI_UPPER = "NK",
+            DISCARD_CI_LOWER = "NK",
+            TOTAL_TRIPS = "NK",
+            TOTAL_SAMPLED_TRIPS = "NK",
+            NO_LENGTH_MEASUREMENTS = "NK",
+            LENGTH_UNIT = "NK",
+            MIN_LENGTH = "NK",
+            MAX_LENGTH = "NK",
+            LENGTH = "NK",
+            NO_LENGTH = "NK",
+            MEAN_WEIGHT_AT_LENGTH = "NK",
+            WEIGHT_UNIT = "NK",            
+            .groups = "drop"
+  )
+
+
+openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
+
+```
+
+
+## Create table E
+
+### Table A and IC data
+
+```{r table_a_ic}
+#-------------------------------------------------------------------------------
+#                       1. aggregate TABLE A for merging                       
+#-------------------------------------------------------------------------------
+
+# import IC data and table A
+
+#IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+IC_DB <- readRDS(file.path(path_der, "IC_DB.rds"))
+table_A <- readRDS(file.path(path_der, "table_A.rds"))
+
+
+#table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
+#select order of columns
+#table_A <- table_A |> select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+table_A <- table_A |> rename_all(tolower)
+
+#colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+
+
+#-------------------------------------------------------------------------------
+#                       1.1 create DOMAIN landing to IC 2023 ZIP data data                       
+#-------------------------------------------------------------------------------
+
+# IC_2023$Country <- "FIN"
+# IC_2023$quarter <- IC_2023$Season
+# IC_2023$subregion <- IC_2023$FishingArea
+# IC_2023$gear_type <- case_when(IC_2023$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+#                                IC_2023$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+#                                IC_2023$Fleet == "Gillnet" ~ "GNS",
+#                                IC_2023$Fleet == "Active" ~ "OTM-PTM",
+#                                IC_2023$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+#                                IC_2023$Fleet == "Passive" ~ "GNS-FYK"
+#                                )
+# IC_2023$vessel_length <- "all"
+# IC_2023$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_2023$Species == "HER"| IC_2023$Species == "SPR"~ "SPF")
+#                                        
+# e1 <- IC_2023 |> mutate(DOMAIN_LANDINGS = paste0(
+#                           Country, "_", # country
+#                          quarter, "_", # quarter
+#                          subregion, "_", # region
+#                          gear_type, "_", # gear type
+#                          TARGET_ASSEMBLAGE, "_", # target assemblage
+#                          "all_", # mesh size range
+#                          "NA_", # selective device / metier
+#                          "NA_", # mesh size range of the selective device
+#                          "all_", # vessel length
+#                          Species, "_", # species
+#                          "all" # commercial category
+#                          )
+#                   )
+
+#-------------------------------------------------------------------------------
+#                       1.1 create DOMAIN landing to IC data between 2013-2023                      
+#-------------------------------------------------------------------------------
+
+IC_DB1 <- IC_DB |> filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024))
+IC_DB2 <- IC_DB1 |> filter (Species %in% c("HER","SPR"))
+
+
+IC_DB2$Country <- "FIN"
+IC_DB2$quarter <- IC_DB2$Season
+IC_DB2$subregion <- IC_DB2$FishingArea
+
+#Filter duplicate and unknown gears out
+IC_DB3 <- IC_DB2 |> filter(Fleet != "Winter Seine")
+IC_DB4 <- IC_DB3 |> filter(Fleet != "BT-Fi-Bal")
+IC_DB5 <- IC_DB4 |> filter(Fleet != "Fleet-All" | Species=="HER")
+
+# check IC Off landings by year, species, season fleet:
+year_unique <- IC_DB5 |> group_by(Year, Species, subregion, Season, Fleet) |> summarise(unique(Fleet), OffLandings = max(OffLandings))
+
+#set common gear_codes to gear_type column
+IC_DB5$gear_type <- case_when(IC_DB5$Fleet == "Trapnet" ~ "FPO-FPN-FYK",
+                               IC_DB5$Fleet == "Pelagic trawl" ~ "OTM-PTM",
+                               IC_DB5$Fleet == "Pelagic trawlers" ~ "OTM-PTM",
+                               IC_DB5$Fleet == "Active" ~ "OTM-PTM",
+                               IC_DB5$Fleet == "Gillnet" ~ "GNS",
+                               IC_DB5$Fleet == "Passive" ~ "GNS-FYK",
+                               IC_DB5$Fleet == "Passive gears" ~ "GNS-FYK",
+                               IC_DB5$Fleet == "Fleet-All" ~ "OTM-PTM"
+)
+
+IC_DB5$vessel_length <- "all"
+IC_DB5$TARGET_ASSEMBLAGE <- "all" #muutettu elokuun 2024 tästä muodosta: case_when(IC_DB$Species == "HER"| IC_DB$Species == "SPR"~ "SPF")
+
+# check IC Off landings by year, species, gear_type:
+year_unique2 <- IC_DB5 |> group_by(Year, Species, gear_type) |> summarise(unique(gear_type), OffLandings = max(OffLandings))
+
+#IC_DB fish number are millions -> to thousand tons
+IC_DB5$NumberCaught <- as.numeric(IC_DB5$NumberCaught)/1000000
+
+#create DOMAIN:
+e1 <- IC_DB5 |> mutate(DOMAIN_LANDINGS = paste0(
+  Country, "_", # country
+  quarter, "_", # quarter
+  subregion, "_", # region
+  gear_type, "_", # gear type
+  TARGET_ASSEMBLAGE, "_", # target assemblage
+  "all_", # mesh size range
+  "NA_", # selective device / metier
+  "NA_", # mesh size range of the selective device
+  "all_", # vessel length
+  Species, "_", # species
+  "all" # commercial category
+)
+)
+
+#printing e1 for browsing:
+
+openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+```
+
+
+### Suomu data
+
+```{r suomu-data}
+
+## SUOMU sample data for age numbers
+
+
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2023"))
+
+#-------------------------------------------------------------------------------
+# choose commercial LANDINGS samples only, from years 2013-2022 and species
+
+agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR"))
+
+#Filter ages, 99 is essentially NA
+suomu <- agedata_cs |> filter(!is.na(age) & age != "99")
+
+# a lot of ages are missing
+suomu_missing_age <- agedata_cs |> filter(is.na(age) | age == "99")
+
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+# make a key variable to match table A key (domain_discards or domain_landings)
+
+# first make individually all the parts that form the DOMAIN key
+country_code <- "FIN"
+quarter <- suomu$q
+subregion <- paste("27.3.d.", suomu$ices_osa_alue, sep = "")
+#Stat dep uses FPO instead of FPN so change
+suomu <- suomu |> mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
+suomu <- suomu |> mutate(metier = replace(metier,metier=="FPN_SPF_>0_0_0","FPO_SPF_>0_0_0"))
+gear_type <- suomu$gear_fishframe
+gear_type <- case_when(gear_type == "FPO" | gear_type == "FPN" | gear_type == "FYK" ~ "FPO-FPN-FYK",
+                       gear_type == "OTM" | gear_type == "PTM" ~ "OTM-PTM",
+                       TRUE ~ gear_type
+                       )
+
+unique(gear_type)
+
+TARGET_ASSEMBLAGE <- "all" # muutettu elokuun 2024 korjauksessa ennen käytössä: substr(suomu$metier,5,7)#metieristä merkit 5-7
+mesh_size <- "all"
+selective_device <- "NA"
+mesh_size_range_selective_device <- "NA"
+vessel_length <- "all"
+species <- suomu$fao
+commercial_cat <- "all"
+
+# then combine them as a single key, identical to that from table A
+suomu$domain_landings <- paste(country_code, quarter, subregion, gear_type, TARGET_ASSEMBLAGE, mesh_size, selective_device, mesh_size_range_selective_device, vessel_length, species, commercial_cat, sep = "_")
+
+# select only important variables
+suomu2 <- suomu |> select(vuosi, nayteno, paino, pituus, age, domain_landings)
+
+#landing2 length from mm -> to cm
+suomu2$pituus <- suomu2$pituus/10
+
+
+#-------------------------------------------------------------------------------
+#                   4. aggregate AGE DATA for merging with TABLE A     2024 alkaen:                
+#-------------------------------------------------------------------------------
+
+# aggregate data separately:
+suomu2_year_domain <- suomu2 |>
+  group_by(vuosi, domain_landings) |>
+  summarise(
+            total_sampled_trips = n_distinct(nayteno),
+            no_age_measurements = n(),
+            min_age = min(age),
+            max_age = max(age))
+
+
+suomu2_year_domain_age <- suomu2 |>
+  group_by(vuosi, domain_landings, age) |>
+  summarise(
+            no_age = n(),
+            mean_weight = round(mean(paino),digits = 3),
+            mean_length = round(mean(pituus), digits = 1))
+
+suomu2_year_domain <- suomu2_year_domain |> left_join(suomu2_year_domain_age, relationship="many-to-many")
+
+suomu2_year_domain$country <- "FIN"
+suomu2_year_domain$age_measurements_prop <- "NA"
+
+suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, total_sampled_trips, no_age_measurements, age_measurements_prop, min_age, max_age, age, no_age, mean_weight, mean_length)
+```
+
+
+### Merge wih table a
+
+```{r merge}
+#-------------------------------------------------------------------------------
+#                       3. Merge SAMPLED DATA with TABLE A                       
+#-------------------------------------------------------------------------------
+
+#e1 to lower
+e1 <- e1 |> rename_all(tolower)
+
+#poistetaan alusryhmittely ja gear type, jotka tekevät monia rivejä per DOMAIN ja lasketaan domainin summasaalis
+table_A_SUM <- table_A |> group_by(country,year,domain_landings,species) |> summarise(totwghtlandg=sum(totwghtlandg))
+
+# merge IC age data with TABLE A
+table_e_pre1 <- e1 |> left_join(table_A_SUM, by=join_by("country", "year", "domain_landings", "species"))
+
+# TEST some keys might not match, check how many there might be
+missing_domains_IC <- table_e_pre1[is.na(table_e_pre1$totwghtlandg),]
+missing_domains_IC_DISTINCT = missing_domains_IC |> distinct(year, domain_landings, .keep_all = T)
+length(missing_domains_IC_DISTINCT$domain_landings)
+#Liittyneet:
+domains_IC <- table_e_pre1[!is.na(table_e_pre1$totwghtlandg),]
+domains_IC_DISTINCT <- domains_IC |> distinct(year, domain_landings, .keep_all = T)
+length(domains_IC_DISTINCT$domain_landings)
+
+#Aggrekoi ensin Suomu yksilödata samaan sapluunaan ja tee sitten left joini :)
+# merge SUOMU age data with TABLE A
+table_e_suomu <- left_join(suomu2_e1, table_A_SUM, by = join_by(country, year, domain_landings))
+
+# TEST some keys might not match, check how many there might be
+missing_domains_SUOMU <- table_e_suomu[is.na(table_e_suomu$totwghtlandg),]
+missing_domains_SUOMU_DISTINCT = missing_domains_SUOMU |> distinct(year, domain_landings, .keep_all = T)
+length(missing_domains_SUOMU_DISTINCT$domain_landings)
+#Liittyneet:
+domains_SUOMU <- table_e_suomu[!is.na(table_e_suomu$totwghtlandg),]
+domains_SUOMU_DISTINCT <- domains_SUOMU|> distinct(year, domain_landings, .keep_all = T)
+length(domains_SUOMU_DISTINCT$domain_landings)
+
+
+
+
+# delete domains with no catches from table A e.g missmatching joins
+table_e_pre1 <- filter(table_e_pre1, !is.na(totwghtlandg))
+table_e_suomu <- filter(table_e_suomu, !is.na(totwghtlandg))
+
+#add statis columns:
+table_e_pre1$age_measurements_prop <-"NA"
+table_e_pre1$nep_sub_region <- "NA"
+#units
+table_e_pre1$weight_unit <- "g"
+table_e_pre1$length_unit <- "cm"
+
+table_e_pre1 <- table_e_pre1 |> mutate(age = as.integer(agelength))
+table_e_pre1 <- table_e_pre1 |> group_by(country, year, domain_landings,species) |> mutate(min_age = min(age), max_age = max(age))
+table_e_pre1$no_age <- as.numeric(table_e_pre1$numbercaught)*1e3 
+# arrange the variables in proper order and put them to upper case
+#table_E <- table_e_pre2  |> select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_age_measurements_landg, age_measurements_prop, min_age, max_age, age, no_age_landg, mean_weight_landg, mean_length_landg) |> rename_all(toupper)
+
+
+table_e_pre2 <- table_e_pre1 |> select(
+       country,
+       year,
+       domain_landings,
+       nep_sub_region,
+       species,
+       totwghtlandg,
+       total_sampled_trips=numsamplesage,
+       no_age_measurements=numagemeas,
+       age_measurements_prop,
+       min_age,
+       max_age,
+       age,
+       no_age,
+       mean_weight=meanweight,
+       weight_unit,
+       mean_length=meanlength,
+       length_unit
+)
+
+table_e_pre2 <- table_e_pre2 |> mutate(
+       no_age = as.numeric(no_age),
+       mean_weight = as.numeric(mean_weight),
+       no_age_measurements = as.integer(no_age_measurements),
+       total_sampled_trips = as.integer(total_sampled_trips)
+)
+
+#-9 removal from some columns
+table_e_pre2 <- table_e_pre2 |> mutate(
+       total_sampled_trips = na_if(total_sampled_trips, -9),
+       no_age_measurements = na_if(no_age_measurements, -9),
+       no_age = na_if(no_age, -9),
+       mean_length = na_if(as.integer(mean_length), -9)
+)
+
+#-90 removal in mean_length column
+table_e_pre2$mean_length <- case_when(table_e_pre2$mean_length == "-90" ~ "NK", .default = as.character(table_e_pre2$mean_length))
+
+#NK input
+table_e_pre2 <- table_e_pre2 |> mutate(
+       total_sampled_trips = replace_na(as.character(total_sampled_trips), "NK"),
+       no_age_measurements = replace_na(as.character(no_age_measurements), "NK"),
+       no_age = replace_na(no_age, "NK"),
+       mean_length = replace_na(as.character(mean_length), "NK")
+)
+
+
+
+table_E <- table_e_pre2 |> rename_all(toupper)
+
+table_E <- table_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES,AGE)
+
+# set working directory to save table E and table of deleted observations
+#openxlsx::write.xlsx(table_E, paste0(path_out,.Platform$file.sep,"FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+#openxlsx::write.xlsx(missing_domains2, paste0(path_out,.Platform$file.sep,"DELETED_TABLE_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+suomu2_e <- table_e_suomu |> rename_all(toupper) #suomu2_e1
+suomu2_e$TOTAL_SAMPLED_TRIPS <- as.character(suomu2_e$TOTAL_SAMPLED_TRIPS)
+suomu2_e$NO_AGE_MEASUREMENTS <- as.character(suomu2_e$NO_AGE_MEASUREMENTS)
+
+mega_E <- table_E |> full_join(suomu2_e, by=join_by(COUNTRY, YEAR, DOMAIN_LANDINGS, AGE, SPECIES), suffix=c("","_SUOMU"))
+mega_E <- mega_E |> arrange(COUNTRY,YEAR,DOMAIN_LANDINGS,AGE)
+suomu_cols <- c("NO_AGE_MEASUREMENTS", "AGE_MEASUREMENTS_PROP", "MIN_AGE", "MAX_AGE", "MEAN_WEIGHT", "MEAN_LENGTH", "TOTWGHTLANDG")
+
+# ChatGPT: Replace NA values in non-suffixed columns using the native pipe syntax
+
+mega_E$MEAN_LENGTH_SUOMU <- as.character(mega_E$MEAN_LENGTH_SUOMU)
+group_cols <- groups(mega_E)
+mega_E <- mega_E |> ungroup()
+mega_E <- mega_E |>
+  mutate(across(all_of(suomu_cols),
+    ~ if_else(is.na(.x), mega_E[[paste0(cur_column(), "_SUOMU")]], .x)
+  )) |> group_by(!!!syms(group_cols))
+
+
+mega_E <- mega_E |> filter(!is.na(TOTWGHTLANDG))
+
+message("Matching rows: ", mega_E |> filter(!is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+suomu_missing <- mega_E |> filter(!is.na(NO_AGE) & is.na(NO_AGE_SUOMU)) |> ungroup()
+message("Missing in suomu: ", suomu_missing |> tally())
+message("\tof which SPR ", suomu_missing |> filter(SPECIES == "SPR") |> tally())
+message("\tother GNS ", suomu_missing |> filter(SPECIES != "SPR", grepl("GNS", DOMAIN_LANDINGS)) |> tally())
+suomu_missing_exclude = suomu_missing |> filter(!grepl("GNS", DOMAIN_LANDINGS), SPECIES != "SPR")
+message("\tneither ", suomu_missing_exclude |> tally())
+
+message("Missing in table_A: ", mega_E |> filter(is.na(NO_AGE) & !is.na(NO_AGE_SUOMU)) |> ungroup() |> tally())
+
+check <- mega_E |> group_by(COUNTRY,YEAR,DOMAIN_LANDINGS) |> summarize(c = all(is.na(TOTWGHTLANDG))) |> filter(c == TRUE) |> ungroup() |> tally()
+message("Categories that have data only in suomu ", check)
+#Fill in static columns per group
+mega_E_expanded <- mega_E |>
+  group_by(COUNTRY,YEAR,DOMAIN_LANDINGS) |>
+  fill(NEP_SUB_REGION,
+       SPECIES,
+       TOTWGHTLANDG,
+       TOTAL_SAMPLED_TRIPS,
+       NO_AGE_MEASUREMENTS,
+       AGE_MEASUREMENTS_PROP,
+       WEIGHT_UNIT,
+       LENGTH_UNIT,
+       .direction="downup")
+#Fix min, max
+mega_E_expanded <- mega_E_expanded |>
+  group_by(COUNTRY,YEAR,DOMAIN_LANDINGS,SPECIES) |>
+  mutate(MIN_AGE = min(AGE), MAX_AGE = max(AGE)) |>
+  mutate(NO_AGE=replace_na(format(NO_AGE, digits = 3, nssmall = 3), "NK"))
+
+#TODO: clean up this mess
+mega_E_expanded <- mega_E_expanded |> mutate(NO_AGE = trimws(NO_AGE))
+mega_E_expanded <- mega_E_expanded |> mutate(NO_AGE = na_if(NO_AGE, "NA"))
+mega_E_expanded <- mega_E_expanded |> mutate(NO_AGE = replace_na(NO_AGE, "NK"))
+
+mega_E_expanded <- mega_E_expanded |>
+  mutate(MEAN_WEIGHT=coalesce(as.character(MEAN_WEIGHT), as.character(MEAN_WEIGHT_SUOMU), "NK")) |>
+  mutate(MEAN_LENGTH=coalesce(na_if(MEAN_LENGTH, "NK"), as.character(MEAN_LENGTH_SUOMU), "NK"))
+
+SOP <- mega_E_expanded |> summarize(SOP=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
+SOP$SOP_R_DIFF <- (SOP$TOTWGHTLANDG - SOP$SOP) / SOP$TOTWGHTLANDG
+SOP <- SOP |> select(-TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> left_join(SOP, relationship = "many-to-one")
+mega_E_expanded$prosentti_SOP <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*100
+
+#Lavennetaan yli 10%:lla SOP-luvun ylittävät yksilökappalemäärät TOTWGHTLANDG painon mukaisiksi:
+mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$prosentti_SOP < 110, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+#Deletoidaan, jos kappalemäärä on yli 45% korkeampi kuin tableA:n domainin landing määrä
+mega_E_expanded <- mega_E_expanded |> filter(prosentti_SOP > 45)
+#Supistettaan kappalemäärät 45-90% vastaamaan Totalcatchin saalista
+mega_E_expanded$NO_AGE <- ifelse(mega_E_expanded$prosentti_SOP > 90, mega_E_expanded$NO_AGE, round(mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP*as.numeric(mega_E_expanded$NO_AGE), digits=3))
+
+
+SOP2 <- mega_E_expanded |> summarize(SOP2=sum(1000.0*as.numeric(NO_AGE)*as.numeric(MEAN_WEIGHT), na.rm=TRUE)*1e-6, TOTWGHTLANDG=first(TOTWGHTLANDG))
+SOP2 <- SOP2 |> select(-TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> select(-TOTWGHTLANDG, TOTWGHTLANDG)
+mega_E_expanded <- mega_E_expanded |> left_join(SOP2, relationship = "many-to-one")
+mega_E_expanded$prosentti_SOP2 <- mega_E_expanded$TOTWGHTLANDG/mega_E_expanded$SOP2*100
+
+openxlsx::write.xlsx(mega_E_expanded, paste0(path_out,.Platform$file.sep,"FIN_TABLE_MEGA_E.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+#Write table_E by dropping extra columns from mega_E
+table_E_mega <- mega_E_expanded |> select(
+       COUNTRY,
+       YEAR,
+       DOMAIN_LANDINGS,
+       NEP_SUB_REGION,
+       SPECIES,
+       TOTWGHTLANDG,
+       TOTAL_SAMPLED_TRIPS,
+       NO_AGE_MEASUREMENTS,
+       AGE_MEASUREMENTS_PROP,
+       MIN_AGE,
+       MAX_AGE,
+       AGE,
+       NO_AGE,
+       MEAN_WEIGHT,
+       WEIGHT_UNIT,
+       MEAN_LENGTH,
+       LENGTH_UNIT
+)
+
+no_IC_DATA <- table_E_mega  |> filter(is.na(NO_AGE)) |> distinct(DOMAIN_LANDINGS) 
+table_E_mega <- table_E_mega  |> filter(!is.na(NO_AGE))
+table_E_mega <-  table_E_mega |>   mutate(NO_AGE = ifelse(is.na(NO_AGE),"NK", NO_AGE)) 
+
+# LENGTH_UNIT to NK if no length variable exists in MEAN_LENGTH
+table_E_mega$LENGTH_UNIT <- case_when(table_E_mega$MEAN_LENGTH == "NK" ~ "NK", .default = "cm")
+
+#Tällä excelissä voi selailla DOMAINEJA, joista puuttuu kappalemäärälaskennat, mutta, joista on SUomussa näytteitä:
+openxlsx::write.xlsx(no_IC_DATA, file.path(path_out, "no_IC_DATA.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+#FDI taulu E output:
+openxlsx::write.xlsx(table_E_mega, file.path(path_out, "FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+
+```
+
+
+## Create table F
+
+### Table A
+
+```{r table_a}
+#-------------------------------------------------------------------------------
+#                       1. aggregate TABLE A for merging                       
+#-------------------------------------------------------------------------------
+
+table_A <- readRDS(file.path(path_der, "table_A.rds"))
+
+
+# import table A
+#table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
+#select order of columns
+table_A <- table_A |> select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH,	GEAR_TYPE,	TARGET_ASSEMBLAGE,	MESH_SIZE_RANGE,	METIER,	DOMAIN_DISCARDS,	DOMAIN_LANDINGS,	SUPRA_REGION,	SUB_REGION,	EEZ_INDICATOR,	GEO_INDICATOR,	NEP_SUB_REGION,	SPECON_TECH,	DEEP,	SPECIES,	TOTWGHTLANDG,	TOTVALLANDG,	DISCARDS,	CONFIDENTIAL)
+
+table_A <- table_A |> rename_all(tolower)
+
+#colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
+
+#-------------------------------------------------------------------------------
+
+# sum totwghtlandg BY year, domain_landings and species from TABLE A
+table_A_sum <- table_A |> group_by(country, year, domain_landings, species) |> summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg)))) |> filter(species == 'HER' | species == 'SPR')
+
+# rounding the number to three digits precision
+table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
+
+#Just to check: table_A_sum_SAL <-  filter(table_A_sum, species=="SAL")
+#ehkä Elokuussa tätä?
+#table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
+```
+
+### Suomu data
+
+```{r suomu-data}
+#-------------------------------------------------------------------------------
+#                       2. SAMPLED DATA for merging                       
+#-------------------------------------------------------------------------------
+
+
+## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
+
+
+# import data from samples (Suomu), length classes from national DCF database
+
+lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
+
+
+#-------------------------------------------------------------------------------
+# choose commercial LANDING samples only, from years 2013-2023 HUOM 2023 valittu kesäkuussa 2024 toimituksessa..
+ 
+suomu <- filter(lengthdata, projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2023,fao %in% c("HER", "SPR"))
+
+suomu$metier <- suomu$metiers_fk
+
+#-------------------------------------------------------------------------------
+
+# make a key variable to match table A key (domain_discards or domain_landings)
+
+# first make individually all the parts that form the key
+# make a key variable to match table A key (domain_discards or domain_landings)
+
+# first make individually all the parts that form the key
+country_code <- "FIN"
+quarter <- suomu$q
+subregion <- paste("27.3.d.", suomu$ices_osa_alue, sep = "")
+#Stat dep uses FPO instead of FPN so change
+suomu <- suomu |> mutate(metier = replace(metier,metier=="FPN_FWS_>0_0_0","FPO_FWS_>0_0_0"))
+suomu <- suomu |> mutate(metier = replace(metier,metier=="FPN_SPF_>0_0_0","FPO_SPF_>0_0_0"))
+gear_type <- suomu$fishframe
+gear_type <- case_when(gear_type == "FPO" | gear_type == "FPN" | gear_type == "FYK" ~ "FPO-FPN-FYK",
+                       gear_type == "OTM" | gear_type == "PTM" ~ "OTM-PTM",
+                       TRUE ~ gear_type
+)
+
+unique(gear_type)
+
+TARGET_ASSEMBLAGE <- "all" #substr(suomu$metier,5,7)  #metieristä merkit 5-7
+mesh_size <- "all"
+selective_device <- "NA"
+mesh_size_range_selective_device <- "NA"
+vessel_length <- "all"
+species <- suomu$fao
+commercial_cat <- "all"
+
+# then combine them as a single key, identical to that from table A
+suomu$domain_landings <- paste(country_code, quarter, subregion, gear_type, TARGET_ASSEMBLAGE, mesh_size, selective_device, mesh_size_range_selective_device, vessel_length, species, commercial_cat, sep = "_")
+
+suomu$species <- suomu$fao
+
+suomu2 <- suomu |> select(vuosi, domain_landings, species, nayteno, pituusluokka, pituusluokan_kpl_maara, pituusluokan_kokpaino)
+``` 
+
+
+### Merge table A and suomu data
+
+```{r merge}
+#-----------------------------------------------------------------------------------
+#                       4. aggregate SAMPLED DATA for merging with TABLE A                       
+#-----------------------------------------------------------------------------------
+
+# aggregate data on different levels according to Annex D instructions from the Official Letter
+
+#number of samples (number of TRIPS) + sum class bumber + mean weight at length
+d6_7 <- suomu2 |> group_by(vuosi, domain_landings, species) |> summarise(TOTAL_SAMPLED_TRIPS = n_distinct(nayteno), no_length_measurements = sum(pituusluokan_kpl_maara)) 
+
+# minimum and maximum lengths (notice! this is done by trip as well)
+d9_10 <- suomu2 |> group_by(vuosi, domain_landings, species) |> summarise(min_length = sum(min(pituusluokka)), max_length = sum(max(pituusluokka)))
+
+#number of length measurements 
+d11_12 <- suomu2 |> group_by(vuosi, domain_landings,species, pituusluokka) |> summarise(no_length = sum(pituusluokan_kpl_maara), mean_weight_at_length = mean(pituusluokan_kokpaino/pituusluokan_kpl_maara, na.rm = TRUE))
+d11_12$mean_weight_at_length <- round(d11_12$mean_weight_at_length, digits = 0)
+
+
+
+# merge the aggregated datas (above) to landing catch data 
+
+landing4 <- merge(d11_12, d9_10, by = c("vuosi", "domain_landings","species"))
+
+landing5 <- merge(landing4, d6_7, by = c("vuosi", "domain_landings","species"))
+
+# add length_unit and country variables
+landing5$length_unit <- "mm"
+landing5$country = "FIN"
+
+#-------------------------------------------------------------------------------
+
+landing5$no_length <- "NK"
+landing5$weight_unit <-"g"
+landing5$nep_sub_region <-"NA"
+
+
+# select only those variables important to merging with table A
+landing6 <- landing5 |> select(country, vuosi, domain_landings, nep_sub_region, TOTAL_SAMPLED_TRIPS, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length, mean_weight_at_length, weight_unit) |> rename(year = vuosi, length = pituusluokka)
+
+
+#-------------------------------------------------------------------------------
+#                       5. Merge SAMPLED DATA with TABLE A                       
+#-------------------------------------------------------------------------------
+
+# 2022 data has NaN values -> delete
+table_A_sum <- table_A_sum
+
+# merge landing catch data with TABLE A
+table_f_pre <- merge(landing6, table_A_sum, by = c("country", "year", "domain_landings"), all.x = T)
+
+# some keys might not match, check how many there might be
+missing_domains <- table_f_pre[is.na(table_f_pre$totwghtlandg),]
+missing_domains2 = missing_domains |> distinct(domain_landings, .keep_all = T)
+
+length(missing_domains2$domain_landings)
+
+
+# delete the missmatch values
+table_f_pre2 <- filter(table_f_pre, !is.na(totwghtlandg))
+suomu_deleted_for_no_catch <- filter(table_f_pre, is.na(totwghtlandg))
+
+table_f_pre3 <- na.omit(table_f_pre2)
+
+
+# arrange the variables in proper order and put them to upper case
+#table_F <- table_f_pre2 |> select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_length_measurements_landg, length_unit, min_length, max_length, length, no_length_landg) |> rename_all(toupper)
+table_F <- table_f_pre3 |> select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, TOTAL_SAMPLED_TRIPS, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) |> rename_all(toupper)
+
+# set working directory to save table F and table of deleted observations
+openxlsx::write.xlsx(table_F,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
+#openxlsx::write.xlsx(missing_domains2,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_TABLE_F.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
+#openxlsx::write.xlsx(suomu_deleted_for_no_catch,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_from_sampling_cause_no_catch.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
+
+
+```
+
 
 
 ## Create table G
