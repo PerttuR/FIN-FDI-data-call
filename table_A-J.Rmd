@@ -205,6 +205,7 @@ aktiviteetti <- aktiviteetti |> filter(!KALASTUSVUOSI %in% c(2013,2014,2015)) |>
                     VETOISUUS,
                     LAHTOPVM, LAHTOAIKA,
                     PALUUPVM, PALUUAIKA,
+                    PYYNTIPV=PYYNTIPAIVAT_ILMOITETTU,  # new
                     VLENGTH_AER_NEW,
                     FT,
                     GEAR,
@@ -256,6 +257,7 @@ akt1 <- aktiviteetti_all |>
                  KALASTUSAIKAHH,
                  LAHTOPVM, LAHTOAIKA,   # need to create timestamp and difference in hours
                  PALUUPVM, PALUUAIKA,
+                 PYYNTIPV,    # new
                  FT_REF, #trip id
                  MONTH = KALASTUS_KK,
                  VESSEL_LENGTH = VLENGTH_AER_NEW,
@@ -465,7 +467,7 @@ sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname =
 
 sas <- sas |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
-  select(YEAR, ULKOINENTUNNUS=ALUS, LOMAKE, KALASTUSPAIVAT, MERIPAIVAT, PAAKONETEHO=TEHO, # added LOMAKE
+  select(YEAR, ULKOINENTUNNUS=ALUS, LOMAKE, KALASTUSPAIVAT, PYYNTIPV, MERIPAIVAT, PAAKONETEHO=TEHO, # added LOMAKE
          VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
          TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, SVT_KG_SPR, SVT_KG_COD, 
          SVT_KG_FLE, SVT_KG_TUR, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_TRS, 
@@ -606,9 +608,9 @@ akt1_all2 |> count(YEAR, FISHING_TECH) |>
 ```
 
 
-## Create table A
+## Create table A - full version
 
-```{r table_a}
+```{r table_a_full}
 #-------------------------------------------------------------------------------
 #                   2. TABLE A (Catch summary)                              ####                
 #-------------------------------------------------------------------------------
@@ -744,13 +746,10 @@ table_A |> head() |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE A")
-# 
-# # Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
-# 
-# # Write the resulting table A
- openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+  flextable::set_caption( "Tiny preview TABLE A-full")
+ 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_A, file = file.path(path_der,"table_A_full.rds"))
 
 ```
 
@@ -760,7 +759,7 @@ Table B data is from Finish eu-dcf sampling database Suomu sampling frame data f
 
 ### Get Suomu data
 
-```{r suomu-cloud data}
+```{r B-suomu-cloud data}
 # Fetch sampling lottery tables from SUOMU sampling database
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
@@ -813,7 +812,7 @@ species_metier_map <- species_gear_code_tally3
 
 ### Adding variables and save
 
-```{r add_vars}
+```{r table_b}
 # tekstiä
 
 #wp_gears <- c("OTM", "PTM", "FYK", "GNS")
@@ -925,19 +924,30 @@ table_b$TRIPS_SAMPLED_ONBOARD <- observer_onboard_tally$n
 # ... order columns 
 table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","UNIQUE_VESSELS_CONTACTED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS")]
 
+table_b |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_b), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE B")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_b, file = file.path(path_der,"table_B.rds"))
+
 openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
 
 ```
 
 ## Create table C
 
-```{r get_table_a}
+```{r table_c}
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- readRDS(file.path(path_der, "table_A.rds"))
+table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
 #-------------------------------------------------------------------------------
@@ -968,6 +978,16 @@ table_C <- table_A |>
             .groups = "drop"
   )
 
+table_C |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_C), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE C")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_C, file = file.path(path_der,"table_C.rds"))
 
 openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
 
@@ -975,13 +995,13 @@ openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_A
 
 ## Create table D
 
-```{r}
+```{r table_d}
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
 #-------------------------------------------------------------------------------
 
 # import table A
-table_A <- readRDS(file.path(path_der, "table_A.rds"))
+table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
 #-------------------------------------------------------------------------------
@@ -1010,6 +1030,16 @@ table_D <- table_A |>
             .groups = "drop"
   )
 
+table_D |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_D), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE D")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_D, file = file.path(path_der,"table_D.rds"))
 
 openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
 
@@ -1020,7 +1050,7 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 
 ### Table A and IC data
 
-```{r table_a_ic}
+```{r E-table_a_ic}
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
@@ -1029,7 +1059,7 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 
 #IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
 IC_DB <- readRDS(file.path(path_der, "IC_DB.rds"))
-table_A <- readRDS(file.path(path_der, "table_A.rds"))
+table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
 #table_A <- read.csv2(paste0(path_tablea,.Platform$file.sep,"A_table_2013_2022.csv"), sep = "," , na.strings = "")
@@ -1129,15 +1159,14 @@ e1 <- IC_DB5 |> mutate(DOMAIN_LANDINGS = paste0(
 )
 )
 
-#printing e1 for browsing:
-
+# save
 openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 ```
 
 
 ### Suomu data
 
-```{r suomu-data}
+```{r E-suomu-data}
 
 ## SUOMU sample data for age numbers
 
@@ -1224,9 +1253,9 @@ suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, 
 ```
 
 
-### Merge wih table a
+### create table E
 
-```{r merge}
+```{r table_e}
 #-------------------------------------------------------------------------------
 #                       3. Merge SAMPLED DATA with TABLE A                       
 #-------------------------------------------------------------------------------
@@ -1261,8 +1290,6 @@ length(missing_domains_SUOMU_DISTINCT$domain_landings)
 domains_SUOMU <- table_e_suomu[!is.na(table_e_suomu$totwghtlandg),]
 domains_SUOMU_DISTINCT <- domains_SUOMU|> distinct(year, domain_landings, .keep_all = T)
 length(domains_SUOMU_DISTINCT$domain_landings)
-
-
 
 
 # delete domains with no catches from table A e.g missmatching joins
@@ -1453,6 +1480,17 @@ table_E_mega$LENGTH_UNIT <- case_when(table_E_mega$MEAN_LENGTH == "NK" ~ "NK", .
 #Tällä excelissä voi selailla DOMAINEJA, joista puuttuu kappalemäärälaskennat, mutta, joista on SUomussa näytteitä:
 openxlsx::write.xlsx(no_IC_DATA, file.path(path_out, "no_IC_DATA.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
+table_E_mega |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_E_mega), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE E")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_E_mega, file = file.path(path_der,"table_E.rds"))
+
 #FDI taulu E output:
 openxlsx::write.xlsx(table_E_mega, file.path(path_out, "FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
@@ -1461,14 +1499,14 @@ openxlsx::write.xlsx(table_E_mega, file.path(path_out, "FIN_TABLE_E_NAO_OFR_LAND
 
 ## Create table F
 
-### Table A
+### aggregate table A
 
-```{r table_a}
+```{r F-table_a}
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
 
-table_A <- readRDS(file.path(path_der, "table_A.rds"))
+table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
 # import table A
@@ -1493,9 +1531,9 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 #table_A_sum_ANA <-  filter(table_A_sum, species=="SAL"| species=="TRS") #SAL = Lohi/Merilohi(Atlantic salmon) TRS=Taimen/Meritaimen(Sea trout)
 ```
 
-### Suomu data
+### get Suomu data
 
-```{r suomu-data}
+```{r F-suomu-data}
 #-------------------------------------------------------------------------------
 #                       2. SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
@@ -1555,9 +1593,9 @@ suomu2 <- suomu |> select(vuosi, domain_landings, species, nayteno, pituusluokka
 ``` 
 
 
-### Merge table A and suomu data
+### create table F
 
-```{r merge}
+```{r table_f}
 #-----------------------------------------------------------------------------------
 #                       4. aggregate SAMPLED DATA for merging with TABLE A                       
 #-----------------------------------------------------------------------------------
@@ -1625,6 +1663,18 @@ table_f_pre3 <- na.omit(table_f_pre2)
 #table_F <- table_f_pre2 |> select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_length_measurements_landg, length_unit, min_length, max_length, length, no_length_landg) |> rename_all(toupper)
 table_F <- table_f_pre3 |> select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, TOTAL_SAMPLED_TRIPS, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) |> rename_all(toupper)
 
+table_F |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_F), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE F")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_F, file = file.path(path_der,"table_F.rds"))
+
+
 # set working directory to save table F and table of deleted observations
 openxlsx::write.xlsx(table_F,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
 #openxlsx::write.xlsx(missing_domains2,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_TABLE_F.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
@@ -1633,6 +1683,30 @@ openxlsx::write.xlsx(table_F,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS
 
 ```
 
+## Create table A - final version
+
+```{r table_a_final}
+
+# import table A
+table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
+
+
+
+table_A |> head() |> flextable::flextable() |>
+  flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_A), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE A")
+
+# # Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
+# 
+# # Write the resulting table A
+openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+
+```
 
 
 ## Create table G
@@ -1734,9 +1808,13 @@ table_G |> head() |> flextable::flextable() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
   flextable::set_caption( "Tiny preview TABLE G")
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_G, file = file.path(path_der,"table_G.rds"))
+
 # Write the resulting table G
 write.xlsx(table_G, file.path(path_out,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
 ```
+
 
 ## Create table H
 
@@ -1811,6 +1889,9 @@ table_H |> head() |> flextable::flextable() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
   flextable::set_caption( "Tiny preview TABLE H")
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_H, file = file.path(path_der,"table_H.rds"))
+
 # Write the resulting table H
 openxlsx::write.xlsx(table_H, file.path(path_out,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
 ```
@@ -1845,6 +1926,9 @@ table_I |> head() |> flextable::flextable() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
   flextable::set_caption( "Tiny preview TABLE I")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_I, file = file.path(path_der,"table_I.rds"))
 
 # Write the resulting table I
 openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
@@ -2055,6 +2139,9 @@ table_J |> head() |> flextable::flextable() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
   flextable::set_caption( "Tiny preview TABLE J")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_J, file = file.path(path_der,"table_J.rds"))
 
 # Write the resulting table J
 write.xlsx(table_J, file.path(path_out, "FIN_TABLE_J_CAPACITY.xlsx"), 
