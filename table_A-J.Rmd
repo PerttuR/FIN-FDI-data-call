@@ -182,6 +182,9 @@ names(discards) <- toupper(names(discards))
 
 discards$DISCARDS_TONNES <- discards$DISCARDS_KG/1000
 
+# some uppercase D in SUBREGION
+discards$SUB_REGION <- tolower(discards$SUB_REGION)
+
 discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |> 
   pivot_wider(names_from = TARGET_ASSEMBLAGE, values_from = n) |>
   flextable::flextable() |>
@@ -197,6 +200,7 @@ aktiviteetti <- aktiviteetti |> filter(!KALASTUSVUOSI %in% c(2013,2014,2015)) |>
                     KALASTUSVUOSI,
                     ULKOINENTUNNUS,
                     LOMAKE,       # new
+                    KK,           # new
                     FT_REF,
                     KALASTUSPAIVAT,
                     MERIPAIVAT,
@@ -250,6 +254,7 @@ akt1 <- aktiviteetti_all |>
           select(YEAR = KALASTUSVUOSI,
                  ULKOINENTUNNUS,
                  LOMAKE,      # new
+                 KK,          # new
                  KALASTUSPAIVAT,
                  MERIPAIVAT,
                  PAAKONETEHO,
@@ -467,7 +472,7 @@ sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname =
 
 sas <- sas |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
-  select(YEAR, ULKOINENTUNNUS=ALUS, LOMAKE, KALASTUSPAIVAT, PYYNTIPV, MERIPAIVAT, PAAKONETEHO=TEHO, # added LOMAKE
+  select(YEAR, ULKOINENTUNNUS=ALUS, LOMAKE, KK, KALASTUSPAIVAT, PYYNTIPV, MERIPAIVAT, PAAKONETEHO=TEHO, # added LOMAKE
          VETOISUUS, KALASTUSAIKAHH, FT_REF, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, 
          TARGET_ASSEMBLAGE, METIER=METIER6, SVT_KG_HER, SVT_KG_SPR, SVT_KG_COD, 
          SVT_KG_FLE, SVT_KG_TUR, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_TRS, 
@@ -711,7 +716,7 @@ a9_first_occurrence <- a9_sorted |> group_by(YEAR, QUARTER, VESSEL_LENGTH, FISHI
 
 # Step 4: Perform the left join only on the first occurrences
 a10_with_discard_matches <- a9_first_occurrence |>
-  filter(first_occurrence) |>
+  filter(first_occurrence) |> 
   left_join(discards2, by = c("YEAR", "QUARTER", "VESSEL_LENGTH", "FISHING_TECH", "GEAR_TYPE", "SUB_REGION", "TARGET_ASSEMBLAGE", "SPECIES"))
 
 # Step 5: Get rows from a9 that did not have a discard match (not first occurrences or those that didn't join)
@@ -979,7 +984,7 @@ table_C <- table_A |>
             MEAN_LENGTH = "NK",
             LENGTH_UNIT = "NK",
             .groups = "drop"
-  )
+  ) |> filter(DISCARDS != 0)
 
 table_C |> head() |> flextable::flextable() |>
   flextable::fontsize(size = 3, part = "all") |>
@@ -1031,7 +1036,7 @@ table_D <- table_A |>
             MEAN_WEIGHT_AT_LENGTH = "NK",
             WEIGHT_UNIT = "NK",            
             .groups = "drop"
-  )
+  ) |> filter(DISCARDS != 0)
 
 table_D |> head() |> flextable::flextable() |>
   flextable::fontsize(size = 3, part = "all") |>
@@ -1543,7 +1548,6 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 #                       2. SAMPLED DATA for merging                       
 #-------------------------------------------------------------------------------
 
-
 ## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
 
 
@@ -1555,7 +1559,7 @@ lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 #-------------------------------------------------------------------------------
 # choose commercial LANDING samples only, from years 2013-2023 HUOM 2023 valittu kesäkuussa 2024 toimituksessa..
  
-suomu <- filter(lengthdata, projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi >= 2013 & vuosi <= 2023,fao %in% c("HER", "SPR"))
+suomu <- filter(lengthdata, projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi %in% years, fao %in% c("HER", "SPR"))
 
 suomu$metier <- suomu$metiers_fk
 
@@ -1707,10 +1711,17 @@ table_A2 <- table_A2 |>
             by=join_by(YEAR, DOMAIN_DISCARDS, SPECIES))
 
 cat("Number of records with zero discards in table C", sep="\n")
-table_A2 |> filter(C_DISCARDS == 0) |> count() |> flextable::flextable()
+table_A2 |> filter(is.na(C_DISCARDS)) |> count() |> flextable::flextable()
 
 # discard records with no discards
-table_A2 <- table_A2 |> filter(C_DISCARDS != 0 | is.na(C_DISCARDS))
+table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
+                            is.na(C_DISCARDS) ~ "NK",
+                            .default = as.character(DOMAIN_DISCARDS)
+))
+
+# check all DOMAIN_DISCADS
+table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> print(n=Inf) |> flextable::flextable() |> flextable::autofit()
+
 
 #' ############################################
 # join with table D
@@ -1721,20 +1732,39 @@ table_A2 <- table_A2 |>
   left_join(table_D |> select(YEAR, DOMAIN_DISCARDS, SPECIES, D_DISCARDS=DISCARDS), 
             by=join_by(YEAR, DOMAIN_DISCARDS, SPECIES))
 
-cat("Number of records with zero discards in table D", sep="\n")
-table_A2 |> filter(D_DISCARDS == 0) |> count() |> flextable::flextable()
+cat("Number of records with zero discards in table C", sep="\n")
+table_A2 |> filter(is.na(D_DISCARDS)) |> count() |> flextable::flextable()
 
 # discard records with no discards
-table_A2 <- table_A2 |> filter(D_DISCARDS != 0 | is.na(D_DISCARDS))
+table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
+                            is.na(D_DISCARDS) ~ "NK",
+                            .default = as.character(DOMAIN_DISCARDS)
+))
+
+# check all DOMAIN_DISCADS
+table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> print(n=Inf) |> flextable::flextable()
 
 #' ############################################
 # join with table E
 #' ############################################
 #' 
-table_A2 <- table_A2 |>
-  #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
-  left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_xxx=xxx), 
-            by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
+# TO DO !!!!
+# table_A2 <- table_A2 |>
+#   #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
+#   left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_TOTWGHTLANDG=TOTWGHTLANDG) |>  # distinct(), 
+#             by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
+# 
+# cat("Number of records with zero discards in table C", sep="\n")
+# table_A2 |> filter(is.na(E_TOTWGHTLANDG)) |> count() |> flextable::flextable()
+# 
+# # discard records with no discards
+# table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
+#                             is.na(E_TOTWGHTLANDG) ~ "NK",
+#                             .default = as.character(DOMAIN_LANDINGS)
+# ))
+# 
+# # check all DOMAIN_DISCADS
+# table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> print(n=Inf) |> flextable::flextable()
 
 
 #' ############################################
@@ -1743,11 +1773,20 @@ table_A2 <- table_A2 |>
 #' 
 table_A2 <- table_A2 |>
   #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
-  left_join(table_F |> select(YEAR, DOMAIN_LANDINGS, SPECIES, F_TOTWGHTLANDG=TOTWGHTLANDG), 
+  left_join(table_F |> select(YEAR, DOMAIN_LANDINGS, SPECIES, F_TOTWGHTLANDG=TOTWGHTLANDG) |>  distinct(), 
             by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
 
-table_A2 |> filter(!is.na(F_TOTWGHTLANDG))
-# no matches
+cat("Number of records with zero discards in table C", sep="\n")
+table_A2 |> filter(is.na(F_TOTWGHTLANDG)) |> count() |> flextable::flextable()
+
+# discard records with no discards
+table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
+                            is.na(F_TOTWGHTLANDG) ~ "NK",
+                            .default = as.character(DOMAIN_LANDINGS)
+))
+
+# check all DOMAIN_DISCADS
+table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> print(n=Inf) |> flextable::flextable()
 
 
 # Put the variables in the correct order:
@@ -2019,6 +2058,32 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 
 # Select variables needed for J table from akt1 (DCPROD active vessels 2016 onwards):
 j <- akt1_all2 |> select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH, -FROM, -TO, -metier6_orig, -METIER5)
+
+# split tables
+# need to think about KALASTUSTAILMANALUSTA - currently not used !!!!!!!!!!
+j_monthly <- j |> filter(LOMAKE == "KKILMOITUS") |> filter(ULKOINENTUNNUS != "KALASTUSTAILMANALUSTA")
+j_not_monthly <- j |> filter(LOMAKE != "KKILMOITUS") |> filter(ULKOINENTUNNUS != "KALASTUSTAILMANALUSTA")
+
+# recalculate trips for KKILMOITUS
+j_monthly <- j_monthly |>
+  group_by(YEAR, ULKOINENTUNNUS, KK, SUB_REGION) |>
+  arrange(desc(PYYNTIPV), .by_group = TRUE) |>
+  mutate(rank_in_group = row_number()) |>
+  ungroup() |>
+  filter(rank_in_group == 1) |>
+  arrange(ULKOINENTUNNUS, YEAR, KK) |>
+  select(-rank_in_group)
+
+# check numbers !!!!!
+
+
+
+
+
+
+
+# glue tables back together
+j <- rbind(j_monthly, j_not_monthly)
 
 #j_all <- rbind(j_sas, j)
 
