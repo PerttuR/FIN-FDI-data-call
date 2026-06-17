@@ -1054,6 +1054,7 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 ### Table A and IC data
 
 ```{r E-table_a_ic}
+#| eval: false
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
@@ -1170,7 +1171,7 @@ openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", c
 ### Suomu data
 
 ```{r E-suomu-data}
-
+#| eval: false
 ## SUOMU sample data for age numbers
 
 
@@ -1259,6 +1260,7 @@ suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, 
 ### create table E
 
 ```{r table_e}
+#| eval: false
 #-------------------------------------------------------------------------------
 #                       3. Merge SAMPLED DATA with TABLE A                       
 #-------------------------------------------------------------------------------
@@ -1693,8 +1695,65 @@ openxlsx::write.xlsx(table_F,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS
 # import table A
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
+table_A2 <- table_A
+
+#' ############################################
+# join with table C
+#' ############################################
+#' 
+table_A2 <- table_A2 |>
+  # select(YEAR, DOMAIN_DISCARDS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
+  left_join(table_C |> select(YEAR, DOMAIN_DISCARDS, SPECIES, C_DISCARDS=DISCARDS), 
+            by=join_by(YEAR, DOMAIN_DISCARDS, SPECIES))
+
+cat("Number of records with zero discards in table C", sep="\n")
+table_A2 |> filter(C_DISCARDS == 0) |> count() |> flextable::flextable()
+
+# discard records with no discards
+table_A2 <- table_A2 |> filter(C_DISCARDS != 0 | is.na(C_DISCARDS))
+
+#' ############################################
+# join with table D
+#' ############################################
+#' 
+table_A2 <- table_A2 |>
+  # select(YEAR, DOMAIN_DISCARDS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
+  left_join(table_D |> select(YEAR, DOMAIN_DISCARDS, SPECIES, D_DISCARDS=DISCARDS), 
+            by=join_by(YEAR, DOMAIN_DISCARDS, SPECIES))
+
+cat("Number of records with zero discards in table D", sep="\n")
+table_A2 |> filter(D_DISCARDS == 0) |> count() |> flextable::flextable()
+
+# discard records with no discards
+table_A2 <- table_A2 |> filter(D_DISCARDS != 0 | is.na(D_DISCARDS))
+
+#' ############################################
+# join with table E
+#' ############################################
+#' 
+table_A2 <- table_A2 |>
+  #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
+  left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_xxx=xxx), 
+            by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
 
 
+#' ############################################
+# join with table F
+#' ############################################
+#' 
+table_A2 <- table_A2 |>
+  #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
+  left_join(table_F |> select(YEAR, DOMAIN_LANDINGS, SPECIES, F_TOTWGHTLANDG=TOTWGHTLANDG), 
+            by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
+
+table_A2 |> filter(!is.na(F_TOTWGHTLANDG))
+# no matches
+
+
+# Put the variables in the correct order:
+table_A <- a11 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+
+# show final table
 table_A |> head() |> flextable::flextable() |>
   flextable::fontsize(size = 3, part = "all") |>
   flextable::rotate(j = colnames(table_A), align = "bottom", rotation = "tbrl", part = "header") |>
