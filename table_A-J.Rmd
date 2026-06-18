@@ -2106,35 +2106,31 @@ j_monthly |> count(YEAR, VESSEL_LENGTH) |>
   flextable::colformat_num(j="YEAR", big.mark = "") |>
   flextable::set_caption("#Records in monthly journals after duplicate removal")
 
+# KKILMOITUS: summarise annual seasdays and fishing days
+j_monthly <- j_monthly |> mutate(FT_REF = "REF_KKILMOITUS")
+
+j_monthly |> select(YEAR, ULKOINENTUNNUS, KK, LOMAKE, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION, KALASTUSPAIVAT) |> View()
+
+j_monthly <- j_monthly |> mutate(LOMAKE="MONTHLY") |> group_by(COUNTRY, YEAR, VESSEL_LENGTH, LOMAKE, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR, FT_REF, ULKOINENTUNNUS, SUB_REGION) |> 
+              summarise(KALASTUSPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), MERIPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), .groups = "drop_last") |> 
+              arrange(YEAR, ULKOINENTUNNUS, FT_REF)
+
+View(j_monthly)
+
+# aggregate to trip level inside a subregion
+j_not_monthly |> select(YEAR, ULKOINENTUNNUS, KK, LOMAKE, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION, KALASTUSPAIVAT) |> 
+                  arrange(YEAR, ULKOINENTUNNUS, FT_REF) |> View()
+
+j_not_monthly <- j_not_monthly |> mutate(LOMAKE="TRIPS") |> group_by(COUNTRY, YEAR,VESSEL_LENGTH, LOMAKE, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) |>   
+                  summarise(KALASTUSPAIVAT=max(KALASTUSPAIVAT), MERIPAIVAT=max(KALASTUSPAIVAT), .groups = "drop_last") |>
+                  arrange(YEAR, ULKOINENTUNNUS, FT_REF)
+
+View(j_not_monthly)
+
 
 # glue tables back together
-j <- rbind(j_monthly, j_not_monthly)
+j_all_trip <- rbind(j_monthly, j_not_monthly)
 
-## split sas data away and check if it needs more cleaning
-j_13_15 <- j |> filter(YEAR %in% c(2013, 2014, 2015))
-j_16_25 <- j |> filter(!YEAR %in% c(2013, 2014, 2015))
-
-
-
-
-
-
-                                             
-
-
-# Aggregating all passive gears to PG
-
-# j_all <- j |> mutate(FISHING_TECH = case_when(
-#   FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
-#   TRUE ~ FISHING_TECH
-# ))
-
-
-
-#try to aggregate to trip level inside a subregion ####
-j_all_trip <- j |> group_by(COUNTRY, YEAR,VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) |> summarise(KALASTUSPAIVAT=max(KALASTUSPAIVAT), MERIPAIVAT=max(KALASTUSPAIVAT))
-
-# Select variables needed for J table from metier_sas (2013-2015 active vessels 2013-2015):
 
 # from capacity table some needed variables
 kap <- kapasiteetti |> filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) |> select(
@@ -2173,32 +2169,43 @@ j3 <- j3 |> mutate(FISHING_TECH = as.factor(FISHING_TECH))
 
 
 # Calculate the principal sub region for each vessel
-j4 <- j3 |> group_by(YEAR, ULKOINENTUNNUS, SUB_REGION) |> summarise(
-  fishingdays = n_distinct(KALASTUSPAIVAT, na.rm = TRUE), #sum????
-  fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
-  .groups = 'drop'
-  )
+j4 <- j3 |> group_by(YEAR, ULKOINENTUNNUS, LOMAKE, SUB_REGION) |> 
+            summarise(
+              ANNUAL_FISHINGDAYS = sum(KALASTUSPAIVAT, na.rm = TRUE),
+              ANNUAL_FISHINGTRIPS = case_when(
+                first(LOMAKE) == "TRIPS" ~ n_distinct(FT_REF, na.rm = TRUE),
+                first(LOMAKE) == "MONTHLY" ~ sum(KALASTUSPAIVAT, na.rm=TRUE),
+                TRUE ~ 0),
+            .groups = 'drop')
   
+# merge if multiple LOMAKE in the same year for the same vessel
+j4b <- j4 |> group_by(YEAR, ULKOINENTUNNUS, SUB_REGION) |> 
+                summarise(
+                ANNUAL_FISHINGDAYS = sum(ANNUAL_FISHINGDAYS, na.rm = TRUE),
+                ANNUAL_FISHINGTRIPS = sum(ANNUAL_FISHINGTRIPS, na.rm = TRUE),
+              .groups = 'drop')                
+
 # Identify the principal sub region for each vessel
-principal_sub_region <- j4 |>
+principal_sub_region <- j4b |>
   group_by(YEAR, ULKOINENTUNNUS) |>
-  filter(fishingdays == max(fishingdays, na.rm = TRUE)) |>
+  filter(ANNUAL_FISHINGDAYS == max(ANNUAL_FISHINGDAYS, na.rm = TRUE)) |>
   # Handle ties by randomly selecting one sub region
   slice_sample(n = 1) |>
   ungroup() |> rename(PRINCIPAL_SUB_REGION = SUB_REGION)
 
+
 # join the principal sub region to the j table
 j5 <- left_join(j3, principal_sub_region, by = c("YEAR","ULKOINENTUNNUS"))
   
-# Calculate the number of fishing trips for each vessel in sd
-vessel_fishing_trips <- j5 |> 
-  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
-  summarise(
-    total_fishingtrips = n_distinct(FT_REF, na.rm = TRUE),
-    total_fishingdays = sum(KALASTUSPAIVAT, na.rm = TRUE),
-    .groups = 'drop'
-  )
 
+# Calculate the number of fishing trips for each vessel
+vessel_fishing_trips <- j5 |> 
+                          select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, 
+                                 ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |>
+                          distinct()
+  
+
+# !!!! WE ARE HERE !!!! ####
 # Calculate the TOTKW and TOTGT for each vessel segment
 
 totkw_totgt <- j5 |> 
@@ -2212,6 +2219,7 @@ totkw_totgt <- j5 |>
     TOTKW = sum(TOTKW1),
     TOTGT = sum(TOTGT1)
 )
+
 # Calculate the average number of fishing days for the top 10 vessels with the highest number of fishing trips
 #maxseadays <- vessel_fishing_trips |> 
 #  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
@@ -2229,6 +2237,7 @@ totkw_totgt <- j5 |>
 #  summarise(
 #    MAXSEADAYS = as.integer(mean(MAXSEADAYS, na.rm = TRUE))
 #    )
+
 
 #### TEST 2026 for maxseadays from AER FIN:
 maxseadays_2 <- vessel_fishing_trips |> 
@@ -2309,6 +2318,7 @@ table_J |> head() |> flextable::flextable() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
   flextable::set_caption( "Tiny preview TABLE J")
+
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_J, file = file.path(path_der,"table_J.rds"))
