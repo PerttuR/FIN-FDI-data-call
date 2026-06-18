@@ -29,6 +29,7 @@ rStudio=TRUE
 rm(list=ls())
 invisible(gc)
 #.rs.restartR()
+unlink(list.files("DATA-CACHE", full.names = TRUE))
 ```
 
 # Prep
@@ -45,7 +46,7 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, janitor)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, janitor, haven, labelled)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
@@ -297,7 +298,7 @@ saveRDS(metier_2013_15, file = paste0(path_der,"sas_logbook_2013_15_raw.rds"))
 
 # SAVEPOINT -------- ####
 # uncomment and save to DB if renewed
-# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_logbook_raw_2013_15", metier_2013_15, overwrite = TRUE))
+invisible(write.dbTable(dbname = 'kake_siirto', "vault", "sas_logbook_raw_2013_15", metier_2013_15, overwrite = FALSE))
 ```
 
 ### Shore data
@@ -409,7 +410,7 @@ saveRDS(shore_2013_15, file = paste0(path_der,"shore_2013_15_raw.rds"))
 
 # SAVEPOINT -------- ####
 # uncomment and save to DB if renewed
-# invisible(write.dbTable(dbname = 'kake_siirto', dcprodschema, "sas_shorelogs_raw_2013_15", shore_2013_15, overwrite = FALSE))
+invisible(write.dbTable(dbname = 'kake_siirto', "vault", "sas_shorelogs_raw_2013_15", shore_2013_15, overwrite = FALSE))
 ```
 
 ### Connect to DPCROD
@@ -448,11 +449,24 @@ dcprodschema <- paste0(schemadate, "-dcprod")
 ```{r add-metier}
 #| eval: true
 
-# metier_2013_15 <- readRDS(paste0(path_der,"metier_2013_15.rds"))
-
 # get 2025 prep data from DB
-metier_2013_15 <- read.dbTable(schema="2025-04-10-dcprod", table="metier_sas_files_2013_15", dbname = "kake_siirto")
+metier_2013_15 <- read.dbTable(schema="vault", table="sas_logbook_raw_2013_15", dbname = "kake_siirto")
+
+metier_2013_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> 
+   pivot_wider(names_from = VESSEL_LENGTH, values_from = n,
+               names_expand = TRUE,  names_sort = FALSE) |>
+   flextable::flextable() |>
+   flextable::colformat_num(j="KALASTUSVUOSI", big.mark="") |>
+   flextable::set_caption("Check raw metier_2013_15 VESSEL_LENGTH classes")
+
 shore_2013_15 <- read.dbTable(schema="2025-04-10-dcprod", table="sas_shore_raw_2013_15", dbname = "kake_siirto")
+
+shore_2013_15 |> count(KALASTUSVUOSI, VESSEL_LENGTH) |> 
+   pivot_wider(names_from = VESSEL_LENGTH, values_from = n,
+               names_expand = TRUE,  names_sort = FALSE) |>
+   flextable::flextable() |>
+   flextable::colformat_num(j="KALASTUSVUOSI", big.mark="") |>
+   flextable::set_caption("Check raw shore_2013_15 VESSEL_LENGTH classes")
 
 logbook_13_15 <- metier_2013_15 |> 
                   mutate(
@@ -683,6 +697,9 @@ shorelogs_13_15 <- shorelogs_13_15 |>
                       .default = VESSEL_LENGTH))
 
 shorelogs_13_15 |> count(test, VESSEL_LENGTH) |> flextable::flextable() |> 
+  flextable::set_caption("Check vessel length derived from PITUUS (test) and VESSEL_LENGTH again")
+
+shorelogs_13_15 |> count(YEAR, VESSEL_LENGTH) |> flextable::flextable() |> 
   flextable::set_caption("Check vessel length derived from PITUUS (test) and VESSEL_LENGTH again")
 
 # drop test column
@@ -1631,6 +1648,7 @@ shorelogs_13_15 <- shorelogs_13_15 |> mutate(ID=1:n())
 invisible(write.dbTable(dbname = 'kake_siirto', "vault", "sas_shorelogs_clean_2013_15", shorelogs_13_15, overwrite = TRUE))
 ```
 
+
 ## join datasets and save for table J 
 
 ```{r join-datasets}
@@ -1758,11 +1776,11 @@ logbook_13_15_for_J <- KALASTUSAKTIVITEETTI_13_15 |> select(YEAR=KALASTUSVUOSI, 
                                                 SUB_REGION=area_code_full,EEZ_INDICATOR,GEO_INDICATOR,SPECON_TECH,DEEP)                                                                                               
 
 
-saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
+# saveRDS(logbook_13_15_for_J, file = paste0(path_der,"logbook_2013_15_for_J.rds"))
 
 # SAVEPOINT -------- ####
 # uncomment and save to DB if renewed
-invisible(write.dbTable(dbname = 'kake_siirto', "vault", "logbook_13_15_for_J", logbook_13_15_for_J, overwrite = TRUE))
+# invisible(write.dbTable(dbname = 'kake_siirto', "vault", "logbook_13_15_for_J", logbook_13_15_for_J, overwrite = TRUE))
 ```
 
 ## add fish pricing data 
@@ -1858,4 +1876,3 @@ invisible(write.dbTable(dbname = 'kake_siirto', "vault", "sas_combined_clean_201
 
 ```
 
-* TO DO: do we need to use the cleaned SAS data for table H ???
