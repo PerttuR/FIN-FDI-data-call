@@ -2115,17 +2115,17 @@ j_monthly <- j_monthly |> mutate(LOMAKE="MONTHLY") |> group_by(COUNTRY, YEAR, VE
               summarise(KALASTUSPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), MERIPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), .groups = "drop_last") |> 
               arrange(YEAR, ULKOINENTUNNUS, FT_REF)
 
-View(j_monthly)
+# View(j_monthly)
 
 # aggregate to trip level inside a subregion
-j_not_monthly |> select(YEAR, ULKOINENTUNNUS, KK, LOMAKE, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION, KALASTUSPAIVAT) |> 
-                  arrange(YEAR, ULKOINENTUNNUS, FT_REF) |> View()
+# j_not_monthly |> select(YEAR, ULKOINENTUNNUS, KK, LOMAKE, VESSEL_LENGTH, FISHING_TECH, # SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION, KALASTUSPAIVAT) |> 
+#                   arrange(YEAR, ULKOINENTUNNUS, FT_REF) |> View()
 
 j_not_monthly <- j_not_monthly |> mutate(LOMAKE="TRIPS") |> group_by(COUNTRY, YEAR,VESSEL_LENGTH, LOMAKE, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) |>   
                   summarise(KALASTUSPAIVAT=max(KALASTUSPAIVAT), MERIPAIVAT=max(KALASTUSPAIVAT), .groups = "drop_last") |>
                   arrange(YEAR, ULKOINENTUNNUS, FT_REF)
 
-View(j_not_monthly)
+# View(j_not_monthly)
 
 
 # glue tables back together
@@ -2146,13 +2146,16 @@ kap <- kapasiteetti |> filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) |
 ) |> select(-RAKENNUSPVM, -rakennusvuosi) |> distinct()
 
 # removing duplicates and checking there are none left
-dup<-kap |> 
+tmp <- kap |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
-  filter(n()>1)
+  filter(n()>1) |> ungroup() |> summarise(tot = n_distinct(ULKOINENTUNNUS))
 
+cat(paste("There are", tmp$tot, "ships with multipe ship records in the same year"))
+
+# use the first record if there is a duplicate by vessel and year
 kap2 <- kap |> arrange(YEAR, ULKOINENTUNNUS, KOKPITUUS, VESSEL_LENGTH, AGE) |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
-  summarise(KOKPITUUS = first(KOKPITUUS), VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), VETOISUUS=first(VETOISUUS) ,AGE = first(AGE),.groups = "drop")
+  summarise(KOKPITUUS = first(KOKPITUUS), VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), VETOISUUS=first(VETOISUUS), AGE = first(AGE),.groups = "drop")
 
 # kap2 |> flextable::flextable()
 
@@ -2165,11 +2168,15 @@ j2 <- j2 |> mutate(FISHING_TECH = as.character(FISHING_TECH))
 # Replace NA values with "PG"
 j3 <- j2 |> mutate(FISHING_TECH = replace_na(FISHING_TECH, "PG"))
 # convert the character vector back to a factor
-j3 <- j3 |> mutate(FISHING_TECH = as.factor(FISHING_TECH))
+j3 <- j3 |> mutate(FISHING_TECH = as.factor(FISHING_TECH),
+                   SUPRA_REGION = "NOA",
+                   GEO_INDICATOR = "NGI",
+                   COUNTRY = replace_na(COUNTRY, "FIN"))
 
 
 # Calculate the principal sub region for each vessel
-j4 <- j3 |> group_by(YEAR, ULKOINENTUNNUS, LOMAKE, SUB_REGION) |> 
+j4 <- j3 |> 
+      group_by(COUNTRY, YEAR, ULKOINENTUNNUS, LOMAKE, SUB_REGION) |> 
             summarise(
               ANNUAL_FISHINGDAYS = sum(KALASTUSPAIVAT, na.rm = TRUE),
               ANNUAL_FISHINGTRIPS = case_when(
@@ -2179,76 +2186,75 @@ j4 <- j3 |> group_by(YEAR, ULKOINENTUNNUS, LOMAKE, SUB_REGION) |>
             .groups = 'drop')
   
 # merge if multiple LOMAKE in the same year for the same vessel
-j4b <- j4 |> group_by(YEAR, ULKOINENTUNNUS, SUB_REGION) |> 
+# i.e. TRIPS and MONTHLY entry in the same year/region for the same vessel
+j5 <- j4 |> group_by(COUNTRY, YEAR, ULKOINENTUNNUS, SUB_REGION) |> 
                 summarise(
                 ANNUAL_FISHINGDAYS = sum(ANNUAL_FISHINGDAYS, na.rm = TRUE),
                 ANNUAL_FISHINGTRIPS = sum(ANNUAL_FISHINGTRIPS, na.rm = TRUE),
-              .groups = 'drop')                
+              .groups = 'drop') |>
+       group_by(COUNTRY, YEAR, ULKOINENTUNNUS) |>
+       mutate(PRINCIPAL_SUB_REGION = SUB_REGION[which.max(ANNUAL_FISHINGDAYS)]) |>
+       group_by(YEAR, ULKOINENTUNNUS, PRINCIPAL_SUB_REGION) |> 
+                summarise(
+                ANNUAL_FISHINGDAYS = sum(ANNUAL_FISHINGDAYS, na.rm = TRUE),
+                ANNUAL_FISHINGTRIPS = sum(ANNUAL_FISHINGTRIPS, na.rm = TRUE),
+              .groups = 'drop')
 
-# Identify the principal sub region for each vessel
-principal_sub_region <- j4b |>
-  group_by(YEAR, ULKOINENTUNNUS) |>
-  filter(ANNUAL_FISHINGDAYS == max(ANNUAL_FISHINGDAYS, na.rm = TRUE)) |>
-  # Handle ties by randomly selecting one sub region
-  slice_sample(n = 1) |>
-  ungroup() |> rename(PRINCIPAL_SUB_REGION = SUB_REGION)
+
+# join against minimal cleaned table from above
+# 13 vessels had multiple FISHING_TECH in the same YEAR
+j_all <- j3 |>
+          select(-LOMAKE, -KALASTUSPAIVAT, -MERIPAIVAT, -SUB_REGION, -FT_REF) |> distinct() |>
+          group_by(YEAR, ULKOINENTUNNUS) |>
+            arrange(YEAR, ULKOINENTUNNUS) |>
+          mutate(
+              FISHING_TECH = if (n() > 1) "PMP" else FISHING_TECH
+            ) |>
+          slice(1) |>
+          ungroup()
+
+# join back with PRINCIPAL_SUB_REGION
+j6 <- j5 |> left_join(j_all, by=c("YEAR"="YEAR", "ULKOINENTUNNUS"="ULKOINENTUNNUS"))
 
 
-# join the principal sub region to the j table
-j5 <- left_join(j3, principal_sub_region, by = c("YEAR","ULKOINENTUNNUS"))
-  
 
-# Calculate the number of fishing trips for each vessel
-vessel_fishing_trips <- j5 |> 
-                          select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, 
-                                 ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |>
-                          distinct()
-  
+# vessel fishing trips
+vessel_fishing_trips <- j6 |>
+        select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |>
+        distinct()
 
-# !!!! WE ARE HERE !!!! ####
+# View(vessel_fishing_trips)
+
+
 # Calculate the TOTKW and TOTGT for each vessel segment
 
-totkw_totgt <- j5 |> 
+totkw_totgt <- j6 |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
   summarise(
     TOTKW1 = first(PAAKONETEHO),
-    TOTGT1 = first(VETOISUUS)
+    TOTGT1 = first(VETOISUUS),
+    .groups = "drop"
   ) |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |> 
   summarise(
     TOTKW = sum(TOTKW1),
-    TOTGT = sum(TOTGT1)
+    TOTGT = sum(TOTGT1),
+    .groups = "drop"
 )
 
-# Calculate the average number of fishing days for the top 10 vessels with the highest number of fishing trips
-#maxseadays <- vessel_fishing_trips |> 
-#  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
-#  arrange(desc(total_fishingdays)) |>
-#  # Sort vessels by days at sea in descending order and take the top 10
-#  slice(1:10) |> 
-#  summarise(
-#    MAXSEADAYS = mean(total_fishingdays, na.rm = TRUE),
-#    .groups = 'drop'
-#  ) |>
-#  mutate(MAXSEADAYS = replace_na(MAXSEADAYS, 'NK'))
-#
-#maxseadays_2 <- maxseadays |> 
-#  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |> 
-#  summarise(
-#    MAXSEADAYS = as.integer(mean(MAXSEADAYS, na.rm = TRUE))
-#    )
 
-
-#### TEST 2026 for maxseadays from AER FIN:
+#### maxseadays from AER FIN:
 maxseadays_2 <- vessel_fishing_trips |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
-  summarise(days_at_sea = sum(total_fishingdays)) |>
+  summarise(days_at_sea = sum(ANNUAL_FISHINGDAYS),
+  .groups = "drop") |>
   # Sort vessels by days at sea in descending order and take the top 10
   group_by(COUNTRY,YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |>
   filter(days_at_sea <= 365) |>
   top_n(10, days_at_sea) |>
   summarise(
-    MAXSEADAYS = round(mean(days_at_sea), digits = 0)
+    MAXSEADAYS = round(mean(days_at_sea), digits = 0),
+    .groups = "drop"
   ) |>
   mutate(MAXSEADAYS = replace_na(MAXSEADAYS, 'NK'))
 
@@ -2265,51 +2271,36 @@ maxseadays_2 <- vessel_fishing_trips |>
 
 
 # Calculate the other sums and averages
-j6 <- j5 |> 
+j7 <- j6 |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |> 
-  summarise(
-    TOTTRIPS = n_distinct(FT_REF), # changed table aggregation to fishingtrips, changed from variable fishingtrips
-    #TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
-    #TOTGT = sum(VETOISUUS, na.rm = TRUE),
+  mutate(
     TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
     AVGAGE = round(mean(AGE, na.rm = TRUE), digits = 1),
-    AVGLOA = round(mean(KOKPITUUS, na.rm = TRUE), digits = 2),
-    .groups = 'drop'
-  )
+    AVGLOA = round(mean(KOKPITUUS, na.rm = TRUE), digits = 2)
+  ) |>
+  ungroup()
 
 # join the maximum days at sea with j table
-j7 <- left_join(j6, maxseadays_2, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
+j8 <- left_join(j7, maxseadays_2, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
 
 # join the previously calculated TOTKW and TOTGT by fleet segment with table J
-j7b <- left_join(j7, totkw_totgt, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
+j9 <- left_join(j8, totkw_totgt, by = c("COUNTRY", "YEAR", "VESSEL_LENGTH", "FISHING_TECH", "SUPRA_REGION", "GEO_INDICATOR", "PRINCIPAL_SUB_REGION"))
 
 
 # replace missing values and arrange by year
-j8 <- j7b |> mutate(
-  COUNTRY = replace_na(COUNTRY, "FIN"),
-  SUPRA_REGION = replace_na(SUPRA_REGION, "NAO"),
-  GEO_INDICATOR = replace_na(GEO_INDICATOR, "NGI"),
-  PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK")
+j10 <- j9 |> mutate(PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK")
 ) |> arrange(by = YEAR)
 
-
-# SET TOTTRIPS to 0 for inactive vessel ranges
-
-j9 <- j8 |> mutate(TOTTRIPS = case_when(
-  TOTTRIPS == 1 & PRINCIPAL_SUB_REGION == "NK" ~ 0,
-  TRUE ~ TOTTRIPS
-))
 # mutate the fishing technique to INACTIVE if TOTTRIPS ==0
 
-j10 <- j9 |> mutate(FISHING_TECH = case_when(
-  TOTTRIPS == 0 ~"INACTIVE",
+j11 <- j10 |> mutate(FISHING_TECH = case_when(
+  ANNUAL_FISHINGTRIPS == 0 ~"INACTIVE",
   TRUE ~ FISHING_TECH
 ))
 
 
-
 # Put the variables in the correct order:
-table_J <- j10 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
+table_J <- j11 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS=ANNUAL_FISHINGTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
 
 table_J |> head() |> flextable::flextable() |>
   flextable::fontsize(size = 3, part = "all") |>
