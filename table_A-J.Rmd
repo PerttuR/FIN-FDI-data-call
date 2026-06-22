@@ -8,9 +8,9 @@ author:
 - Antti Sykkö
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document: default
   pdf_document:
     latex_engine: xelatex
+  word_document: default
 editor_options: 
   chunk_output_type: console
 ---
@@ -37,7 +37,7 @@ rStudio=TRUE
 rm(list=ls())
 invisible(gc)
 #.rs.restartR()
-unlink(list.files("DATA-CACHE", full.names = TRUE))
+#unlink(list.files("DATA-CACHE", full.names = TRUE))
 ```
 
 # Prep
@@ -2273,10 +2273,11 @@ maxseadays_2 <- vessel_fishing_trips |>
 # Calculate the other sums and averages
 j7 <- j6 |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |> 
-  mutate(
+  summarise(
     TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
     AVGAGE = round(mean(AGE, na.rm = TRUE), digits = 1),
-    AVGLOA = round(mean(KOKPITUUS, na.rm = TRUE), digits = 2)
+    AVGLOA = round(mean(KOKPITUUS, na.rm = TRUE), digits = 2),
+    TOTTRIPS = sum(ANNUAL_FISHINGTRIPS)
   ) |>
   ungroup()
 
@@ -2294,16 +2295,16 @@ j10 <- j9 |> mutate(PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK"
 # mutate the fishing technique to INACTIVE if TOTTRIPS ==0
 
 j11 <- j10 |> mutate(FISHING_TECH = case_when(
-  ANNUAL_FISHINGTRIPS == 0 ~"INACTIVE",
+  TOTTRIPS == 0 ~"INACTIVE",
   TRUE ~ FISHING_TECH
 ))
 
 
 # Put the variables in the correct order:
-table_J <- j11 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS=ANNUAL_FISHINGTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
+table_J <- j11 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
 
 table_J |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
+  #flextable::fontsize(size = 3, part = "all") |>
   flextable::rotate(j = colnames(table_J), align = "bottom", rotation = "tbrl", part = "header") |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
