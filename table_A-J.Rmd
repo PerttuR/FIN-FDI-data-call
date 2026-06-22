@@ -2169,7 +2169,7 @@ j2 <- j2 |> mutate(FISHING_TECH = as.character(FISHING_TECH))
 j3 <- j2 |> mutate(FISHING_TECH = replace_na(FISHING_TECH, "PG"))
 # convert the character vector back to a factor
 j3 <- j3 |> mutate(FISHING_TECH = as.factor(FISHING_TECH),
-                   SUPRA_REGION = "NOA",
+                   SUPRA_REGION = "NAO",
                    GEO_INDICATOR = "NGI",
                    COUNTRY = replace_na(COUNTRY, "FIN"))
 
@@ -2244,12 +2244,15 @@ totkw_totgt <- j6 |>
 
 
 #### maxseadays from AER FIN:
-maxseadays_2 <- vessel_fishing_trips |> 
+maxseadays_2 <- vessel_fishing_trips |>
+  #should these INACTIVE be filtered first?
+  #filter(ANNUAL_FISHINGDAYS!=0) |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
   summarise(days_at_sea = sum(ANNUAL_FISHINGDAYS),
   .groups = "drop") |>
   # Sort vessels by days at sea in descending order and take the top 10
   group_by(COUNTRY,YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |>
+  #filter higher that 365 days?? should it be using ceiling?
   filter(days_at_sea <= 365) |>
   top_n(10, days_at_sea) |>
   summarise(
