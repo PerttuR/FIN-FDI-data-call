@@ -2242,7 +2242,7 @@ totkw_totgt <- j5 |>
 #### TEST 2026 for maxseadays from AER FIN:
 maxseadays_2 <- vessel_fishing_trips |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
-  summarise(days_at_sea = sum(total_fishingdays)) |>
+  summarise(days_at_sea = sum(ANNUAL_FISHINGDAYS)) |>
   # Sort vessels by days at sea in descending order and take the top 10
   group_by(COUNTRY,YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |>
   filter(days_at_sea <= 365) |>
@@ -2268,7 +2268,7 @@ maxseadays_2 <- vessel_fishing_trips |>
 j6 <- j5 |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |> 
   summarise(
-    TOTTRIPS = n_distinct(FT_REF), # changed table aggregation to fishingtrips, changed from variable fishingtrips
+    TOTTRIPS = sum(ANNUAL_FISHINGTRIPS), #n_distinct(FT_REF),  changed table aggregation to fishingtrips, changed from variable fishingtrips
     #TOTKW = sum(PAAKONETEHO, na.rm = TRUE),
     #TOTGT = sum(VETOISUUS, na.rm = TRUE),
     TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
