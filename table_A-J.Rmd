@@ -37,7 +37,7 @@ rStudio=TRUE
 rm(list=ls())
 invisible(gc)
 #.rs.restartR()
-#unlink(list.files("DATA-CACHE", full.names = TRUE))
+unlink(list.files("DATA-CACHE", full.names = TRUE))
 ```
 
 # Prep
@@ -2112,7 +2112,8 @@ j_monthly <- j_monthly |> mutate(FT_REF = "REF_KKILMOITUS")
 # j_monthly |> select(YEAR, ULKOINENTUNNUS, KK, LOMAKE, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION, KALASTUSPAIVAT) |> View()
 
 j_monthly <- j_monthly |> mutate(LOMAKE="MONTHLY") |> group_by(COUNTRY, YEAR, VESSEL_LENGTH, LOMAKE, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR, FT_REF, ULKOINENTUNNUS, SUB_REGION) |> 
-              summarise(KALASTUSPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), MERIPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), .groups = "drop_last") |> 
+              summarise(KALASTUSPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), 
+                        MERIPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), .groups = "drop_last") |> 
               arrange(YEAR, ULKOINENTUNNUS, FT_REF)
 
 # View(j_monthly)
@@ -2121,9 +2122,11 @@ j_monthly <- j_monthly |> mutate(LOMAKE="MONTHLY") |> group_by(COUNTRY, YEAR, VE
 # j_not_monthly |> select(YEAR, ULKOINENTUNNUS, KK, LOMAKE, VESSEL_LENGTH, FISHING_TECH, # SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION, KALASTUSPAIVAT) |> 
 #                   arrange(YEAR, ULKOINENTUNNUS, FT_REF) |> View()
 
-j_not_monthly <- j_not_monthly |> mutate(LOMAKE="TRIPS") |> group_by(COUNTRY, YEAR,VESSEL_LENGTH, LOMAKE, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) |>   
-                  summarise(KALASTUSPAIVAT=max(KALASTUSPAIVAT), MERIPAIVAT=max(KALASTUSPAIVAT), .groups = "drop_last") |>
-                  arrange(YEAR, ULKOINENTUNNUS, FT_REF)
+j_not_monthly <- j_not_monthly |> mutate(LOMAKE="TRIPS") |> 
+                group_by(COUNTRY, YEAR,VESSEL_LENGTH, LOMAKE, FISHING_TECH, SUPRA_REGION,GEO_INDICATOR,FT_REF, ULKOINENTUNNUS, SUB_REGION) |>   
+                summarise(KALASTUSPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), 
+                        MERIPAIVAT = sum(KALASTUSPAIVAT, na.rm=TRUE), .groups = "drop_last") |> 
+                arrange(YEAR, ULKOINENTUNNUS, FT_REF)
 
 # View(j_not_monthly)
 
@@ -2249,12 +2252,9 @@ maxseadays_2 <- vessel_fishing_trips |>
   #filter(ANNUAL_FISHINGDAYS!=0) |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
   summarise(days_at_sea = sum(ANNUAL_FISHINGDAYS),
-  .groups = "drop") |>
-  # Sort vessels by days at sea in descending order and take the top 10
-  group_by(COUNTRY,YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |>
-  #filter higher that 365 days?? should it be using ceiling?
-  filter(days_at_sea <= 365) |>
+            days_at_sea = if_else(days_at_sea > 365, 365, days_at_sea)) |> 
   top_n(10, days_at_sea) |>
+  group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |>
   summarise(
     MAXSEADAYS = round(mean(days_at_sea), digits = 0),
     .groups = "drop"
