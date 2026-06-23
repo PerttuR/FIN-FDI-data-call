@@ -574,6 +574,10 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
                              table=tablename, dbname = "kake_siirto") |> 
                   select(VUOSI, ULKOINENTUNNUS, NIMI, VLENGTH_FDI) |> 
                   mutate(NIMI = toupper(NIMI)) |> distinct()
+
+# check vessel length classes and VLENGTH_FDI
+
+
 ```
 
 ## clean logbook
@@ -1624,6 +1628,15 @@ LOGBOOK$LOMAKE <- "KALASTUSPAIVAKIRJA"
 # LOGBOOK |> filter(ID %in% tmp$ID) |> 
 #   select(KALASTUSVUOSI, KK, ALUS, GEAR, LAHTOPVM, PALUUPVM, KALASTUSKERTATUNNUS,trip_id,ID) |> View()
 
+# need to check why fecR fails do deal with these records !!!
+# if NA's in KALASTUSPAIVAT/MERIPAIVAT
+LOGBOOK <- LOGBOOK |>
+              mutate(KALASTUSPAIVAT = case_when(
+                      is.na(KALASTUSPAIVAT) ~ PYYNTIPV,
+                      TRUE ~ KALASTUSPAIVAT),
+                     MERIPAIVAT = case_when(
+                      is.na(MERIPAIVAT) ~ PYYNTIPV,
+                      TRUE ~ MERIPAIVAT))
 
 # SAVEPOINT -------- ####
 # uncomment and save to DB if renewed
