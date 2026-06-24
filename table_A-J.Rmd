@@ -2251,7 +2251,7 @@ vessel_fishing_trips <- j6b |>
 
 # Calculate the TOTKW and TOTGT for each vessel segment
 
-totkw_totgt <- j6 |> 
+totkw_totgt <- j6b |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS) |> 
   summarise(
     TOTKW1 = first(PAAKONETEHO),
