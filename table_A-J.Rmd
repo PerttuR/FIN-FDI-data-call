@@ -2277,7 +2277,7 @@ extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
 extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table")
 
 # removing duplicates and checking there are none left
-extra_dup <- extra_kap2 |> 
+extra_dup <- extra_kap |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
   filter(n()>1)
 
