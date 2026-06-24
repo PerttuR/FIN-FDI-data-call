@@ -2249,14 +2249,14 @@ inactive <- kap2 |>
 # glue inactive vessels to cleaned activity data
 j6b <- rbind(j6, inactive)
 
+# testing
+# j6b |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |> filter(VESSEL_LENGTH == "VL40XX") |> View()
 
 
 # vessel fishing trips
 vessel_fishing_trips <- j6b |>
         select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |>
         distinct()
-
-
 
 
 # Calculate the TOTKW and TOTGT for each vessel segment
@@ -2329,6 +2329,12 @@ j10 <- j9 |> mutate(PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK"
 
 # Put the variables in the correct order:
 table_J <- j10 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
+
+# check seadays
+
+table_J 
+
+
 
 table_J |> head() |> flextable::flextable() |>
   #flextable::fontsize(size = 3, part = "all") |>
