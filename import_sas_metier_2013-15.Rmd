@@ -1624,7 +1624,7 @@ LOGBOOK$LOMAKE <- "KALASTUSPAIVAKIRJA"
 
 # this creates 500 extra rows in fec.R - check later!!!
 # tmp <- LOGBOOK |> count(ID) |> filter(n>1)
-# 
+
 # LOGBOOK |> filter(ID %in% tmp$ID) |> 
 #   select(KALASTUSVUOSI, KK, ALUS, GEAR, LAHTOPVM, PALUUPVM, KALASTUSKERTATUNNUS,trip_id,ID) |> View()
 
@@ -1695,7 +1695,7 @@ LOG <- LOGBOOK |> select(ALUS, ALUSNIMI, KKERTA_TUNNUS=KALASTUSKERTATUNNUS, PURK
                          SVT_KG_FPE, SVT_KG_FPI, SVT_KG_FPP, SVT_KG_FRO, SVT_KG_FVE, SVT_KG_HER, 
                          SVT_KG_PLE, SVT_KG_PLN, SVT_KG_SAL, SVT_KG_SME, SVT_KG_SPR, SVT_KG_TRR, 
                          SVT_KG_TRS, SVT_KG_TUR, SVT_KG_WHG, SVT_KG_TOTAL, FT_TRIP, FT, 
-                         KMATKA_TUNNUS, TRIP_ID=trip_id, ID, MERIPAIVAT=days_at_sea, KALASTUSPAIVAT=fishing_days, LOMAKE)
+                         KMATKA_TUNNUS, TRIP_ID=trip_id, ID, MERIPAIVAT, KALASTUSPAIVAT, LOMAKE)
                          
 SHORE <- shorelogs_13_15 |> mutate(LAHTOPVM=NA, PALUUPVM=NA, PVM=NA, KUNTA=NA,
                                    PURKUPVM = as.Date(PURKUPVM),
