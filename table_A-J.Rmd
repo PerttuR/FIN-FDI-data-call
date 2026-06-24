@@ -2472,3 +2472,38 @@ write.xlsx(table_J, file.path(path_out, "FIN_TABLE_J_CAPACITY.xlsx"),
            sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
 
 ```
+
+
+## Create table K
+
+```
+Table K NAO OFR. Discards estimated by domain
+Table to be provided only for the Atlantic Ocean and other regions (not for the Mediterranean and Black Sea
+regions).
+Discard estimates should be provided at the domain level (DOMAIN_DISCARDS).
+This table must be used to provide only discards data for which no biological data are available (that is, for discards
+data that have not already been reported in tables C and D).
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. DOMAIN_DISCARDS: Text in format specified in Appendix 8; missing values not allowed.
+4. SPECIES: According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed.
+5. DISCARDS: Estimated discards in tonnes [precision to 3 digits after the decimal]; missing values not
+allowed.
+6. DISCARD_CV: the coefficient of variation of the estimate based on the sample available for the
+strata considered (i.e., DOMAIN_DISCARDS) and the sampling design. This is calculated for the
+weight of discards. Mandatory. NK if not known.
+7. DISCARD_CI_UPPER: the upper confidence limit of the estimate based on the strata sampled (i.e.,
+DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be
+95% confident that the real value is contained into; is between the upper and the lower confidence
+limit), supplied in weight. Mandatory. NK if not known.
+8. DISCARD_CI_LOWER: the lower confidence limit of the estimate based on the strata sampled (i.e.,
+DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be
+95% confident that the real value is contained into; is between the upper and the lower confidence
+limit), supplied in weight. Mandatory. NK if not known.
+9. TOTAL_TRIPS: The total number of trips that relate to domain; a number should only be given only
+if it relates to this domain, otherwise use ‘NK’.
+10. NO_TRIPS_SAMPLED_WITH_SPECIES: [integer] Number of trips in which the species was
+sampled/observed; if not known use ‘NK’.
+11. NO_TRIPS_SAMPLED: [integer] Number of trips sampled for the specified domain discards; if not
+known use ‘NK’.
+```
