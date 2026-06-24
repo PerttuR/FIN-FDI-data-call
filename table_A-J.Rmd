@@ -2294,7 +2294,7 @@ maxseadays_2 <- vessel_fishing_trips |>
 
 
 # Calculate the other sums and averages
-j7 <- j6 |> 
+j7 <- j6b |> 
   group_by(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION) |> 
   summarise(
     TOTVES = n_distinct(ULKOINENTUNNUS, na.rm = TRUE),
