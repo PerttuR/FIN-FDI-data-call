@@ -654,6 +654,8 @@ akt1_all2 <- akt1_all2 |>
     FISHING_TECH = names(which.max(table(FISHING_TECH)))
   ) 
 
+# one vessel was not in capcity table and VESSEL_LENGTH was overwritten
+akt1_all2 <- akt1_all2 |> mutate(VESSEL_LENGTH = if_else(ULKOINENTUNNUS == "FIN-31409-V", "VL0812", VESSEL_LENGTH))
 
 # lookup METIER classs
 # lookup <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |> 
@@ -2221,9 +2223,6 @@ j_all <- j3 |>
           select(-LOMAKE, -KALASTUSPAIVAT, -MERIPAIVAT, -SUB_REGION, -FT_REF) |> distinct() |>
           group_by(YEAR, ULKOINENTUNNUS) |>
             arrange(YEAR, ULKOINENTUNNUS) |>
-          #mutate(
-          #    FISHING_TECH = if (n() > 1) "PMP" else FISHING_TECH
-          #  ) |>
           slice(1) |>
           ungroup()
 
@@ -2250,7 +2249,108 @@ inactive <- kap2 |>
 j6b <- rbind(j6, inactive)
 
 # testing
-# j6b |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |> filter(VESSEL_LENGTH == "VL40XX") |> View()
+missing_kap <- j6b |> filter(is.na(PAAKONETEHO)) |> select(ULKOINENTUNNUS, YEAR)
+
+missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing")
+
+missing_tag <- missing_kap |> pull(ULKOINENTUNNUS) |> unique()
+
+extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
+  YEAR = VUOSI,
+  ULKOINENTUNNUS,
+  KOKPITUUS,
+  RAKENNUSPVM,
+  PAAKONETEHO,
+  VETOISUUS,
+  VESSEL_LENGTH = VLENGTH_AER_NEW) |> mutate(
+  rakennusvuosi = as.numeric(format(RAKENNUSPVM,"%Y")),
+  AGE = YEAR -rakennusvuosi
+) |> select(-RAKENNUSPVM, -rakennusvuosi) |> distinct()
+
+extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table")
+
+# removing duplicates and checking there are none left
+extra_dup <- extra_kap |> 
+  group_by(YEAR, ULKOINENTUNNUS) |> 
+  filter(n()>1)
+
+extra_kap2 <- extra_kap |> arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) |> 
+  group_by(ULKOINENTUNNUS, YEAR, AGE, KOKPITUUS) |> 
+  summarise(VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), 
+            VETOISUUS=first(VETOISUUS),.groups = "drop")
+
+extra_kap3 <- right_join(extra_kap2, missing_kap, by=c("ULKOINENTUNNUS"="ULKOINENTUNNUS", "YEAR"="YEAR"))
+
+# rejoin missing information onto j6b
+j6b <- j6b |>
+  left_join(
+    extra_kap2 |>
+      select(ULKOINENTUNNUS, YEAR,
+             AGE, KOKPITUUS, VESSEL_LENGTH, PAAKONETEHO, VETOISUUS),
+    by = c("ULKOINENTUNNUS", "YEAR"),
+    suffix = c("", "_new")
+  ) |>
+  mutate(
+    AGE            = if_else(is.na(PAAKONETEHO), AGE_new, AGE),
+    KOKPITUUS      = if_else(is.na(PAAKONETEHO), KOKPITUUS_new, KOKPITUUS),
+    VESSEL_LENGTH  = if_else(is.na(PAAKONETEHO), VESSEL_LENGTH_new, VESSEL_LENGTH),
+    PAAKONETEHO    = if_else(is.na(PAAKONETEHO), PAAKONETEHO_new, PAAKONETEHO),
+    VETOISUUS      = if_else(is.na(PAAKONETEHO), VETOISUUS_new, VETOISUUS)
+  ) |>
+  select(-ends_with("_new"))
+
+
+# fill in missing years (only fixes 2 records)
+
+static_cols <- c(
+  "KOKPITUUS",
+  "VESSEL_LENGTH",
+  "PAAKONETEHO",
+  "VETOISUUS"
+)
+
+j6b <- j6b |>
+  group_by(ULKOINENTUNNUS) |>
+  arrange(YEAR, .by_group = TRUE) |>
+  mutate(
+    # Estimate vessel "birth/build reference" from any known AGE/YEAR pair
+    age_ref_year = YEAR[which(!is.na(AGE))[1]],
+    age_ref_age  = AGE[which(!is.na(AGE))[1]],
+
+    # Fill missing AGE by adjusting relative to the known year
+    AGE = if_else(
+      is.na(AGE) & !is.na(age_ref_age),
+      age_ref_age + (YEAR - age_ref_year),
+      AGE
+    )
+  ) |>
+  fill(
+    all_of(static_cols),
+    .direction = "downup"
+  ) |>
+  select(-age_ref_year, -age_ref_age) |>
+  ungroup()
+
+# there is one vessel, that originally ahd information in activity table and was flattened in the cleaning against capacity in Chunk 12: clean_capacity
+# might need to change the methodology for non-existing vessels here to the top!
+# for now, just fix it manually
+
+j6b <- j6b |> mutate(PAAKONETEHO    = if_else(ULKOINENTUNNUS == "FIN-31409-V", 45, PAAKONETEHO),
+                    VETOISUUS      = if_else(ULKOINENTUNNUS == "FIN-31409-V", 2.81, VETOISUUS))
+
+# drop missing vessel ID's for 2013-2015
+j6b |> filter(ULKOINENTUNNUS == "") |> select(ULKOINENTUNNUS, YEAR, VESSEL_LENGTH, FISHING_TECH, PRINCIPAL_SUB_REGION, ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |> flextable::flextable()
+
+j6b <- j6b |> filter(ULKOINENTUNNUS != "") 
+
+# TOTGT missing values !!!!!
+# missing VESSEL_LENGTH !!!!!
+
+
+
+
+
+
 
 
 # vessel fishing trips
@@ -2326,14 +2426,16 @@ j10 <- j9 |> mutate(PRINCIPAL_SUB_REGION = replace_na(PRINCIPAL_SUB_REGION, "NK"
 ) |> arrange(by = YEAR)
 
 
+# fix formatting for EXCEL !!!!!
+
+
+
+
+
+
 
 # Put the variables in the correct order:
 table_J <- j10 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
-
-# check seadays
-
-table_J 
-
 
 
 table_J |> head() |> flextable::flextable() |>
