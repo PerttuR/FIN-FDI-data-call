@@ -647,6 +647,14 @@ akt1_all2 |> count(YEAR, FISHING_TECH) |>
   flextable::theme_zebra() |>
   flextable::set_caption( "Number of fishing tech by year")
 
+# fleet segment
+akt1_all2 <- akt1_all2 |> 
+  group_by(ULKOINENTUNNUS, YEAR) |> 
+  mutate(
+    FISHING_TECH = names(which.max(table(FISHING_TECH)))
+  ) 
+
+
 # lookup METIER classs
 # lookup <- read_excel("documents/2025_FDI_codes.xlsx", sheet="METIER") |> 
 #   mutate(METIER5=str_sub(METIER, 1,7)) |>
@@ -2241,12 +2249,14 @@ inactive <- kap2 |>
 # glue inactive vessels to cleaned activity data
 j6b <- rbind(j6, inactive)
 
+
+
 # vessel fishing trips
 vessel_fishing_trips <- j6b |>
         select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, ULKOINENTUNNUS, ANNUAL_FISHINGDAYS, ANNUAL_FISHINGTRIPS) |>
         distinct()
 
-# View(vessel_fishing_trips)
+
 
 
 # Calculate the TOTKW and TOTGT for each vessel segment
