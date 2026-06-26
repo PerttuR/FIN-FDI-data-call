@@ -1009,7 +1009,11 @@ openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"
 
 ## Create table C
 
+- removed, as we don't have age information
+
 ```{r table_c}
+#| eval: false
+
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
 #-------------------------------------------------------------------------------
@@ -1063,7 +1067,11 @@ openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_A
 
 ## Create table D
 
+- removed, because no lengths
+
 ```{r table_d}
+#| eval: false
+
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
 #-------------------------------------------------------------------------------
@@ -2476,13 +2484,12 @@ write.xlsx(table_J, file.path(path_out, "FIN_TABLE_J_CAPACITY.xlsx"),
 
 ## Create table K
 
-```
 Table K NAO OFR. Discards estimated by domain
-Table to be provided only for the Atlantic Ocean and other regions (not for the Mediterranean and Black Sea
-regions).
+
 Discard estimates should be provided at the domain level (DOMAIN_DISCARDS).
-This table must be used to provide only discards data for which no biological data are available (that is, for discards
-data that have not already been reported in tables C and D).
+This table must be used to provide only discards data for which no biological data are available (that is, for discards data that have not already been reported in tables C and D).
+
+```
 1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
 2. YEAR: Four digits (e.g. 2019); missing values not allowed.
 3. DOMAIN_DISCARDS: Text in format specified in Appendix 8; missing values not allowed.
@@ -2507,3 +2514,40 @@ sampled/observed; if not known use ‘NK’.
 11. NO_TRIPS_SAMPLED: [integer] Number of trips sampled for the specified domain discards; if not
 known use ‘NK’.
 ```
+
+```{r table_K}
+
+# import table A
+table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
+
+table_K <- table_A |> 
+  select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
+  filter(SPECIES %in% c("HER", "SPR", "SAL")) |> 
+  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) |>
+  summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
+            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
+            DISCARD_CV = "NK",
+            DISCARD_CI_UPPER = "NK",
+            DISCARD_CI_LOWER = "NK",
+            TOTAL_TRIPS = "NK",
+            NO_TRIPS_SAMPLED_WITH_SPECIES = "NK",
+            TOTAL_SAMPLED_TRIPS = "NK",
+            .groups = "drop"
+    ) |> filter(DISCARDS != 0)
+
+
+table_K |> head() |> flextable::flextable() |>
+  #flextable::fontsize(size = 3, part = "all") |>
+  flextable::rotate(j = colnames(table_K), align = "bottom", rotation = "tbrl", part = "header") |>
+  flextable::autofit() |>
+  flextable::theme_zebra() |>
+  flextable::colformat_num(j = "YEAR", big.mark = "") |>
+  flextable::set_caption( "Tiny preview TABLE K")
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_K, file = file.path(path_der,"table_K.rds"))
+
+openxlsx::write.xlsx(table_K, file.path(path_out,"FIN_TABLE_K_NAO_OFR_DISCARDS.xlsx"), sheetName = "TABLE_K", colNames = TRUE, rowNames = FALSE)
+```
+
+
