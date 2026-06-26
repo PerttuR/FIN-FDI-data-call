@@ -26,6 +26,19 @@ Updated: JUN 2021 by Perttu
          JUN 2026 by Joanne, Perttu and Petri
 ```
 
+```{r title image}
+#| fig.cap: "FIN-FDI"
+
+path_orig  <- here::here("orig") 
+
+library(png)
+
+img <- readPNG(file.path(path_orig, "Fin_cat_Fleet.png"))
+
+# plot
+plot(as.raster(img))
+
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warnings=FALSE, errors=FALSE)
@@ -1128,20 +1141,11 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 
 ```{r image}
 #| fig.cap: "InterCAT"
-#knitr::include_graphics(file.path(path_orig,"cat_fish.jpeg"))
 
-library(jpeg)
+img <- readPNG(file.path(path_orig, "cat_fish.png"))
 
-img <- readJPEG(file.path(path_orig,"cat_fish.jpeg"))
-
+# plot
 plot(as.raster(img))
-
-# scale if necessary
-# plot(
-#   1:2, type = "n", axes = FALSE, xlab = "", ylab = "",
-#   asp = 1
-# )
-# rasterImage(img, 0, 0, 1, 1)
 
 ```
 
@@ -2617,20 +2621,21 @@ known use ‘NK’.
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 table_K <- table_A |> 
-  select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
+  select(COUNTRY, YEAR, DOMAIN_DISCARDS, SPECIES, DISCARDS) |> 
   filter(SPECIES %in% c("HER", "SPR", "SAL")) |> 
-  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES) |>
-  summarise(TOTWGHTLANDG = sum(TOTWGHTLANDG, na.rm = T),
-            DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
+  group_by(COUNTRY, YEAR, DOMAIN_DISCARDS, SPECIES) |>
+  summarise(DISCARDS = sum(as.numeric(DISCARDS), na.rm = T),
             DISCARD_CV = "NK",
             DISCARD_CI_UPPER = "NK",
             DISCARD_CI_LOWER = "NK",
             TOTAL_TRIPS = "NK",
             NO_TRIPS_SAMPLED_WITH_SPECIES = "NK",
-            TOTAL_SAMPLED_TRIPS = "NK",
+            NO_TRIPS_SAMPLED = "NK",
             .groups = "drop"
     ) |> filter(DISCARDS != 0)
 
+# test <- c("COUNTRY",	"YEAR",	"DOMAIN_DISCARDS",	"SPECIES", 	"DISCARDS",	"DISCARD_CV",	"DISCARD_CI_UPPER",	"DISCARD_CI_LOWER",	"TOTAL_TRIPS",	"NO_TRIPS_SAMPLED_WITH_SPECIES",	"NO_TRIPS_SAMPLED")
+# names(table_K) %in% test
 
 table_K |> head() |> flextable::flextable() |>
   #flextable::fontsize(size = 3, part = "all") |>
