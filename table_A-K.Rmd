@@ -30,7 +30,7 @@ Updated: JUN 2021 by Perttu
 #| fig.cap: "FIN-FDI"
 #| echo: FALSE
 #| fig.align: "center"
-
+#| out.width: "50%"
 path_orig  <- here::here("orig") 
 
 knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
@@ -840,6 +840,15 @@ Table B data is from Finish eu-dcf sampling database Suomu sampling frame data f
 
 ### Get Suomu data
 
+```{r image3}
+#| fig.cap: "SUOMU"
+#| echo: FALSE
+#| fig.align: "center"
+#| out.width: "50%"
+knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
+
+```
+
 ```{r B-suomu-cloud data}
 # Fetch sampling lottery tables from SUOMU sampling database
 sampling_result <- read.dbTable("suomu","sampling_result")
@@ -1141,7 +1150,7 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 #| fig.cap: "InterCAT"
 #| echo: FALSE
 #| fig.align: "center"
-
+#| out.width: "50%"
 path_orig  <- here::here("orig") 
 
 knitr::include_graphics(file.path(path_orig, "cat_fish.png"))
@@ -1341,6 +1350,16 @@ openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", c
 
 
 ### Suomu data
+
+```{r image4}
+#| fig.cap: "SUOMU"
+#| echo: FALSE
+#| fig.align: "center"
+#| out.width: "50%"
+#| 
+knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
+
+```
 
 ```{r E-suomu-data}
 
@@ -1709,6 +1728,16 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 ```
 
 ### get Suomu data
+
+```{r image5}
+#| fig.cap: "SUOMU"
+#| echo: FALSE
+#| fig.align: "center"
+#| out.width: "50%"
+
+knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
+
+```
 
 ```{r F-suomu-data}
 #-------------------------------------------------------------------------------
