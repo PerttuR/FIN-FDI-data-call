@@ -1014,7 +1014,6 @@ openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"
 - removed, as we don't have age information
 
 ```{r table_c}
-#| eval: false
 
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
@@ -1072,7 +1071,6 @@ openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_A
 - removed, because no lengths
 
 ```{r table_d}
-#| eval: false
 
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
@@ -1914,23 +1912,23 @@ table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> print(n=Inf) |> flextable::flextable
 # join with table E
 #' ############################################
 #' 
-# TO DO !!!!
-# table_A2 <- table_A2 |>
-#   #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
-#   left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_TOTWGHTLANDG=TOTWGHTLANDG) |>  # distinct(), 
-#             by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
-# 
-# cat("Number of records with zero discards in table C", sep="\n")
-# table_A2 |> filter(is.na(E_TOTWGHTLANDG)) |> count() |> flextable::flextable()
-# 
-# # discard records with no discards
-# table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
-#                             is.na(E_TOTWGHTLANDG) ~ "NK",
-#                             .default = as.character(DOMAIN_LANDINGS)
-# ))
-# 
-# # check all DOMAIN_DISCADS
-# table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> print(n=Inf) |> flextable::flextable()
+
+table_A2 <- table_A2 |>
+  #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
+  left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_TOTWGHTLANDG=TOTWGHTLANDG) |>  # distinct(), 
+            by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
+
+cat("Number of records with zero discards in table C", sep="\n")
+table_A2 |> filter(is.na(E_TOTWGHTLANDG)) |> count() |> flextable::flextable()
+
+# discard records with no discards
+table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
+                            is.na(E_TOTWGHTLANDG) ~ "NK",
+                            .default = as.character(DOMAIN_LANDINGS)
+))
+
+# check all DOMAIN_DISCADS
+table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> print(n=Inf) |> flextable::flextable()
 
 
 #' ############################################
