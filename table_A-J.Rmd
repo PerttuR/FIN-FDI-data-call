@@ -8,9 +8,9 @@ author:
 - Antti Sykkö
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  word_document: default
   pdf_document:
     latex_engine: xelatex
-  word_document: default
 editor_options: 
   chunk_output_type: console
 ---
@@ -1227,11 +1227,11 @@ saveRDS(IC_DB, file = file.path(last_path,"IC_DB.rds"))
 
 # import IC data and table A
 ## fall back - use last years data
-# last_path <- here::here("der", run.year-1) 
-# IC_DB <- readRDS(file.path(last_path, "IC_DB.rds"))
+last_path <- here::here("der", run.year-1) 
+IC_DB <- readRDS(file.path(last_path, "IC_DB.rds"))
 
 # code for current run year
-IC_DB <- readRDS(file.path(path_der, "IC_DB.rds"))
+# IC_DB <- readRDS(file.path(path_der, "IC_DB.rds"))
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
