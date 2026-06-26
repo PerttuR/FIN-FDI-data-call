@@ -94,6 +94,8 @@ path_der  <- here::here("der", run.year)
 path_out  <- here::here("results", run.year) 
 path_orig  <- here::here("orig") 
 plotPath  <- here::here("Plots", run.year)
+path_IC_ORIG <- here::here("orig/IC_database")
+
 
 # Ensure path exists
 ifelse(!dir.exists(path_der), 
@@ -1124,17 +1126,113 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 
 ## Create table E
 
+### Get InterCATCH data
+
+```{r image}
+#| fig.cap: "InterCAT"
+#knitr::include_graphics(file.path(path_orig,"cat_fish.jpeg"))
+
+library(jpeg)
+
+img <- readJPEG(file.path(path_orig,"cat_fish.jpeg"))
+
+plot(as.raster(img))
+
+# scale if necessary
+# plot(
+#   1:2, type = "n", axes = FALSE, xlab = "", ylab = "",
+#   asp = 1
+# )
+# rasterImage(img, 0, 0, 1, 1)
+
+```
+
+
+```{r InterCATCH}
+# unzip InterCATCH data from current year
+
+## if this year is not available only!!!
+
+last_path <- here::here("der", run.year-1) 
+
+zip_file <- list.files(
+  path_IC_ORIG,
+  pattern = paste0(run.year-1, ".*\\.zip$"),
+  full.names = TRUE
+)
+
+unzip(zip_file, exdir = last_path)
+
+IC_SD <- read.csv(list.files(last_path,          
+                     pattern = " SD .*\\.csv$", 
+                     full.names=TRUE))
+
+IC_SI <- read.csv(list.files(last_path, 
+                     pattern = " SI .*\\.csv$", 
+                     full.names=TRUE))
+
+IC_HI<- read.csv(list.files(last_path, 
+                     pattern = " HI .*\\.csv$", 
+                     full.names=TRUE))
+
+# zip_file <- list.files(
+#   path_IC_ORIG,
+#   pattern = paste0(run.year, ".*\\.zip$"),
+#   full.names = TRUE
+# )
+# 
+# unzip(zip_file, exdir = path_der)
+# 
+# IC_SD <- read.csv2(list.files(path_der,          
+#                      pattern = " SD .*\\.csv$", 
+#                      full.names=TRUE))
+# 
+# IC_SI <- read.csv2(list.files(path_der, 
+#                      pattern = " SI .*\\.csv$", 
+#                      full.names=TRUE))
+# 
+# IC_HI<- read.csv2(list.files(path_der, 
+#                      pattern = " HI .*\\.csv$", 
+#                      full.names=TRUE))
+
+# left join by ID
+IC_SD_SI <- left_join(IC_SD, IC_SI, by=c('ImportStratumId'='ImportStratumId'), suffix = c("", ".y"), keep = FALSE)
+IC_SD_SI_HI <- left_join(IC_SD_SI, IC_HI, by=c('ImportHeaderId'='ImportHeaderId'), suffix = c("", ".z"), keep = FALSE)
+
+unique(IC_SD_SI_HI$Deleted)
+# Delete all rows where deleted = 1
+IC_1 <- IC_SD_SI_HI %>% filter (Deleted != 1)
+
+#select columns based on IC_DB names:
+IC_2 <- IC_1 %>% select(Country,Year,SeasonType,Season,Fleet,AreaType,Area,DepthRange,Species,Stock,CatCat,RepCat,Sex,CanumType,AgeOrLength,PlusGroup,SampledCatch,NumSamplesLength,NumLengthMeasurements,NumSamplesAge,NumAgeMeasurement,UnitWeca,UnitCanum,UnitAgeOrLength,UnitMeanLength,Maturity,NumberLanded,MeanWeight,MeanLength,varNumLanded,varWgtLanded,varLgtLanded,DataToFrom,Usage,SamplesOrigin,QualityFlag,UnitCaton,CATON,OfficialLandings,UnitEffort,Effort,AreaQualifier)
+
+# vector for column names:
+ic_names <- c("Country","Year","SeasonType","Season","Fleet","AreaType","FishingArea","DepthRange","Species","Stock","CatchCategory","ReportingCategory","Sex","CANUMtype","AgeLength","PlusGroup","SampledCatch","NumSamplesLngt","NumLngtMeas","NumSamplesAge","NumAgeMeas","unitMeanWeight","unitCANUM","UnitAgeOrLength","UnitMeanLength","Maturity","NumberCaught","MeanWeight","MeanLength","varNumLanded","varWgtLanded","varLgtLanded","DataToFrom","Usage","SamplesOrigin","QualityFlag","UnitCATON","CATON","OffLandings","UnitEffort","Effort","AreaQualifier")
+#rename columns:
+colnames(IC_2) <- ic_names
+
+#rename dataframe
+IC_DB <- IC_2
+
+#save to der folder
+saveRDS(IC_DB, file = file.path(last_path,"IC_DB.rds"))
+# saveRDS(IC_DB, file = file.path(path_der,"IC_DB.rds"))
+```
+
 ### Table A and IC data
 
 ```{r E-table_a_ic}
-#| eval: false
+
 #-------------------------------------------------------------------------------
 #                       1. aggregate TABLE A for merging                       
 #-------------------------------------------------------------------------------
 
 # import IC data and table A
+## fall back - use last years data
+# last_path <- here::here("der", run.year-1) 
+# IC_DB <- readRDS(file.path(last_path, "IC_DB.rds"))
 
-#IC_2023 <- readRDS(paste0(path_der,.Platform$file.sep,"IC_2023_DATA.rds"))
+# code for current run year
 IC_DB <- readRDS(file.path(path_der, "IC_DB.rds"))
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
@@ -1184,7 +1282,7 @@ table_A <- table_A |> rename_all(tolower)
 #                       1.1 create DOMAIN landing to IC data between 2013-2023                      
 #-------------------------------------------------------------------------------
 
-IC_DB1 <- IC_DB |> filter (Year %in% c(2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024))
+IC_DB1 <- IC_DB |> filter (Year %in% years)
 IC_DB2 <- IC_DB1 |> filter (Species %in% c("HER","SPR"))
 
 
@@ -1244,7 +1342,7 @@ openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", c
 ### Suomu data
 
 ```{r E-suomu-data}
-#| eval: false
+
 ## SUOMU sample data for age numbers
 
 
@@ -1333,7 +1431,7 @@ suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, 
 ### create table E
 
 ```{r table_e}
-#| eval: false
+
 #-------------------------------------------------------------------------------
 #                       3. Merge SAMPLED DATA with TABLE A                       
 #-------------------------------------------------------------------------------
