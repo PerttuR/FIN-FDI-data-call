@@ -1915,7 +1915,7 @@ table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> print(n=Inf) |> flextable::flextable
 
 table_A2 <- table_A2 |>
   #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
-  left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_TOTWGHTLANDG=TOTWGHTLANDG) |>  # distinct(), 
+  left_join(table_E |> select(YEAR, DOMAIN_LANDINGS, SPECIES, E_TOTWGHTLANDG=TOTWGHTLANDG) |>  distinct(), 
             by=join_by(YEAR, DOMAIN_LANDINGS, SPECIES))
 
 cat("Number of records with zero discards in table C", sep="\n")
