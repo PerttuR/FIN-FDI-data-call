@@ -1950,7 +1950,8 @@ table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
 ))
 
 # check all DOMAIN_DISCADS
-table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> print(n=Inf) |> flextable::flextable() |> flextable::autofit()
+table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> filter(DOMAIN_DISCARDS == "NK") |> flextable::flextable() |> flextable::autofit() |>
+  flextable::colformat_num(j="YEAR", big.mark="")
 
 
 #' ############################################
@@ -1972,7 +1973,8 @@ table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
 ))
 
 # check all DOMAIN_DISCADS
-table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> print(n=Inf) |> flextable::flextable()
+table_A2 |> count(YEAR, DOMAIN_DISCARDS) |> filter(DOMAIN_DISCARDS == "NK") |> flextable::flextable() |> flextable::autofit() |>
+  flextable::colformat_num(j="YEAR", big.mark="")
 
 #' ############################################
 # join with table E
@@ -1994,7 +1996,8 @@ table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
 ))
 
 # check all DOMAIN_DISCADS
-table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> print(n=Inf) |> flextable::flextable()
+table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> filter(DOMAIN_LANDINGS == "NK") |> flextable::flextable() |> flextable::autofit() |>
+  flextable::colformat_num(j="YEAR", big.mark="")
 
 
 #' ############################################
@@ -2016,7 +2019,8 @@ table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
 ))
 
 # check all DOMAIN_DISCADS
-table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> print(n=Inf) |> flextable::flextable()
+table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> filter(DOMAIN_LANDINGS == "NK") |> flextable::flextable() |> flextable::autofit() |>
+  flextable::colformat_num(j="YEAR", big.mark="")
 
 
 # Put the variables in the correct order:
