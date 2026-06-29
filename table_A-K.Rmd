@@ -65,7 +65,7 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, arsenal)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, arsenal, daff)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
@@ -1254,9 +1254,17 @@ new.IC <- readRDS(file = file.path(path_der,"IC_DB.rds"))
 old.IC <- old.IC |> filter(!is.na(Year) & Year >= 2013)
 new.IC <- new.IC |> filter(Year != run.year-1 & Year >= 2013)
 
+# arsenal way
 cmp <- arsenal::comparedf(old.IC, new.IC)
 summary(cmp)
 
+# daff way
+patch <- daff::diff_data(old.IC, new.IC)
+
+# interactive html
+daff::render_diff(patch)
+
+# save if wanted from interactive
 ```
 
 ### Table A and IC data
