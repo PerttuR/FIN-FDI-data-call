@@ -2093,8 +2093,6 @@ full_join(
   filter(TOT_E == 0) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("DOMAIN_LANDINGS that are in table F, but not in table E") |> flextable::colformat_num(j="YEAR", big.mark = "")
 
 
-IC_DB |> filter(Year == 2021 & Season %in% c(1,2)) |> View()
-
 # discard records with no discards
 table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
                             is.na(E_TOTWGHTLANDG) & is.na(F_TOTWGHTLANDG) ~ "NK",
