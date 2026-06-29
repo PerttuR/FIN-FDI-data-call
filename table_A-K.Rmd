@@ -1400,7 +1400,7 @@ knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 ## SUOMU sample data for age numbers
 
 
-agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= 2023"))
+agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= ", run.year-1))
 
 #-------------------------------------------------------------------------------
 # choose commercial LANDINGS samples only, from years 2013-2022 and species
@@ -2098,7 +2098,7 @@ tmp <- g3 |> filter(HRSEA == "0" | GTHRSEA == "0" | KWHRSEA == "0") |> tally() |
 message(paste("0's in HRSEA, GTHRSEA or KWHRSEA: ",tmp))
 
 # HRSEA, GTHRSEA or KWHRSEA exist, but other values are 0
-tmp <- g3 |> filter(YEAR %in% seq(2016,2024)) |> 
+tmp <- g3 |> filter(YEAR %in% years) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
          TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, CONFIDENTIAL) |> 
   filter((TOTSEADAYS == "0" | TOTKWDAYSATSEA == "0" | TOTGTDAYSATSEA == "0" |
@@ -2119,7 +2119,7 @@ g4 <- g3 |> mutate(TOTSEADAYS     = if_else(TOTSEADAYS == "0", "NK", TOTSEADAYS)
                    TOTGTFISHDAYS  = if_else(TOTGTFISHDAYS == "0", "NK", TOTGTFISHDAYS))
 
 # check
-tmp <- g4 |> filter(YEAR %in% seq(2016,2024)) |> 
+tmp <- g4 |> filter(YEAR %in% years) |> 
   select(YEAR, QUARTER, VESSEL_LENGTH, GEAR_TYPE, SUB_REGION, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
          TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, CONFIDENTIAL) |> 
   filter((TOTSEADAYS == "0" | TOTKWDAYSATSEA == "0" | TOTGTDAYSATSEA == "0" |
