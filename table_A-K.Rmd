@@ -1163,47 +1163,27 @@ knitr::include_graphics(file.path(path_orig, "cat_fish.png"))
 
 ## if this year is not available only!!!
 
-last_path <- here::here("der", run.year-1) 
-
 zip_file <- list.files(
   path_IC_ORIG,
-  pattern = paste0(run.year-1, ".*\\.zip$"),
+  pattern = paste0(run.year, ".*\\.zip$"),
   full.names = TRUE
 )
 
-unzip(zip_file, exdir = last_path)
+for (i in 1:length(zip_file)){
+  unzip(zip_file[i], exdir = path_der)
+}
 
-IC_SD <- read.csv(list.files(last_path,          
+IC_SD <- read.csv2(list.files(path_der,          
                      pattern = " SD .*\\.csv$", 
                      full.names=TRUE))
 
-IC_SI <- read.csv(list.files(last_path, 
+IC_SI <- read.csv2(list.files(path_der, 
                      pattern = " SI .*\\.csv$", 
                      full.names=TRUE))
 
-IC_HI<- read.csv(list.files(last_path, 
+IC_HI <- read.csv2(list.files(path_der, 
                      pattern = " HI .*\\.csv$", 
                      full.names=TRUE))
-
-# zip_file <- list.files(
-#   path_IC_ORIG,
-#   pattern = paste0(run.year, ".*\\.zip$"),
-#   full.names = TRUE
-# )
-# 
-# unzip(zip_file, exdir = path_der)
-# 
-# IC_SD <- read.csv2(list.files(path_der,          
-#                      pattern = " SD .*\\.csv$", 
-#                      full.names=TRUE))
-# 
-# IC_SI <- read.csv2(list.files(path_der, 
-#                      pattern = " SI .*\\.csv$", 
-#                      full.names=TRUE))
-# 
-# IC_HI<- read.csv2(list.files(path_der, 
-#                      pattern = " HI .*\\.csv$", 
-#                      full.names=TRUE))
 
 # left join by ID
 IC_SD_SI <- left_join(IC_SD, IC_SI, by=c('ImportStratumId'='ImportStratumId'), suffix = c("", ".y"), keep = FALSE)
