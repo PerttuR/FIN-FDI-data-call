@@ -1262,6 +1262,50 @@ knitr::include_graphics("table_D_preview_rotated.png")
 
 ## Create table E
 
+```
+Table E NAO OFR. Landings age data
+Table to be provided only for the Atlantic Ocean and other regions (not for the Mediterranean and Black Sea
+regions).
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. DOMAIN_LANDINGS: Text in format specified in Appendix 8; missing values not allowed.
+4. NEP_SUB_REGION: Functional Units (FUs) according to the list in Appendix 9; ‘NK’ if not known or
+‘NA’ if not applicable. This variable is asked only for Nephrops norvegicus catches.
+5. SPECIES: According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed
+6. TOTWGHTLANDG: Estimated landings in tonnes [precision to 3 digits after the decimal]; missing
+values not allowed.
+7. TOTAL_SAMPLED_TRIPS: The total number of sampled trips that relate to domain; a number
+should only be given only if it relates to this domain, otherwise use ‘NK’.
+8. NO_AGE_MEASUREMENTS: The number of age measurements that relate to landings. If an ALK
+formed from a larger aggregation of vessels than the domain has been used to estimate age
+information for this domain insert the total number of age measurements used to form the ALK. If
+age measurements not available or number of measurements not known use ‘NK’.
+9. AGE_MEASUREMENTS_PROP: [a value between 0 and 1] If an ALK formed from a larger
+aggregation of vessels than the domain has been used to estimate age information for this domain
+insert the proportion of age measurements coming from the domain. If not applicable (i.e. all age
+measurements came from within the domain) use ‘NA’.
+10. MIN_AGE: [integer] The minimum age in the data for this species-domain combination; minimum
+age and maximum age must either both be ‘NK’ or both be not ‘NK’.
+11. MAX_AGE: [integer] The true maximum age in the data for this species-domain combination (no
+plus group is allowed); minimum age and maximum age must either both be ‘NK’ or both be not
+‘NK’.
+12. AGE: [integer] The age of the fish (MIN_AGE <= AGE <= MAX_AGE); ‘NK’ can be used only if both
+MIN_AGE and MAX_AGE are not known.
+13. NO_AGE: The number in thousands [precision to 3 digits after the decimal] at the specified age;
+‘NK’ if no age specific information is available.
+14. MEAN_WEIGHT: The mean weight of landed fish at that age; if no age specific information is
+available use ‘NK’.
+15. WEIGHT_UNIT: The unit of measure used for the column MEAN_WEIGHT [kg = kilogram, g = gram];
+if weight information is not available, use ‘NK’.
+16. MEAN_LENGTH: The mean length of landed fish at that age; if no age specific information is
+available use ‘NK’.
+17. LENGTH_UNIT: The unit of measure used for the column MEAN_LENGTH [‘mm’=millimetre,
+‘cm’=centimetre]; if length information is not available use ‘NK’.
+```
+
+
+
+
 ### Get InterCATCH data
 
 ```{r image}
@@ -1860,6 +1904,38 @@ knitr::include_graphics("table_E_preview_rotated.png")
 
 ## Create table F
 
+```
+Table F NAO OFR. Landings length data
+Table to be provided only for the Atlantic Ocean and other regions (not for the Mediterranean and Black Sea
+regions).
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. DOMAIN_LANDINGS: Text in format specified in Appendix 8; missing values not allowed.
+4. NEP_SUB_REGION: Functional Units (FUs) according to the list in Appendix 9; ‘NK’ if not known or
+‘NA’ if not applicable. This variable is asked only for Nephrops norvegicus catches.
+5. SPECIES: according to the FAO 3-alpha code list, see Appendix 12; missing values not allowed.
+6. TOTWGHTLANDG: Estimated landings in tonnes [precision to 3 digits after the decimal]; missing
+values not allowed.
+7. TOTAL_SAMPLED_TRIPS: The total number of sampled trips that relate to domain; a number
+should only be given only if it relates to this domain, otherwise use ‘NK’.
+8. NO_LENGTH_MEASUREMENTS: The number of length measurements, from within the domain,
+that relate to landings; a number should be given only if it relates to this domain, otherwise ‘NK’.
+9. LENGTH_UNIT: The unit of length classes [‘mm’=millimetre, ‘cm’=centimetre]; ‘NK’ if length
+information is not available.
+10. MIN_LENGTH: [integer] The minimum length in the data for this species-domain combination;
+minimum length and maximum length must either both be ‘NK’ or both be not ‘NK’.
+11. MAX_LENGTH: [integer] The true maximum length in the data for this species-domain
+combination; minimum length and maximum length must either both be ‘NK’ or both be not ‘NK’.
+12. LENGTH: [integer] (MIN_LENGTH <= LENGTH <= MAX_LENGTH). ‘NK’ can be used only if both
+MIN_LENGTH and MAX_LENGTH are not known.
+13. NO_LENGTH: The number in thousands [precision to 3 digits after the decimal] at the specified
+length. If length information is not available, use ‘NK’.
+14. MEAN_WEIGHT_AT_LENGTH: The mean weight of fish; if no age specific information is available
+use ‘NK’.
+15. WEIGHT_UNIT: The unit of measure used for the column MEAN_WEIGHT_AT_LENGTH [kg =
+kilogram, g = gram]; if weight information is not available, use ‘NK’.
+```
+
 ### aggregate table A
 
 ```{r F-table_a}
@@ -2261,6 +2337,47 @@ knitr::include_graphics("table_A_preview_rotated.png")
 
 ## Create table G
 
+```
+Table G. Effort summary
+Data to be provided for all effort, both that from métiers selected for biological sampling and otherwise.
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. QUARTER: 1, 2, 3 or 4; missing values not allowed.
+4. VESSEL_LENGTH: According to the code list provided in Appendix 2; ‘NK’ if not known.
+5. FISHING_TECH: Fishing technique according to the code list provided in Appendix 3; missing values
+not allowed.
+6. GEAR_TYPE: According to the code list provided in Appendix 4; ‘NK’ if not known.
+7. TARGET_ASSEMBLAGE: According to the code list provided in Appendix 5; ‘NK’ if not known.
+8. MESH_SIZE_RANGE: According to the code list provided in Appendix 6; ‘NK’ if not known.
+9. METIER: According to Appendix 7; ‘NK’ if not known.
+10. METIER_7: According to Appendix 7; ‘NK’ if not known (for tuna fisheries) or ‘NA’ if not applicable
+(for all other fisheries than tuna fisheries) should be used.
+11. SUPRA_REGION: According to the code list in Appendix 9; missing values not allowed.
+12. SUB_REGION: According to the code list in Appendix 9; ‘NK’ if not known.
+13. EEZ_INDICATOR: According to the code list in Appendix 9; ‘NK’ can be use only when also the subregion
+is not known.
+14. GEO_INDICATOR: According to the code list in Appendix 10.
+15. SPECON_TECH: Specific conditions related to technical measures according to Appendix 11; ‘NK’ if
+not known or ‘NA’ if not applicable.
+16. DEEP: ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the
+definition, should be indicated with ‘DEEP’).
+17. TOTSEADAYS: Days at sea8; if nominal fishing activity is not available use ‘NK’.
+18. TOTKWDAYSATSEA: Fishing effort in kW-days, i.e. engine power in kW times days at sea; ‘NK’ if
+nominal effort is not available.
+19. TOTGTDAYSATSEA: Fishing effort in gross tonnage*days at sea; ‘NK’ if not available.
+20. TOTFISHDAYS: Fishing days; ‘NK’ if the number of fishing days is not available.
+21. TOTKWFISHDAYS: Fishing effort in kW-days, i.e. engine power in kW times fishing days; ‘NK’ if not
+available.
+22. TOTGTFISHDAYS: Fishing effort in gross tonnage*fishing days; ‘NK’ if not available.
+23. HRSEA: Hours at sea; ‘NK’ if not available.
+24. KWHRSEA: kW hours at sea [kW*hours at sea]; ‘NK’ if not available.
+25. GTHRSEA: GT hours at sea [Gross tonnage*hours at sea]; ‘NK’ if not available.
+26. TOTVES: [integer] Number of vessels conducting activity as defined in columns 3 to 149; ‘NK’ if the
+number of vessels is not known.
+27. CONFIDENTIAL: [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise
+‘N’; missing values not allowed.
+```
+
 ```{r table_g}
 #| fig.cap: "Preview TABLE G"
 #-------------------------------------------------------------------------------
@@ -2387,6 +2504,52 @@ knitr::include_graphics("table_G_preview_rotated.png")
 
 ## Create table H
 
+```
+Table H. Landings by rectangle
+Data to be provided for all landings, both those from métiers selected for biological sampling and otherwise10. If
+it is not possible to submit data at a finer spatial resolution to that required for Table A please do not submit data
+to table H.
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. QUARTER: 1, 2, 3 or 4; missing values not allowed.
+4. VESSEL_LENGTH: According to the code list provided in Appendix 2; ‘NK’ if not known.
+5. FISHING_TECH: According to the code list provided in Appendix 3; missing values not allowed.
+6. GEAR_TYPE: According to the code list provided in Appendix 4; ‘NK’ if not known.
+7. TARGET_ASSEMBLAGE: According to the code list provided in Appendix 5; ‘NK’ if not known.
+8. MESH_SIZE_RANGE: According to the code list provided in Appendix 6; ‘NK’ if not known.
+9. METIER: According to Appendix 7; ‘NK’ if not known.
+10. METIER_7: According to Appendix 7; NK’ if not known (for tuna fisheries) or ‘NA’ if not
+applicable (for all other fisheries than tuna fisheries) should be used.
+11. SUPRA_REGION: According to the code list in Appendix 9; missing values not allowed.
+12. SUB_REGION: According to the code list in Appendix 9; missing values not allowed.
+13. EEZ_INDICATOR: According to the code list in Appendix 9; ‘NK’ can be use only when also the subregion
+is not known.
+14. GEO_INDICATOR: According to the code list in Appendix 10.
+15. SPECON_TECH: Specific conditions related to technical measures according to Appendix 11; ‘NK’ if
+not known or ‘NA’ if not applicable.
+16. DEEP: ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the
+definition, should be indicated with ‘DEEP’).
+17. RECTANGLE_TYPE: 05*05’ or ‘05*1’ or ‘1*1’ or ‘5*5’ or ‘NA’
+ ‘05*05’ if entries at 0.5*0.5 degree resolution (e.g. if related to GFCM squares);
+ ‘05*1’ if entries at 0.5 degree latitude by 1.0 degree longitude (e.g. if related to ICES
+rectangles);
+ ‘1*1’ if entries at 1.0*1.0 degree resolution (e.g. related to fisheries governed by the IOTC);
+ ‘5*5’ if entries at 5.0*5.0 degree resolution (e.g. related to fisheries governed by the ICCAT);
+ ‘NA’ if a value is provided in the C_SQUARE field.
+18. LATITUDE: Latitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE
+field provided, use ‘NA’.
+19. LONGITUDE: Longitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if
+C_SQUARE field provided, use ‘NA’.
+20. C_SQUARE: [string with the format: XXXX:XXX:X] C-square notation at 0.5*0.5 degree resolution;
+fill with ‘NA’ if all the 3 fields RECTANGLE_TYPE, LATITUDE and LONGITUDE are provided.
+21. SPECIES: According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed.
+22. TOTWGHTLANDG: Estimated landings in tonnes [precision to 3 digits after the decimal], including
+landings below MCRS (minimum conservation reference size); missing values not allowed.
+23. TOTVALLANDG: Total value of the landings in euro; ‘NK’ if not available.
+24. CONFIDENTIAL: [1 character] Accepted values: ‘A’ (all), ‘N’ (none), ‘W’ (weight), ‘V’ (value); missing values
+not allowed.
+```
+
 ```{r table_H}
 #| fig.cap: "Preview TABLE H"
 #-------------------------------------------------------------------------------
@@ -2486,6 +2649,49 @@ knitr::include_graphics("table_H_preview_rotated.png")
 
 ## Create table I
 
+```
+Table I. Effort by rectangle
+Data to be provided for all effort, both that from métiers selected for biological sampling and otherwise11. If it is
+not possible to submit data at a finer spatial resolution to that required for Table G please do not submit data to
+table I.
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. QUARTER: 1, 2, 3 or 4; missing values not allowed.
+4. VESSEL_LENGTH: According to the code list provided in Appendix 2; ‘NK’ if not known.
+5. FISHING_TECH: According to the code list provided in Appendix 3; missing values not allowed.
+6. GEAR_TYPE: According to the code list provided in Appendix 4; ‘NK’ if not known.
+7. TARGET_ASSEMBLAGE: According to the code list provided in Appendix 5; ‘NK’ if not known.
+8. MESH_SIZE_RANGE: According to the code list provided in Appendix 6; ‘NK’ if not known.
+9. METIER: According to Appendix 7; ‘NK’ if not known.
+10. METIER_7: According to Appendix 7; NK’ if not known (for tuna fisheries) or ‘NA’ if not applicable
+(for all other fisheries than tuna fisheries) should be used.
+11. SUPRA_REGION: According to the code list in Appendix 9; missing values not allowed.
+12. SUB_REGION: According to the code list in Appendix 9; missing values not allowed.
+13. EEZ_INDICATOR: According to the code list in Appendix 9; ‘NK’ can be use only when also the subregion
+is not known.
+14. GEO_INDICATOR: According to the code list in Appendix 10.
+15. SPECON_TECH: Specific conditions related to technical measures according to Appendix 11; ‘NK’ if
+not known or ‘NA’ if not applicable.
+16. DEEP: ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the
+definition, should be indicated with ‘DEEP’).
+17. RECTANGLE_TYPE: One of the following values: ‘05*05’ or ‘05*1’ or ‘1*1’ or ‘5*5’ or ‘NA’
+ ‘05*05’ if entries at 0.5*0.5 degree resolution (e.g. if related to GFCM squares);
+ ‘05*1’ if entries at 0.5 degree latitude by 1.0 degree longitude (e.g. if related to ICES
+rectangles);
+ ‘1*1’ if entries at 1.0*1.0 degree resolution (e.g. related to fisheries governed by the IOTC);
+ ‘5*5’ if entries at 5.0*5.0 degree resolution (e.g. related to fisheries governed by the ICCAT);
+ ‘NA’ if a value is provided in the C_SQUARE field.
+18. LATITUDE: Latitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE
+field provided, use ‘NA’.
+19. LONGITUDE: Longitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if
+C_SQUARE field provided, use ‘NA’.
+20. C_SQUARE: [string with the format: XXXX:XXX:X] C-square notation at 0.5*0.5 degree resolution;
+fill with ‘NA’ if all the 3 fields RECTANGLE_TYPE, LATITUDE and LONGITUDE are provided.
+21. TOTFISHDAYS: Fishing days; missing values not allowed.
+22. CONFIDENTIAL: [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise
+‘N’; missing values not allowed.
+```
+
 ```{r table_i}
 #| fig.cap: "Preview TABLE I"
 #-------------------------------------------------------------------------------
@@ -2541,6 +2747,31 @@ knitr::include_graphics("table_I_preview_rotated.png")
 
 
 ## Create table J
+
+```
+Table J. Capacity and fleet segment effort
+1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
+2. YEAR: Four digits (e.g. 2019); missing values not allowed.
+3. VESSEL_LENGTH: According to the code list provided in Appendix 2; ‘NK’ if not known.
+4. FISHING_TECH: According to the code list provided in Appendix 3; missing values not allowed.
+5. SUPRA_REGION: According to the code list in Appendix 9; missing values not allowed.
+6. GEO_INDICATOR: According to the code list in Appendix 10.
+7. PRINCIPAL_SUB_REGION: Sub-region where the vessel has its majority fishing activity during the
+year. Principal sub-region has to be calculated vessel by vessel (i.e. calculated at the vessel level)
+and, in order to define the principal sub-region of a vessel, the metric number of fishing days should
+be used. According to the code list in Appendix 9; ‘NK’ if not known.
+8. TOTTRIPS: [integer] Number of fishing trips by the vessels in the fleet segment from a land location
+to a landing place, excluding non-fishing trips; ‘NK’ if not known.
+9. TOTKW: Fishing capacity in kW of the vessels in the fleet segment; if not available use ‘NK’.
+10. TOTGT: Fishing capacity in gross tonnage of the vessels in the fleet segment; if not available use
+‘NK’.
+11. TOTVES: [integer] Number of vessels in the fleet segment12; if not available use ‘NK’.
+12. AVGAGE: Average age [in years] of the vessels in the fleet segment; if not available use ‘NK’.
+13. AVGLOA: Average length over all [in metres] of the vessels in the fleet segment; if not available
+use ‘NK’.
+14. MAXSEADAYS: Average number of days at sea of the top 10 most active vessels in the fleet
+segment; if not available use ‘NK’.
+```
 
 ```{r table_j}
 #| fig.cap: "Preview TABLE J"
