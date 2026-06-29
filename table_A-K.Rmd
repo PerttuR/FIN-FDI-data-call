@@ -30,7 +30,7 @@ Updated: JUN 2021 by Perttu
 #| fig.cap: "FIN-FDI"
 #| echo: FALSE
 #| fig.align: "center"
-#| out.width: "50%"
+#| out.width: "75%"
 path_orig  <- here::here("orig") 
 
 knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
@@ -72,7 +72,7 @@ pacman::p_load_gh("lukefi-private/luketools")
 
 # memory hungry packages and rarely used packages, need to be prefixed! e.g. sf::
 # pacman::p_install seems to have a bug, so use base R instead
-pkg_list <- c("icesVocab","flextable", "conflicted")
+pkg_list <- c("icesVocab","flextable", "conflicted", "magick")
 
 to_install <- pkg_list[!pkg_list %in% rownames(installed.packages())]
 
@@ -180,7 +180,7 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra() |>
-  flextable::set_caption( "Number of vessels by vessel length in KAPASITEETI")
+  flextable::set_caption( "Number of vessels by vessel length in KAPASITEETI") |> flextable::autofit()
 ```
 
 ## add discards
@@ -202,7 +202,7 @@ discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |>
   pivot_wider(names_from = TARGET_ASSEMBLAGE, values_from = n) |>
   flextable::flextable() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |> flextable::theme_zebra() |>
-  flextable::set_caption( "Number of vessels by vessel length and target assemblage in DISCARDS")
+  flextable::set_caption( "Number of vessels by vessel length and target assemblage in DISCARDS") |> flextable::autofit()
 ```
 
 ## prepare logbook data
@@ -253,7 +253,7 @@ aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
 aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_AER_NEW) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_AER_NEW, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> flextable::theme_zebra() |>
-  flextable::set_caption( "Number of vessels by vessel length in AKTIVITEETTI")
+  flextable::set_caption( "Number of vessels by vessel length in AKTIVITEETTI") |> flextable::autofit()
 ```
 
 ## Prepare vars for table H and I
@@ -450,7 +450,7 @@ metier_check <- metier |> left_join(valid_metiers, by = c("METIER" = "valid_meti
 missing <- metier_check |> filter(is.na(valid_metiers))
 
 missing |> flextable::flextable() |> flextable::theme_zebra() |>
-  flextable::set_caption( "Metiers in AKT1 that are not valid")
+  flextable::set_caption( "Metiers in AKT1 that are not valid") |> flextable::autofit()
 
 # clean metier categories based on METIER 5 and mesh size ranges
 akt1  <- akt1 |> 
@@ -485,13 +485,14 @@ sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname =
 sas |> count(YEAR, VESSEL_LENGTH) |> mutate(VESSEL_LENGTH = factor(VESSEL_LENGTH)) |>
   pivot_wider(names_from = VESSEL_LENGTH, values_from = n, names_expand = TRUE, names_sort = FALSE) |>
   flextable::flextable() |>
-  flextable::colformat_num(j="YEAR", big.mark="")
+  flextable::colformat_num(j="YEAR", big.mark="") |> flextable::autofit() |>
+  flextable::set_caption( "Years and vessel lengths in SAS data")
 
 sas |> count(YEAR, LOMAKE, VESSEL_LENGTH) |> mutate(VESSEL_LENGTH = factor(VESSEL_LENGTH)) |>
   pivot_wider(names_from = VESSEL_LENGTH, values_from = n, names_expand = TRUE, names_sort = FALSE) |>
   flextable::flextable() |>
-  flextable::colformat_num(j="YEAR", big.mark="")
-
+  flextable::colformat_num(j="YEAR", big.mark="") |> flextable::autofit()  |>
+  flextable::set_caption( "Years and vessel lengths by LOMAKE in SAS data")
 
 sas <- sas |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
@@ -903,6 +904,8 @@ species_metier_map <- species_gear_code_tally3
 ### Adding variables and save
 
 ```{r table_b}
+#| fig.cap: "Preview TABLE B"
+#| 
 # tekstiä
 
 #wp_gears <- c("OTM", "PTM", "FYK", "GNS")
@@ -1014,13 +1017,24 @@ table_b$TRIPS_SAMPLED_ONBOARD <- observer_onboard_tally$n
 # ... order columns 
 table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","UNIQUE_VESSELS_CONTACTED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS")]
 
-table_b |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_b), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_b |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE B")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_B_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_B_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_B_preview_rotated.png")
+
+knitr::include_graphics("table_B_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_b, file = file.path(path_der,"table_B.rds"))
@@ -1034,7 +1048,7 @@ openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"
 - removed, as we don't have age information
 
 ```{r table_c}
-
+#| fig.cap: "Preview TABLE C"
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
 #-------------------------------------------------------------------------------
@@ -1071,13 +1085,24 @@ table_C <- table_A |>
             .groups = "drop"
   ) |> filter(DISCARDS != 0)
 
-table_C |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_C), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_C |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE C")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_C_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_C_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_C_preview_rotated.png")
+
+knitr::include_graphics("table_C_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_C, file = file.path(path_der,"table_C.rds"))
@@ -1091,7 +1116,7 @@ openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_A
 - removed, because no lengths
 
 ```{r table_d}
-
+#| fig.cap: "Preview TABLE D"
 #-------------------------------------------------------------------------------
 #                       1. Import data for 2023 C table needs                    
 #-------------------------------------------------------------------------------
@@ -1126,13 +1151,24 @@ table_D <- table_A |>
             .groups = "drop"
   ) |> filter(DISCARDS != 0)
 
-table_D |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_D), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_D |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE D")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_D_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_D_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_D_preview_rotated.png")
+
+knitr::include_graphics("table_D_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_D, file = file.path(path_der,"table_D.rds"))
@@ -1150,7 +1186,7 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 #| fig.cap: "InterCAT"
 #| echo: FALSE
 #| fig.align: "center"
-#| out.width: "50%"
+#| out.width: "30%"
 path_orig  <- here::here("orig") 
 
 knitr::include_graphics(file.path(path_orig, "cat_fish.png"))
@@ -1485,7 +1521,7 @@ suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, 
 ### create table E
 
 ```{r table_e}
-
+#| fig.cap: "Preview TABLE E"
 #-------------------------------------------------------------------------------
 #                       3. Merge SAMPLED DATA with TABLE A                       
 #-------------------------------------------------------------------------------
@@ -1710,13 +1746,24 @@ table_E_mega$LENGTH_UNIT <- case_when(table_E_mega$MEAN_LENGTH == "NK" ~ "NK", .
 #Tällä excelissä voi selailla DOMAINEJA, joista puuttuu kappalemäärälaskennat, mutta, joista on SUomussa näytteitä:
 openxlsx::write.xlsx(no_IC_DATA, file.path(path_out, "no_IC_DATA.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
-table_E_mega |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_E_mega), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_E_mega |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE E")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_E_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_E_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_E_preview_rotated.png")
+
+knitr::include_graphics("table_E_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_E_mega, file = file.path(path_der,"table_E.rds"))
@@ -1835,6 +1882,7 @@ suomu2 <- suomu |> select(vuosi, domain_landings, species, nayteno, pituusluokka
 ### create table F
 
 ```{r table_f}
+#| fig.cap: "Preview TABLE F"
 #-----------------------------------------------------------------------------------
 #                       4. aggregate SAMPLED DATA for merging with TABLE A                       
 #-----------------------------------------------------------------------------------
@@ -1902,13 +1950,24 @@ table_f_pre3 <- na.omit(table_f_pre2)
 #table_F <- table_f_pre2 |> select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_length_measurements_landg, length_unit, min_length, max_length, length, no_length_landg) |> rename_all(toupper)
 table_F <- table_f_pre3 |> select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, TOTAL_SAMPLED_TRIPS, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) |> rename_all(toupper)
 
-table_F |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_F), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_F |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE F")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_F_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_F_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_F_preview_rotated.png")
+
+knitr::include_graphics("table_F_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_F, file = file.path(path_der,"table_F.rds"))
@@ -1925,7 +1984,7 @@ openxlsx::write.xlsx(table_F,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS
 ## Create table A - final version
 
 ```{r table_a_final}
-
+#| fig.cap: "Preview TABLE A"
 # import table A
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
@@ -2027,13 +2086,24 @@ table_A2 |> count(YEAR, DOMAIN_LANDINGS) |> filter(DOMAIN_LANDINGS == "NK") |> f
 table_A <- table_A2 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 
 # show final table
-table_A |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_A), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_A |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE A")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_A_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_A_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_A_preview_rotated.png")
+
+knitr::include_graphics("table_A_preview_rotated.png")
 
 # # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
@@ -2047,6 +2117,7 @@ openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), shee
 ## Create table G
 
 ```{r table_g}
+#| fig.cap: "Preview TABLE G"
 #-------------------------------------------------------------------------------
 #                   3. TABLE G (Effort summary)                             ####
 #-------------------------------------------------------------------------------
@@ -2137,13 +2208,24 @@ message(paste("Mismatches in TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
 # Put the variables in the correct order:
 table_G <- g4 |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, TOTVES, CONFIDENTIAL)
 
-table_G |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_G), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_G |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE G")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_G_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_G_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_G_preview_rotated.png")
+
+knitr::include_graphics("table_G_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_G, file = file.path(path_der,"table_G.rds"))
@@ -2156,6 +2238,7 @@ write.xlsx(table_G, file.path(path_out,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "
 ## Create table H
 
 ```{r table_H}
+#| fig.cap: "Preview TABLE H"
 #-------------------------------------------------------------------------------
 #                   4. TABLE H (Landings by rectangle)                      ####   
 #-------------------------------------------------------------------------------
@@ -2220,13 +2303,24 @@ h8 <- h7 |> filter(SPECIES != "TOTAL")
 # Put the variables in the correct order:
 table_H <- h8 |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
 
-table_H |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_H), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_H |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE H")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_H_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_H_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_H_preview_rotated.png")
+
+knitr::include_graphics("table_H_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_H, file = file.path(path_der,"table_H.rds"))
@@ -2239,6 +2333,7 @@ openxlsx::write.xlsx(table_H, file.path(path_out,"FIN_TABLE_H_LANDINGS_BY_RECTAN
 ## Create table I
 
 ```{r table_i}
+#| fig.cap: "Preview TABLE I"
 #-------------------------------------------------------------------------------
 #                   5. TABLE I (Effort by rectangle)                        ####
 #-------------------------------------------------------------------------------
@@ -2260,13 +2355,24 @@ table_I <- i2 |> filter(TOTFISHDAYS > 0) |> mutate(
     n2 < 3 ~ "Y",
     n2 >= 3 ~ "N")) |> select(-n2)
 
-table_I |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_I), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_I |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE I")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_I_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_I_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_I_preview_rotated.png")
+
+knitr::include_graphics("table_I_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_I, file = file.path(path_der,"table_I.rds"))
@@ -2279,6 +2385,7 @@ openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EF
 ## Create table J
 
 ```{r table_j}
+#| fig.cap: "Preview TABLE J"
 #-------------------------------------------------------------------------------
 #                   6. TABLE J (Capacity and fleet segment effort)          ####               
 #-------------------------------------------------------------------------------
@@ -2432,7 +2539,7 @@ j6b <- rbind(j6, inactive)
 # vessels missing in the capacity table, but in activity table
 missing_kap <- j6b |> filter(is.na(PAAKONETEHO) | is.na(VETOISUUS)) |> select(ULKOINENTUNNUS, YEAR)
 
-missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing")
+missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing") |> flextable::autofit()
 
 missing_tag <- missing_kap |> pull(ULKOINENTUNNUS) |> unique()
 
@@ -2448,7 +2555,7 @@ extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
   AGE = YEAR -rakennusvuosi
 ) |> select(-RAKENNUSPVM, -rakennusvuosi) |> distinct()
 
-extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table")
+extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table") |> flextable::autofit()
 
 # removing duplicates and checking there are none left
 extra_dup <- extra_kap |> 
@@ -2628,14 +2735,24 @@ j10 <- j10 |> mutate(
 # Put the variables in the correct order:
 table_J <- j10 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
 
-
-table_J |> head() |> flextable::flextable() |>
-  #flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_J), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_J |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE J")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_J_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_J_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_J_preview_rotated.png")
+
+knitr::include_graphics("table_J_preview_rotated.png")
 
 
 # Write the resulting table A into der folder as rds file and into results folder
@@ -2681,7 +2798,10 @@ sampled/observed; if not known use ‘NK’.
 known use ‘NK’.
 ```
 
+\newline
+
 ```{r table_K}
+#| fig.cap: "Preview TABLE K"
 
 # import table A
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
@@ -2703,13 +2823,24 @@ table_K <- table_A |>
 # test <- c("COUNTRY",	"YEAR",	"DOMAIN_DISCARDS",	"SPECIES", 	"DISCARDS",	"DISCARD_CV",	"DISCARD_CI_UPPER",	"DISCARD_CI_LOWER",	"TOTAL_TRIPS",	"NO_TRIPS_SAMPLED_WITH_SPECIES",	"NO_TRIPS_SAMPLED")
 # names(table_K) %in% test
 
-table_K |> head() |> flextable::flextable() |>
-  #flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_K), align = "bottom", rotation = "tbrl", part = "header") |>
+ft <- table_K |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE K")
+  flextable::colformat_num(j = "YEAR", big.mark = "")
+
+flextable::save_as_image(ft, path = file.path(path_out,"table_K_preview.png"))
+
+# read ft and rotate
+img <- magick::image_read(file.path(path_out,"table_K_preview.png")) |>
+  magick::image_rotate(-90)
+
+# resize table to fit page
+img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
+
+# save rotated
+magick::image_write(img_resized, "table_K_preview_rotated.png")
+
+knitr::include_graphics("table_K_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_K, file = file.path(path_der,"table_K.rds"))
