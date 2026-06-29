@@ -28,9 +28,10 @@ Updated: JUN 2021 by Perttu
 
 ```{r title image}
 #| fig.cap: "FIN-FDI"
-#| echo: FALSE
 #| fig.align: "center"
 #| out.width: "75%"
+#| echo: false
+
 path_orig  <- here::here("orig") 
 
 knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
@@ -39,11 +40,13 @@ knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=TRUE, warnings=FALSE, errors=FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, warning=FALSE, error=FALSE, message=FALSE)
 rStudio=TRUE
 ```
 
 ```{r environment, eval=rStudio}
+#| echo: false
+
 # only works in R Studio (--> Restart R)
 rm(list=ls())
 invisible(gc)
@@ -55,6 +58,8 @@ unlink(list.files("DATA-CACHE", full.names = TRUE))
 ## Load libraries and functions
 
 ```{r libraries_source}
+#| echo: false
+
 ## TO DO
 ## check which packages are actually needed in this script !!!
 
@@ -94,6 +99,8 @@ conflicted::conflicts_prefer(
 ## Set paths
 
 ```{r output}
+#| echo: false
+#| include: false
 # ...to display numeric values normally, i.e., not scientific notation 
 options(scipen = 999)
 
@@ -407,6 +414,14 @@ akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |>
   )) |>
   count(FISHING_TECH, TAG) |> flextable::flextable() |> flextable::autofit() |> flextable::theme_zebra() |>
   flextable::set_caption( "Number of sea day records by definition (NEGATIVE, ZERO, POSITIVE, TOO BIG, MISSING)")
+```
+
+\newline
+
+```{r vars-h-i-ggplot}
+#| echo: false
+#| message: false
+#| warning: false
 
 ggplot(akt1, aes(x=HRSEA)) + geom_histogram() + facet_wrap(~FISHING_TECH) + ggtitle("DCPROD HRSEA by fishing tech")
 ```
@@ -492,6 +507,7 @@ sas |> count(YEAR, LOMAKE, VESSEL_LENGTH) |> mutate(VESSEL_LENGTH = factor(VESSE
   pivot_wider(names_from = VESSEL_LENGTH, values_from = n, names_expand = TRUE, names_sort = FALSE) |>
   flextable::flextable() |>
   flextable::colformat_num(j="YEAR", big.mark="") |> flextable::autofit()  |>
+  flextable::theme_zebra() |>
   flextable::set_caption( "Years and vessel lengths by LOMAKE in SAS data")
 
 sas <- sas |>
@@ -584,7 +600,8 @@ missing <- metier_check |> filter(is.na(valid_metiers))
 
 ```{r clean_capacity}
 
-akt1_all |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from activity and sas")
+akt1_all |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from activity and sas") |>
+  flextable::theme_zebra()
 
 # clean against capacity table
 kap <- kapasiteetti |> filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) |> select(
@@ -616,7 +633,7 @@ kap2 <- kap |> arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) |>
             VETOISUUS=first(VETOISUUS),.groups = "drop")
 
 # check vessel lengths from capacity table
-kap2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity table")
+kap2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity table") |> flextable::theme_zebra() |> flextable::colformat_num(j="YEAR", big.mark="")
 
 # join the capacity to the j table
 akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> 
@@ -642,7 +659,7 @@ akt1_all2 <- akt1_all2 |>
   mutate(VESSEL_LENGTH = if_else(is.na(VESSEL_LENGTH), VESSEL_LENGTH_ORIG, VESSEL_LENGTH))
 
 # check vessel lengths after join
-akt1_all2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity")
+akt1_all2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity") |> flextable::theme_zebra() |> flextable::colformat_num(j="YEAR", big.mark="")
 
 # Aggregating all passive gears to PG
 
@@ -821,15 +838,6 @@ write.xlsx(discards_not_joined, file = "discards_not_joined.xlsx")
 # # Put the variables in the correct order:
 table_A <- a11 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
  
-# 
-table_A |> head() |> flextable::flextable() |>
-  flextable::fontsize(size = 3, part = "all") |>
-  flextable::rotate(j = colnames(table_A), align = "bottom", rotation = "tbrl", part = "header") |>
-  flextable::autofit() |>
-  flextable::theme_zebra() |>
-  flextable::colformat_num(j = "YEAR", big.mark = "") |>
-  flextable::set_caption( "Tiny preview TABLE A-full")
- 
 # Write the resulting table A into der folder as rds file and into results folder
 saveRDS(table_A, file = file.path(path_der,"table_A_full.rds"))
 
@@ -837,20 +845,27 @@ saveRDS(table_A, file = file.path(path_der,"table_A_full.rds"))
 
 ## Create table B
 
-Table B data is from Finish eu-dcf sampling database Suomu sampling frame data from FIN sample lottery machine system
-
-### Get Suomu data
+**no longer requested 2026**
 
 ```{r image3}
 #| fig.cap: "SUOMU"
-#| echo: FALSE
 #| fig.align: "center"
 #| out.width: "50%"
+#| echo: false
+#| eval: false
+#| results: 'asis'
+
+cat("Table B data is from Finish eu-dcf sampling database Suomu sampling frame data from FIN sample lottery machine system", sep="\n")
+
+cat("### Get Suomu data", sep="\n")
 knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 
 ```
 
 ```{r B-suomu-cloud data}
+#| echo: false
+#| eval: false
+
 # Fetch sampling lottery tables from SUOMU sampling database
 sampling_result <- read.dbTable("suomu","sampling_result")
 sampling_source <- read.dbTable("suomu","sampling_source")
@@ -900,13 +915,13 @@ species_gear_code_tally3 <- species_gear_code_tally2 %>% mutate(frame = case_whe
 species_metier_map <- species_gear_code_tally3
 ```
 
-
-### Adding variables and save
-
 ```{r table_b}
 #| fig.cap: "Preview TABLE B"
-#| 
-# tekstiä
+#| echo: false
+#| eval: false
+#| results: 'asis'
+
+cat("### Adding variables and save", sep="\n")
 
 #wp_gears <- c("OTM", "PTM", "FYK", "GNS")
 #metiers <- filter(metier, gear_code %in% wp_gears) 
@@ -1017,12 +1032,22 @@ table_b$TRIPS_SAMPLED_ONBOARD <- observer_onboard_tally$n
 # ... order columns 
 table_b <- table_b[, c("COUNTRY","YEAR","SAMPLE_FRAME","REFUSAL_RATE","COVERAGE_RATE","NONRESPONSE_RATE","VESSELS_FLEET","TRIPS_FLEET","TRIPS_SAMPLED_ONBOARD","UNIQUE_VESSELS_SAMPLED","UNIQUE_VESSELS_CONTACTED","NOT_AVAILABLE","NO_CONTACT_DETAILS","NO_ANSWER","OBSERVER_DECLINED","INDUSTRY_DECLINED","TOT_SELECTIONS")]
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_b, file = file.path(path_der,"table_B.rds"))
+
+openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_b_ft}
+#| echo: false
+#| eval: false
+
 ft <- table_b |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_B_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_B_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_B_preview.png")) |>
@@ -1036,16 +1061,40 @@ magick::image_write(img_resized, "table_B_preview_rotated.png")
 
 knitr::include_graphics("table_B_preview_rotated.png")
 
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_b, file = file.path(path_der,"table_B.rds"))
-
-openxlsx::write.xlsx(table_b, file.path(path_out,"FIN_TABLE_B_REFUSAL_RATE.xlsx"), sheetName = "TABLE_B", colNames = TRUE, rowNames = FALSE)
-
 ```
+
 
 ## Create table C
 
-- removed, as we don't have age information
+- should be removed, as we don't have age information
+
+**Table C NAO OFR. Discards age data**
+
+Table to be provided only for the Atlantic Ocean and other regions (not for the Mediterranean and Black Sea regions). Discard estimates should be provided at the domain level (DOMAIN_DISCARDS).
+
+| # | Variable | Description |
+| -- | -------- |-------------|
+| 1. | COUNTRY | According to the code list provided in Appendix 1; missing values not allowed. |
+| 2. | YEAR | Four digits (e.g. 2019); missing values not allowed. |
+| 3. | DOMAIN_DISCARDS | Text in format specified in Appendix 8; missing values not allowed. |
+| 4. | NEP_SUB_REGION | Functional Units (FUs) according to the list in Appendix 9; ‘NK’ if not known or ‘NA’ if not applicable. This variable is asked only for Nephrops norvegicus catches. |
+| 5. | SPECIES | According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed. |
+| 6. | TOTWGHTLANDG | Estimated landings in tonnes [precision to 3 digits after the decimal]; missing values not allowed. |
+| 7. | DISCARDS | Estimated discards in tonnes [precision to 3 digits after the decimal]; missing values not allowed. If age based information is present, this quantity should correspond to the sum of products. |
+| 8. | DISCARD_CV | the coefficient of variation of the estimate based on the sample available for the strata considered (i.e., DOMAIN_DISCARDS) and the sampling design. This is calculated for the weight of discards. ‘NK’ if not known. |
+| 9. | DISCARD_CI_UPPER | the upper confidence limit of the estimate based on the strata sampled (i.e., DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be 95% confident that the real value is contained into; is between the upper and the lower confidence limit), supplied in weight. ‘NK’ if not known. |
+| 10. | DISCARD_CI_LOWER | the lower confidence limit of the estimate based on the strata sampled (i.e., DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be 95% confident that the real value is contained into; is between the upper and the lower confidence limit), supplied in weight. ‘NK’ if not known. |
+| 11. | TOTAL_TRIPS | The total number of trips that relate to domain; a number should only be given only if it relates to this domain, otherwise use ‘NK’. |
+| 12. | TOTAL_SAMPLED_TRIPS | The total number of sampled trips that relate to domain; a number should only be given only if it relates to this domain, otherwise use ‘NK’. |
+| 13. | NO_AGE_MEASUREMENTS | The number of age measurements that relate to discards. If an ALK formed from a larger aggregation of vessels than the domain has been used to estimate age information for this domain, insert the total number of age measurements used to form the ALK. If age measurements are not available or the number of measurements is not known use ‘NK’. |
+| 14. | AGE_MEASUREMENTS_PROP | [a value between 0 and 1] If an ALK formed from a larger aggregation of vessels than the domain has been used to estimate age information for this domain, insert the proportion of age measurements coming from the domain. If not applicable (i.e. all age measurements came from within the domain) use ‘NA’. |
+| 15. | MIN_AGE | [integer] The minimum age in the data for this species-domain combination; minimum age and maximum age must either both be ‘NK’ or both be not ‘NK’. |
+| 16. | MAX_AGE | [integer] The true maximum age in the data for this species-domain combination (no plus group is allowed); minimum age and maximum age must either both be ‘NK’ or both be not ‘NK’. |
+| 17. | AGE | [integer] (MIN_AGE <= AGE <= MAX_AGE). ‘NK’ can be used only if both MIN_AGE and MAX_AGE are not known. |
+| 18. | NO_AGE | The number in thousands [precision to 3 digits after the decimal] at the specified age; if no age specific information is available use ‘NK’. |
+| 19. | MEAN_WEIGHT | The mean weight of fish in the discards at that age; if no age specific information is available use ‘NK’. |
+
+\newline
 
 ```{r table_c}
 #| fig.cap: "Preview TABLE C"
@@ -1085,12 +1134,21 @@ table_C <- table_A |>
             .groups = "drop"
   ) |> filter(DISCARDS != 0)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_C, file = file.path(path_der,"table_C.rds"))
+
+openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_c_ft}
+#| echo: false
+
 ft <- table_C |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_C_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_C_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_C_preview.png")) |>
@@ -1101,19 +1159,40 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
 magick::image_write(img_resized, "table_C_preview_rotated.png")
-
-knitr::include_graphics("table_C_preview_rotated.png")
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_C, file = file.path(path_der,"table_C.rds"))
-
-openxlsx::write.xlsx(table_C, file.path(path_out,"FIN_TABLE_C_NAO_OFR_DISCARDS_AGE.xlsx"), sheetName = "TABLE_C", colNames = TRUE, rowNames = FALSE)
-
 ```
 
 ## Create table D
 
-- removed, because no lengths
+- should be removed, because no lengths
+
+**Table D NAO OFR. Discards length data**
+
+Table to be provided only for the Atlantic Ocean and other regions (not for the Mediterranean and Black Sea regions). Discards estimates should be provided at the domain level (DOMAIN_DISCARDS).
+
+| # | Variable | Description |
+| -- | -------- | ------------- |
+| 1. | COUNTRY | According to the code list provided in Appendix 1; missing values not allowed. | 
+| 2. | YEAR | Four digits (e.g. 2019); missing values not allowed. | 
+| 3. | DOMAIN_DISCARDS | Text in format specified in Appendix 8; missing values not allowed. | 
+| 4. | NEP_SUB_REGION | Functional Units (FUs) according to the list in Appendix 9; ‘NK’ if not known or ‘NA’ if not applicable. This variable is asked only for Nephrops norvegicus catches. | 
+| 5. | SPECIES | According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed.  | 
+| 6. | TOTWGHTLANDG | Estimated landings in tonnes [precision to 3 digits after the decimal]; missing values not allowed. | 
+| 7. | DISCARDS | Estimated discards in tonnes [precision to 3 digits after the decimal]; missing values not allowed. | 
+| 8. | DISCARD_CV | the coefficient of variation of the estimate based on the sample available for the strata considered (i.e., DOMAIN_DISCARDS) and the sampling design. This is calculated for the weight of discards. ‘NK’ if not known. | 
+| 9. | DISCARD_CI_UPPER | the upper confidence limit of the estimate based on the strata sampled (i.e., DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be 95% confident that the real value is contained into; is between the upper and the lower confidence limit), supplied in weight. ‘NK’ if not known. | 
+| 10. | DISCARD_CI_LOWER | the lower confidence limit of the estimate based on the strata sampled (i.e., DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be 95% confident that the real value is contained into; is between the upper and the lower confidence limit), supplied in weight. ‘NK‘ if not known. | 
+| 11. | TOTAL_TRIPS | The total number of trips that relate to domain; a number should only be given only if it relates to this domain, otherwise use ‘NK’. | 
+| 12. | TOTAL_SAMPLED_TRIPS | The total number of sampled trips that relate to domain; a number should only be given only if it relates to this domain, otherwise use ‘NK’. | 
+| 13. | NO_LENGTH_MEASUREMENTS | The number of length measurements, from within the domain, that relate to discards; a number should be given only if it relates to this domain, otherwise use ‘NK’. | 
+| 14. | LENGTH_UNIT | The unit of length classes [‘mm’=millimetre, ‘cm’=centimetre]; if length information is not available use ‘NK’. | 
+| 15. | MIN_LENGTH | [integer] The minimum length in the data for this species-domain combination; minimum length and maximum length must either both be ‘NK’ or both be not ‘NK’. | 
+| 16. | MAX_LENGTH | [integer] The maximum length in the data for this species-domain combination; minimum length and maximum length must either both be ‘NK’ or both be not ‘NK’. | 
+| 17. | LENGTH | [integer] (MIN_LENGTH <= LENGTH <= MAX_LENGTH); ‘NK’ can be used only if both MIN_LENGTH and MAX_LENGTH are not known. | 
+| 18. | NO_LENGTH | The number in thousands [precision to 3 digits after the decimal] at the specified length. If length information is not available, use ‘NK’. | 
+| 19. | MEAN_WEIGHT_AT_LENGTH | The mean weight of fish; if no age specific information is available use ‘NK’. | 
+| 20. | WEIGHT_UNIT | The unit of measure used for the column MEAN_WEIGHT_AT_LENGTH [kg = kilogram, g = gram]; if weight information is not available, use ‘NK’. | 
+
+\newline
 
 ```{r table_d}
 #| fig.cap: "Preview TABLE D"
@@ -1151,12 +1230,21 @@ table_D <- table_A |>
             .groups = "drop"
   ) |> filter(DISCARDS != 0)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_D, file = file.path(path_der,"table_D.rds"))
+
+openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_d_ft}
+#| echo: false
+
 ft <- table_D |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_D_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_D_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_D_preview.png")) |>
@@ -1169,12 +1257,6 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_D_preview_rotated.png")
 
 knitr::include_graphics("table_D_preview_rotated.png")
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_D, file = file.path(path_der,"table_D.rds"))
-
-openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_LENGTH.xlsx"), sheetName = "TABLE_D", colNames = TRUE, rowNames = FALSE)
-
 ```
 
 
@@ -1184,9 +1266,9 @@ openxlsx::write.xlsx(table_D, file.path(path_out, "FIN_TABLE_D_NAO_OFR_DISCARDS_
 
 ```{r image}
 #| fig.cap: "InterCAT"
-#| echo: FALSE
 #| fig.align: "center"
 #| out.width: "30%"
+#| echo: false
 path_orig  <- here::here("orig") 
 
 knitr::include_graphics(file.path(path_orig, "cat_fish.png"))
@@ -1423,10 +1505,9 @@ openxlsx::write.xlsx(e1, file.path(path_out,"e1.xlsx"), sheetName = "TABLE_E", c
 
 ```{r image4}
 #| fig.cap: "SUOMU"
-#| echo: FALSE
 #| fig.align: "center"
 #| out.width: "50%"
-#| 
+#| echo: false 
 knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 
 ```
@@ -1746,12 +1827,22 @@ table_E_mega$LENGTH_UNIT <- case_when(table_E_mega$MEAN_LENGTH == "NK" ~ "NK", .
 #Tällä excelissä voi selailla DOMAINEJA, joista puuttuu kappalemäärälaskennat, mutta, joista on SUomussa näytteitä:
 openxlsx::write.xlsx(no_IC_DATA, file.path(path_out, "no_IC_DATA.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_E_mega, file = file.path(path_der,"table_E.rds"))
+
+#FDI taulu E output:
+openxlsx::write.xlsx(table_E_mega, file.path(path_out, "FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_e_ft}
+#| echo: false
+
 ft <- table_E_mega |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_E_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_E_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_E_preview.png")) |>
@@ -1764,13 +1855,6 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_E_preview_rotated.png")
 
 knitr::include_graphics("table_E_preview_rotated.png")
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_E_mega, file = file.path(path_der,"table_E.rds"))
-
-#FDI taulu E output:
-openxlsx::write.xlsx(table_E_mega, file.path(path_out, "FIN_TABLE_E_NAO_OFR_LANDINGS_AGE.xlsx"), sheetName = "TABLE_E", colNames = TRUE, rowNames = FALSE)
-
 ```
 
 
@@ -1812,10 +1896,9 @@ table_A_sum$totwghtlandg <- round(table_A_sum$totwghtlandg, digits = 3)
 
 ```{r image5}
 #| fig.cap: "SUOMU"
-#| echo: FALSE
 #| fig.align: "center"
 #| out.width: "50%"
-
+#| echo: false
 knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 
 ```
@@ -1960,18 +2043,28 @@ table_F2 <- table_F |> left_join(E_domains |> mutate(DOMAIN_LANDINGS_E= DOMAIN_L
 table_F2 |> filter(is.na(DOMAIN_CHECK)) |> 
                 count(YEAR, DOMAIN_LANDINGS) |>
     flextable::flextable() |> flextable::autofit() |> 
-  flextable::set_caption("DOMAIN_LANDINS, that are not reported in table E") |> 
+  flextable::set_caption("DOMAIN_LANDINS, that are not reported in table E") |> flextable:: theme_zebra() |>
   flextable::colformat_num(j="YEAR", big.mark = "")
       
 # drop DOMAIN_LANDINGS, that are not in table E
 table_F3 <- table_F2 |> filter(!is.na(DOMAIN_CHECK))
+
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_F3, file = file.path(path_der,"table_F.rds"))
+
+# set working directory to save table F and table of deleted observations
+openxlsx::write.xlsx(table_F3,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_f_ft}
+#| echo: false
 
 ft <- table_F3 |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_F_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_F_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_F_preview.png")) |>
@@ -1985,19 +2078,40 @@ magick::image_write(img_resized, "table_F_preview_rotated.png")
 
 knitr::include_graphics("table_F_preview_rotated.png")
 
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_F3, file = file.path(path_der,"table_F.rds"))
-
-
-# set working directory to save table F and table of deleted observations
-openxlsx::write.xlsx(table_F3,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
-#openxlsx::write.xlsx(missing_domains2,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_TABLE_F.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
-#openxlsx::write.xlsx(suomu_deleted_for_no_catch,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_from_sampling_cause_no_catch.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
-
-
 ```
 
 ## Create table A - final version
+
+**Table A. Catch summary**
+
+| # | Variable | Description |
+| -- | -------- |-------------|
+| 1. | COUNTRY | According to the code list provided in Appendix 1; missing values not allowed. |
+| 2. | YEAR | Four digits (e.g. 2019); missing values not allowed. |
+| 3. | QUARTER | 1, 2, 3 or 4; missing values not allowed. |
+| 4. | VESSEL_LENGTH | According to the code list provided in Appendix 2; ‘NK’ if not known. |
+| 5. | FISHING_TECH | According to the code list provided in Appendix 3; missing values not allowed. |
+| 6. | GEAR_TYPE | According to the code list provided in Appendix 4; ‘NK’ if not known. |
+| 7. | TARGET_ASSEMBLAGE | According to the code list provided in Appendix 5; ‘NK’ if not known. |
+| 8. | MESH_SIZE_RANGE | According to the code list provided in Appendix 6; ‘NK’ if not known. |
+| 9. | METIER | According to Appendix 7; ‘NK’ if not known. |
+| 10. | METIER_7 | According to Appendix 7; ‘NK’ if not known (for tuna fisheries) or ‘NA’ if not applicable (for all other fisheries than tuna fisheries) should be used. |
+| 11. | DOMAIN_DISCARDS | Text in format specified in Appendix 8; ‘NK’ if not known |
+| 12. | DOMAIN_LANDINGS | Text in format specified in Appendix 8; ‘NK’ if not known. |
+| 13. | SUPRA_REGION | According to the code list in Appendix 9; missing values not allowed. |
+| 14. | SUB_REGION | According to the code list in Appendix 9; ‘NK’ if not known. |
+| 15. | EEZ_INDICATOR | According to the code list in Appendix 9; ‘NK’ can be use only when also the subregion is not known. |
+| 16. | GEO_INDICATOR | According to the code list in Appendix 10. |
+| 17. | NEP_SUB_REGION | Functional Units (FUs) according to the list in Appendix 9; ‘NK’ if not known or ‘NA’ if not applicable. This variable is asked only for Nephrops norvegicus catches. |
+| 18. | SPECON_TECH | Specific conditions related to technical measures according to Appendix 11; ‘NK’ if not known or ‘NA’ if not applicable. |
+| 19. | DEEP | ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the definition, should be indicated with ‘DEEP’). |
+| 20. | SPECIES | According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed. |
+| 21. | TOTWGHTLANDG | Estimated landings in tonnes (live weight) [precision to 3 digits after the decimal], including landings below minimum conservation reference size (MCRS); missing values not allowed. |
+| 22. | TOTVALLANDG | Total value of the landings in euro; ‘NK’ if not known. |
+| 23. | DISCARDS | Estimated discards in tonnes [precision to 3 digits after the decimal]; ‘NK’ if not known. |
+| 24. | CONFIDENTIAL | [1 character] Accepted values: ‘A’ (all), ‘N’ (none), ‘W’ (weight), ‘V’ (value), ‘D’ (discards); missing values not allowed. When the value ‘W’ is used, values in the field TOTWGHTLANDG is considered confidential. When the value ‘D’ is used, values in the field DISCARDS are considered confidential. |
+
+\newline
 
 ```{r table_a_final}
 #| fig.cap: "Preview TABLE A"
@@ -2034,7 +2148,7 @@ full_join(
   mutate(
     TOT_C = coalesce(TOT_C, 0L),
     TOT_D = coalesce(TOT_D, 0L)
-  ) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("Remaining DOMAIN_DISCARDS after tagging tagging table C+D") |> flextable::colformat_num(j="YEAR", big.mark = "")
+  ) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("Remaining DOMAIN_DISCARDS after tagging tagging table C+D") |> flextable::theme_zebra() |> flextable::colformat_num(j="YEAR", big.mark = "")
 
 # discard records with no discards
 table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
@@ -2046,6 +2160,7 @@ table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
 table_A2 |> filter(DOMAIN_DISCARDS == "NK") |> 
   count(YEAR, QUARTER) |>  flextable::flextable() |> flextable::autofit() |>
   flextable::colformat_num(j="YEAR", big.mark="") |>
+  flextable::theme_zebra() |>
   flextable::set_caption("DISCARDS (NK) from tables C+D by year/quarter") 
 
 
@@ -2078,7 +2193,8 @@ full_join(
   mutate(
     TOT_E = coalesce(TOT_E, 0L),
     TOT_F = coalesce(TOT_F, 0L)
-  ) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("Remaining DOMAIN_LANDINGS after tagging tagging table E+F") |> flextable::colformat_num(j="YEAR", big.mark = "")
+  ) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("Remaining DOMAIN_LANDINGS after tagging tagging table E+F") |> flextable::theme_zebra() |>
+  flextable::colformat_num(j="YEAR", big.mark = "")
 
 # not in E, but in F
 full_join(
@@ -2103,11 +2219,22 @@ table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
 table_A2 |> filter(DOMAIN_LANDINGS == "NK") |> 
   count(YEAR, QUARTER) |>  flextable::flextable() |> flextable::autofit() |>
   flextable::colformat_num(j="YEAR", big.mark="") |>
+  flextable::theme_zebra() |>
   flextable::set_caption("LANDINGS (NK) from tables E+F by year/quarter") 
 
 
 # Put the variables in the correct order:
 table_A <- table_A2 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
+
+# # Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
+# 
+# # Write the resulting table A
+openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_a_final_ft}
+#| echo: false
 
 # show final table
 ft <- table_A |> head(n=20) |> flextable::flextable() |>
@@ -2115,7 +2242,7 @@ ft <- table_A |> head(n=20) |> flextable::flextable() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_A_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_A_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_A_preview.png")) |>
@@ -2128,12 +2255,6 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_A_preview_rotated.png")
 
 knitr::include_graphics("table_A_preview_rotated.png")
-
-# # Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_A, file = file.path(path_der,"table_A.rds"))
-# 
-# # Write the resulting table A
-openxlsx::write.xlsx(table_A, file.path(path_out,"FIN_TABLE_A_CATCH.xlsx"), sheetName = "TABLE_A", colNames = TRUE, rowNames = FALSE)
 
 ```
 
@@ -2232,12 +2353,22 @@ message(paste("Mismatches in TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA,
 # Put the variables in the correct order:
 table_G <- g4 |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, TOTSEADAYS, TOTKWDAYSATSEA, TOTGTDAYSATSEA, TOTFISHDAYS, TOTKWFISHDAYS, TOTGTFISHDAYS, HRSEA, KWHRSEA, GTHRSEA, TOTVES, CONFIDENTIAL)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_G, file = file.path(path_der,"table_G.rds"))
+
+# Write the resulting table G
+write.xlsx(table_G, file.path(path_out,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_g_ft}
+#| echo: false
+
 ft <- table_G |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_G_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_G_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_G_preview.png")) |>
@@ -2251,11 +2382,6 @@ magick::image_write(img_resized, "table_G_preview_rotated.png")
 
 knitr::include_graphics("table_G_preview_rotated.png")
 
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_G, file = file.path(path_der,"table_G.rds"))
-
-# Write the resulting table G
-write.xlsx(table_G, file.path(path_out,"FIN_TABLE_G_EFFORT.xlsx"), sheetName = "TABLE_G", colNames = TRUE, rowNames = FALSE)
 ```
 
 
@@ -2327,12 +2453,22 @@ h8 <- h7 |> filter(SPECIES != "TOTAL")
 # Put the variables in the correct order:
 table_H <- h8 |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, SPECON_TECH, DEEP, RECTANGLE_TYPE, LATITUDE, LONGITUDE, C_SQUARE, SPECIES, TOTWGHTLANDG,TOTVALLANDG, CONFIDENTIAL)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_H, file = file.path(path_der,"table_H.rds"))
+
+# Write the resulting table H
+openxlsx::write.xlsx(table_H, file.path(path_out,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_h_ft}
+#| echo: false
+
 ft <- table_H |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_H_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_H_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_H_preview.png")) |>
@@ -2345,12 +2481,6 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_H_preview_rotated.png")
 
 knitr::include_graphics("table_H_preview_rotated.png")
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_H, file = file.path(path_der,"table_H.rds"))
-
-# Write the resulting table H
-openxlsx::write.xlsx(table_H, file.path(path_out,"FIN_TABLE_H_LANDINGS_BY_RECTANGLE.xlsx"), sheetName = "TABLE_H", colNames = TRUE, rowNames = FALSE)
 ```
 
 
@@ -2379,12 +2509,22 @@ table_I <- i2 |> filter(TOTFISHDAYS > 0) |> mutate(
     n2 < 3 ~ "Y",
     n2 >= 3 ~ "N")) |> select(-n2)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_I, file = file.path(path_der,"table_I.rds"))
+
+# Write the resulting table I
+openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_i_ft}
+#| echo: false
+
 ft <- table_I |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_I_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_I_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_I_preview.png")) |>
@@ -2397,12 +2537,6 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_I_preview_rotated.png")
 
 knitr::include_graphics("table_I_preview_rotated.png")
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_I, file = file.path(path_der,"table_I.rds"))
-
-# Write the resulting table I
-openxlsx::write.xlsx(table_I, paste0(path_out,.Platform$file.sep,"FIN_TABLE_I_EFFORT_BY_RECTANGLE.xlsx"), sheetName = "TABLE_I", colNames = TRUE, rowNames = FALSE)
 ```
 
 
@@ -2563,7 +2697,7 @@ j6b <- rbind(j6, inactive)
 # vessels missing in the capacity table, but in activity table
 missing_kap <- j6b |> filter(is.na(PAAKONETEHO) | is.na(VETOISUUS)) |> select(ULKOINENTUNNUS, YEAR)
 
-missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing") |> flextable::autofit()
+missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing") |> flextable::theme_zebra() |> flextable::autofit()
 
 missing_tag <- missing_kap |> pull(ULKOINENTUNNUS) |> unique()
 
@@ -2579,7 +2713,10 @@ extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
   AGE = YEAR -rakennusvuosi
 ) |> select(-RAKENNUSPVM, -rakennusvuosi) |> distinct()
 
-extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table") |> flextable::autofit()
+extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |>
+  flextable::theme_zebra() |> 
+  flextable::set_caption("vessels not registered in capacity table") |>
+  flextable::autofit()
 
 # removing duplicates and checking there are none left
 extra_dup <- extra_kap |> 
@@ -2759,12 +2896,23 @@ j10 <- j10 |> mutate(
 # Put the variables in the correct order:
 table_J <- j10 |> select(COUNTRY, YEAR, VESSEL_LENGTH, FISHING_TECH, SUPRA_REGION, GEO_INDICATOR, PRINCIPAL_SUB_REGION, TOTTRIPS, TOTKW, TOTGT, TOTVES, AVGAGE, AVGLOA, MAXSEADAYS)
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_J, file = file.path(path_der,"table_J.rds"))
+
+# Write the resulting table J
+write.xlsx(table_J, file.path(path_out, "FIN_TABLE_J_CAPACITY.xlsx"), 
+           sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_j_ft}
+#| echo: false
+
 ft <- table_J |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_J_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_J_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_J_preview.png")) |>
@@ -2777,50 +2925,29 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_J_preview_rotated.png")
 
 knitr::include_graphics("table_J_preview_rotated.png")
-
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_J, file = file.path(path_der,"table_J.rds"))
-
-# Write the resulting table J
-write.xlsx(table_J, file.path(path_out, "FIN_TABLE_J_CAPACITY.xlsx"), 
-           sheetName = "TABLE_J", colNames = TRUE, rowNames = FALSE)
-
 ```
 
 
 ## Create table K
 
-Table K NAO OFR. Discards estimated by domain
+**Table K NAO OFR. Discards estimated by domain **
+
+| # | Variable | Description |
+| -- | -------- |-------------|
+| 1. | COUNTRY | According to the code list provided in Appendix 1; missing values not allowed. |
+| 2. | YEAR | Four digits (e.g. 2019); missing values not allowed. |
+| 3. | DOMAIN_DISCARDS |Text in format specified in Appendix 8; missing values not allowed. |
+| 4. | SPECIES | According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed. |
+| 5. | DISCARDS | Estimated discards in tonnes [precision to 3 digits after the decimal]; missing values not allowed. |
+| 6. | DISCARD_CV | the coefficient of variation of the estimate based on the sample available for the strata considered (i.e., DOMAIN_DISCARDS) and the sampling design. This is calculated for the weight of discards. Mandatory. NK if not known. |
+| 7. | DISCARD_CI_UPPER |  the upper confidence limit of the estimate based on the strata sampled (i.e., DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be 95% confident that the real value is contained into; is between the upper and the lower confidence limit), supplied in weight. Mandatory. NK if not known. |
+| 8. | DISCARD_CI_LOWER | the lower confidence limit of the estimate based on the strata sampled (i.e., DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be 95% confident that the real value is contained into; is between the upper and the lower confidence limit), supplied in weight. Mandatory. NK if not known. |
+| 9. | TOTAL_TRIPS | The total number of trips that relate to domain; a number should only be given only if it relates to this domain, otherwise use ‘NK’. |
+| 10. | NO_TRIPS_SAMPLED_WITH_SPECIES | [integer] Number of trips in which the species was sampled/observed; if not known use ‘NK’. |
+| 11. | NO_TRIPS_SAMPLED | [integer] Number of trips sampled for the specified domain discards; if not known use ‘NK’. |
 
 Discard estimates should be provided at the domain level (DOMAIN_DISCARDS).
 This table must be used to provide only discards data for which no biological data are available (that is, for discards data that have not already been reported in tables C and D).
-
-```
-1. COUNTRY: According to the code list provided in Appendix 1; missing values not allowed.
-2. YEAR: Four digits (e.g. 2019); missing values not allowed.
-3. DOMAIN_DISCARDS: Text in format specified in Appendix 8; missing values not allowed.
-4. SPECIES: According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed.
-5. DISCARDS: Estimated discards in tonnes [precision to 3 digits after the decimal]; missing values not
-allowed.
-6. DISCARD_CV: the coefficient of variation of the estimate based on the sample available for the
-strata considered (i.e., DOMAIN_DISCARDS) and the sampling design. This is calculated for the
-weight of discards. Mandatory. NK if not known.
-7. DISCARD_CI_UPPER: the upper confidence limit of the estimate based on the strata sampled (i.e.,
-DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be
-95% confident that the real value is contained into; is between the upper and the lower confidence
-limit), supplied in weight. Mandatory. NK if not known.
-8. DISCARD_CI_LOWER: the lower confidence limit of the estimate based on the strata sampled (i.e.,
-DOMAIN_DISCARDS), 95% confidence interval (i.e., the confidence interval that allows us to be
-95% confident that the real value is contained into; is between the upper and the lower confidence
-limit), supplied in weight. Mandatory. NK if not known.
-9. TOTAL_TRIPS: The total number of trips that relate to domain; a number should only be given only
-if it relates to this domain, otherwise use ‘NK’.
-10. NO_TRIPS_SAMPLED_WITH_SPECIES: [integer] Number of trips in which the species was
-sampled/observed; if not known use ‘NK’.
-11. NO_TRIPS_SAMPLED: [integer] Number of trips sampled for the specified domain discards; if not
-known use ‘NK’.
-```
 
 \newline
 
@@ -2847,12 +2974,21 @@ table_K <- table_A |>
 # test <- c("COUNTRY",	"YEAR",	"DOMAIN_DISCARDS",	"SPECIES", 	"DISCARDS",	"DISCARD_CV",	"DISCARD_CI_UPPER",	"DISCARD_CI_LOWER",	"TOTAL_TRIPS",	"NO_TRIPS_SAMPLED_WITH_SPECIES",	"NO_TRIPS_SAMPLED")
 # names(table_K) %in% test
 
+# Write the resulting table A into der folder as rds file and into results folder
+saveRDS(table_K, file = file.path(path_der,"table_K.rds"))
+
+openxlsx::write.xlsx(table_K, file.path(path_out,"FIN_TABLE_K_NAO_OFR_DISCARDS.xlsx"), sheetName = "TABLE_K", colNames = TRUE, rowNames = FALSE)
+```
+
+```{r table_k_ft}
+#| echo: false
+
 ft <- table_K |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
 
-flextable::save_as_image(ft, path = file.path(path_out,"table_K_preview.png"))
+invisible(flextable::save_as_image(ft, path = file.path(path_out,"table_K_preview.png")))
 
 # read ft and rotate
 img <- magick::image_read(file.path(path_out,"table_K_preview.png")) |>
@@ -2865,10 +3001,5 @@ img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 magick::image_write(img_resized, "table_K_preview_rotated.png")
 
 knitr::include_graphics("table_K_preview_rotated.png")
-
-# Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_K, file = file.path(path_der,"table_K.rds"))
-
-openxlsx::write.xlsx(table_K, file.path(path_out,"FIN_TABLE_K_NAO_OFR_DISCARDS.xlsx"), sheetName = "TABLE_K", colNames = TRUE, rowNames = FALSE)
 ```
 
