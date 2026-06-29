@@ -1950,7 +1950,23 @@ table_f_pre3 <- na.omit(table_f_pre2)
 #table_F <- table_f_pre2 |> select(country, year, domain_landings, species, totwghtlandg, no_samples_landg, no_length_measurements_landg, length_unit, min_length, max_length, length, no_length_landg) |> rename_all(toupper)
 table_F <- table_f_pre3 |> select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, TOTAL_SAMPLED_TRIPS, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) |> rename_all(toupper)
 
-ft <- table_F |> head(n=20) |> flextable::flextable() |>
+# check domains that are in F but not in E
+E_domains <- table_E_mega |> ungroup() |> select(YEAR, DOMAIN_LANDINGS)
+
+table_F2 <- table_F |> left_join(E_domains |> mutate(DOMAIN_LANDINGS_E= DOMAIN_LANDINGS), 
+                     by = c("YEAR", "DOMAIN_LANDINGS")) |>
+            mutate(DOMAIN_CHECK = if_else(DOMAIN_LANDINGS == DOMAIN_LANDINGS_E, 1, 0))
+
+table_F2 |> filter(is.na(DOMAIN_CHECK)) |> 
+                count(YEAR, DOMAIN_LANDINGS) |>
+    flextable::flextable() |> flextable::autofit() |> 
+  flextable::set_caption("DOMAIN_LANDINS, that are not reported in table E") |> 
+  flextable::colformat_num(j="YEAR", big.mark = "")
+      
+# drop DOMAIN_LANDINGS, that are not in table E
+table_F3 <- table_F2 |> filter(!is.na(DOMAIN_CHECK))
+
+ft <- table_F3 |> head(n=20) |> flextable::flextable() |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "")
@@ -1970,11 +1986,11 @@ magick::image_write(img_resized, "table_F_preview_rotated.png")
 knitr::include_graphics("table_F_preview_rotated.png")
 
 # Write the resulting table A into der folder as rds file and into results folder
-saveRDS(table_F, file = file.path(path_der,"table_F.rds"))
+saveRDS(table_F3, file = file.path(path_der,"table_F.rds"))
 
 
 # set working directory to save table F and table of deleted observations
-openxlsx::write.xlsx(table_F,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
+openxlsx::write.xlsx(table_F3,  file.path(path_out, "FIN_TABLE_F_NAO_OFR_LANDINGS_LENGTH.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
 #openxlsx::write.xlsx(missing_domains2,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_TABLE_F.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
 #openxlsx::write.xlsx(suomu_deleted_for_no_catch,  paste0(path_out,.Platform$file.sep,"TABLE_F_NAO_OFR_LANDINGS_LENGTH_DELETED_from_sampling_cause_no_catch.xlsx"), sheetName = "TABLE_F", colNames = TRUE, rowNames = FALSE)
 
@@ -2042,7 +2058,7 @@ table_A2 <- table_A2 |>
   #select(YEAR, DOMAIN_LANDINGS, SPECIES, TOTWGHTLANDG, TOTVALLANDG) |> # testing only
   left_join(table_E |> select(YEAR, COUNTRY, DOMAIN_LANDINGS, SPECIES, E_TOTWGHTLANDG=TOTWGHTLANDG) |>  distinct(), 
             by=join_by(YEAR, COUNTRY, DOMAIN_LANDINGS, SPECIES)) |> 
-  left_join(table_F |> select(YEAR, COUNTRY, DOMAIN_LANDINGS, SPECIES, F_TOTWGHTLANDG=TOTWGHTLANDG) |>  distinct(), 
+  left_join(table_F3 |> select(YEAR, COUNTRY, DOMAIN_LANDINGS, SPECIES, F_TOTWGHTLANDG=TOTWGHTLANDG) |>  distinct(), 
             by=join_by(YEAR, COUNTRY, DOMAIN_LANDINGS, SPECIES))
 
 # check all C discard domains
@@ -2063,6 +2079,21 @@ full_join(
     TOT_E = coalesce(TOT_E, 0L),
     TOT_F = coalesce(TOT_F, 0L)
   ) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("Remaining DOMAIN_LANDINGS after tagging tagging table E+F") |> flextable::colformat_num(j="YEAR", big.mark = "")
+
+# not in E, but in F
+full_join(
+  E_count,
+  F_count,
+  by = c("YEAR", "DOMAIN_LANDINGS")
+) |>
+  mutate(
+    TOT_E = coalesce(TOT_E, 0L),
+    TOT_F = coalesce(TOT_F, 0L)
+  ) |> 
+  filter(TOT_E == 0) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("DOMAIN_LANDINGS that are in table F, but not in table E") |> flextable::colformat_num(j="YEAR", big.mark = "")
+
+
+IC_DB |> filter(Year == 2021 & Season %in% c(1,2)) |> View()
 
 # discard records with no discards
 table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
