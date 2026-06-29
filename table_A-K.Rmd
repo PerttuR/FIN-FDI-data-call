@@ -1173,18 +1173,54 @@ for (i in 1:length(zip_file)){
   unzip(zip_file[i], exdir = path_der)
 }
 
-IC_SD <- read.csv2(list.files(path_der,          
+# testing separator of csv file
+guess_sep <- function(file) {
+  x <- readLines(file, n = 5)
+  candidates <- c(",", ";")
+
+  scores <- sapply(candidates, function(sep) {
+    sum(count.fields(textConnection(x), sep = sep))
+  })
+
+  candidates[which.max(scores)]
+}
+
+sep <- guess_sep(list.files(path_der,          
                      pattern = " SD .*\\.csv$", 
                      full.names=TRUE))
 
-IC_SI <- read.csv2(list.files(path_der, 
+# read data
+if (sep == ";") {
+  IC_SD <- read.csv2(list.files(path_der,          
+                     pattern = " SD .*\\.csv$", 
+                     full.names=TRUE))
+
+  IC_SI <- read.csv2(list.files(path_der, 
                      pattern = " SI .*\\.csv$", 
                      full.names=TRUE))
 
-IC_HI <- read.csv2(list.files(path_der, 
+  IC_HI <- read.csv2(list.files(path_der, 
                      pattern = " HI .*\\.csv$", 
                      full.names=TRUE))
+} else {
+  IC_SD <- read.csv(list.files(path_der,          
+                     pattern = " SD .*\\.csv$", 
+                     full.names=TRUE))
 
+  IC_SI <- read.csv(list.files(path_der, 
+                     pattern = " SI .*\\.csv$", 
+                     full.names=TRUE))
+
+  IC_HI <- read.csv(list.files(path_der, 
+                     pattern = " HI .*\\.csv$", 
+                     full.names=TRUE))
+}
+
+IC_SD$ImportStratumId <- as.character(IC_SD$ImportStratumId)
+IC_SI$ImportStratumId <- as.character(IC_SI$ImportStratumId)
+IC_SI$ImportHeaderId  <- as.character(IC_SI$ImportHeaderId)
+IC_HI$ImportHeaderId  <- as.character(IC_HI$ImportHeaderId)
+  
 # left join by ID
 IC_SD_SI <- left_join(IC_SD, IC_SI, by=c('ImportStratumId'='ImportStratumId'), suffix = c("", ".y"), keep = FALSE)
 IC_SD_SI_HI <- left_join(IC_SD_SI, IC_HI, by=c('ImportHeaderId'='ImportHeaderId'), suffix = c("", ".z"), keep = FALSE)
@@ -1205,8 +1241,7 @@ colnames(IC_2) <- ic_names
 IC_DB <- IC_2
 
 #save to der folder
-saveRDS(IC_DB, file = file.path(last_path,"IC_DB.rds"))
-# saveRDS(IC_DB, file = file.path(path_der,"IC_DB.rds"))
+saveRDS(IC_DB, file = file.path(path_der,"IC_DB.rds"))
 ```
 
 ### Table A and IC data
