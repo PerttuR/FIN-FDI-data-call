@@ -1951,7 +1951,7 @@ table_f_pre3 <- na.omit(table_f_pre2)
 table_F <- table_f_pre3 |> select(country, year, domain_landings, nep_sub_region, species, totwghtlandg, TOTAL_SAMPLED_TRIPS, no_length_measurements, length_unit, min_length, max_length, length, no_length, mean_weight_at_length, weight_unit) |> rename_all(toupper)
 
 # check domains that are in F but not in E
-E_domains <- table_E_mega |> ungroup() |> select(YEAR, DOMAIN_LANDINGS)
+E_domains <- table_E_mega |> ungroup() |> select(YEAR, DOMAIN_LANDINGS) |> distinct()
 
 table_F2 <- table_F |> left_join(E_domains |> mutate(DOMAIN_LANDINGS_E= DOMAIN_LANDINGS), 
                      by = c("YEAR", "DOMAIN_LANDINGS")) |>
