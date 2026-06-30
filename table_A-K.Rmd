@@ -190,9 +190,7 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
 ```
 
 ```{r, results='asis', echo=FALSE}
-if (knitr::is_latex_output()) {
-  cat("\\newline\n")
-} else if (knitr::pandoc_to("docx")) {
+if (knitr::pandoc_to("docx")) {
   cat("\\newline", sep="\n")
 }
 ```
@@ -210,9 +208,7 @@ kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(U
 
 
 ```{r, results='asis', echo=FALSE}
-if (knitr::is_latex_output()) {
-  cat("\\newline\n")
-} else if (knitr::pandoc_to("docx")) {
+if (knitr::pandoc_to("docx")) {
   cat("\\newline", sep="\n")
 }
 ```
