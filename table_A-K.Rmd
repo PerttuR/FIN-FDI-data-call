@@ -183,7 +183,10 @@ message(paste("Reading table:", tablename))
 # (used with J)
 kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""), 
                              table=tablename, dbname = "kake_siirto")
+```
 
+```{r import_data2}
+#| echo: false
 kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra() |>
@@ -204,7 +207,10 @@ discards$DISCARDS_TONNES <- discards$DISCARDS_KG/1000
 
 # some uppercase D in SUBREGION
 discards$SUB_REGION <- tolower(discards$SUB_REGION)
+```
 
+```{r discards2}
+#| echo: false
 discards |> count(YEAR, VESSEL_LENGTH, TARGET_ASSEMBLAGE) |> 
   pivot_wider(names_from = TARGET_ASSEMBLAGE, values_from = n) |>
   flextable::flextable() |>
@@ -256,7 +262,10 @@ aktiviteetti_all <- aktiviteetti |> filter(KALASTUSVUOSI %in% years) |>
            KALASTUS_VUOSI == as.character(as.numeric(KALASTUSVUOSI) + 1) ~ "12",  # Next year, set to December
            TRUE ~ KALASTUS_KK
          ))
+```
 
+```{r prepare-akt2}
+#| echo: false
 aktiviteetti_all |> group_by(KALASTUSVUOSI, VLENGTH_AER_NEW) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_AER_NEW, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "KALASTUSVUOSI", big.mark = "") |> flextable::theme_zebra() |>
@@ -402,8 +411,10 @@ akt1 <- aktiviteetti_all |>
             SUB_REGION == "27.3.d.28" ~ "27.3.d.28.2", #Vaihtoehtoinen 28.1 ja 28.2 ja jälkimmäinen pääallas, jolla Suomi kalastaa
             TRUE ~ SUB_REGION
           )) #tehdään tarkaste myöhemmin!
+```
 
-
+```{r vars-h-i2}
+#| echo: false
 akt1 |> select(FISHING_TECH, METIER, MERIPAIVAT, LAHTO, PALUU, HRSEA) |>
   mutate(TAG = case_when(
     HRSEA < 0 ~ "NEGATIVE",
@@ -463,10 +474,16 @@ valid_metiers <- data.frame(valid_metiers = metier_table$Metier_level6)
 metier <- akt1 |> dplyr::select(METIER) |> distinct()
 metier_check <- metier |> left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
 missing <- metier_check |> filter(is.na(valid_metiers))
+```
 
+```{r spatial2}
+#| echo: false
 missing |> flextable::flextable() |> flextable::theme_zebra() |>
   flextable::set_caption( "Metiers in AKT1 that are not valid") |> flextable::autofit()
+```
 
+```{r spatial3}
+# AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
 # clean metier categories based on METIER 5 and mesh size ranges
 akt1  <- akt1 |> 
             mutate(metier6_orig=METIER,
@@ -480,11 +497,12 @@ akt1  <- akt1 |>
               (MESH_SIZE_RANGE == "NK" | MESH_SIZE_RANGE == "NA") & METIER4 %in% c("LLD","LLS","MIS","LHP") ~ paste0(METIER5,"_0_0_0"))
             ) |>
             select(-MONTH, -ICES, -MESH_SIZE, -PYYDYS, -LAHTOPVM, -LAHTOAIKA, -PALUUPVM, -PALUUAIKA, -LAHTO, -PALUU)
+```
 
+```{r spatial4}
+#| echo: false
 # akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
 # akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
-
-# AKT 1 BASIS FOR ALL FOLLOWING TABLES ####
 
 akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> flextable::autofit() |> 
   flextable::theme_zebra() |>
@@ -496,20 +514,25 @@ akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> fl
 ```{r sas}
 # load sas data
 sas <- read.dbTable(schema="vault", table="sas_combined_clean_2013_15", dbname = "kake_siirto")
+```
 
+```{r sas2}
+#| echo: false
 sas |> count(YEAR, VESSEL_LENGTH) |> mutate(VESSEL_LENGTH = factor(VESSEL_LENGTH)) |>
   pivot_wider(names_from = VESSEL_LENGTH, values_from = n, names_expand = TRUE, names_sort = FALSE) |>
-  flextable::flextable() |>
+  flextable::flextable() |> theme_zebra() |>
   flextable::colformat_num(j="YEAR", big.mark="") |> flextable::autofit() |>
   flextable::set_caption( "Years and vessel lengths in SAS data")
 
 sas |> count(YEAR, LOMAKE, VESSEL_LENGTH) |> mutate(VESSEL_LENGTH = factor(VESSEL_LENGTH)) |>
   pivot_wider(names_from = VESSEL_LENGTH, values_from = n, names_expand = TRUE, names_sort = FALSE) |>
-  flextable::flextable() |>
+  flextable::flextable() |> theme_zebra() |>
   flextable::colformat_num(j="YEAR", big.mark="") |> flextable::autofit()  |>
   flextable::theme_zebra() |>
   flextable::set_caption( "Years and vessel lengths by LOMAKE in SAS data")
+```
 
+```{r sas3}
 sas <- sas |>
   mutate(KALASTUSAIKAHH = NA, RECTANGLE_TYPE="05*1",C_SQUARE="NA", HRSEA=NA) |> 
   select(YEAR, ULKOINENTUNNUS=ALUS, LOMAKE, KK, KALASTUSPAIVAT, PYYNTIPV, MERIPAIVAT, PAAKONETEHO=TEHO, # added LOMAKE
@@ -530,14 +553,19 @@ sas <- sas |>
 
 # combine sas and DCPROD logbooks
 akt1_all <- rbind(akt1, sas)
+```
 
+```{r sas4}
+#| echo: false
 #just checking data types
 as.data.frame(sapply(akt1_all, class)) |> rownames_to_column() |> rename(format = 2) |> 
   flextable::flextable() |> 
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::set_caption( "Column formatting of AKT1_ALL")
+```
 
+```{r sas5}
 #cast QUARTER as integer
 akt1_all$QUARTER <- as.integer(akt1_all$QUARTER)
 
@@ -579,12 +607,17 @@ akt1_all <- akt1_all |> mutate(
     .default =  as.character(MESH_SIZE_RANGE)),
   TARGET_ASSEMBLAGE = if_else(TARGET_ASSEMBLAGE == "ING", "FWS", TARGET_ASSEMBLAGE),
   GEAR_TYPE = if_else(GEAR_TYPE == "MIS", "NK", GEAR_TYPE))
+```
 
+```{r sas6}
+#| echo: false
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> 
   flextable::autofit() |> 
   flextable::theme_zebra() |>
   flextable::set_caption( "Mesh size to metier conversion AKT1_all")
+```
 
+```{r sas7}
 # check if valid
 metier <- akt1_all |> dplyr::select(METIER) |> distinct()
 metier_check <- metier |> left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
@@ -599,10 +632,12 @@ missing <- metier_check |> filter(is.na(valid_metiers))
 ## Cleaning data against capacity table
 
 ```{r clean_capacity}
-
+#| echo: false
 akt1_all |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from activity and sas") |>
   flextable::theme_zebra()
+```
 
+```{r clean_capacity2}
 # clean against capacity table
 kap <- kapasiteetti |> filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) |> select(
   YEAR = VUOSI,
@@ -620,21 +655,31 @@ kap <- kapasiteetti |> filter(VUOSI %in% years, REKISTERISSAVUODENAIKANA == 1) |
 dup <- kap |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
   filter(n()>1)
+```
 
+```{r clean_capacity3}
+#| echo: false
 dup |> ungroup() |>  select(YEAR, ULKOINENTUNNUS) |> distinct() |> 
   count(YEAR) |> flextable::flextable() |> 
   flextable::theme_zebra() |>
   flextable::colformat_num(j = "YEAR", big.mark = "") |>
   flextable::set_caption( "Number of vessels with multiple vessel lengths by year")
+```
 
+```{r clean_capacity4}
 kap2 <- kap |> arrange(YEAR, ULKOINENTUNNUS, VESSEL_LENGTH) |> 
   group_by(ULKOINENTUNNUS, YEAR, AGE, KOKPITUUS) |> 
   summarise(VESSEL_LENGTH = first(VESSEL_LENGTH), PAAKONETEHO=first(PAAKONETEHO), 
             VETOISUUS=first(VETOISUUS),.groups = "drop")
+```
 
+```{r clean_capacity5}
+#| echo: false
 # check vessel lengths from capacity table
 kap2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity table") |> flextable::theme_zebra() |> flextable::colformat_num(j="YEAR", big.mark="")
+```
 
+```{r clean_capacity6}
 # join the capacity to the j table
 akt1_all2 <- akt1_all |> select(-c(PAAKONETEHO,VETOISUUS)) |> 
   # rename orginal vessel length - we will use the one from capacity instead
@@ -657,10 +702,15 @@ akt1_all2 <- akt1_all2 |>
   ungroup() |>
   # also recode vessels missing in capacity table
   mutate(VESSEL_LENGTH = if_else(is.na(VESSEL_LENGTH), VESSEL_LENGTH_ORIG, VESSEL_LENGTH))
+```
 
+```{r clean_capacity7}
+#| echo: false
 # check vessel lengths after join
 akt1_all2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity") |> flextable::theme_zebra() |> flextable::colformat_num(j="YEAR", big.mark="")
+```
 
+```{r clean_capacity8}
 # Aggregating all passive gears to PG
 
 akt1_all2 <- akt1_all2 |> 
@@ -668,8 +718,10 @@ akt1_all2 <- akt1_all2 |>
                 FISHING_TECH == "FPO" |  FISHING_TECH == "DFN" | FISHING_TECH == "HOK" ~ "PG",
                 TRUE ~ FISHING_TECH
             )) |> select(-missing_vl, -has_missing_vl)
+```
 
-
+```{r clean_capacity9}
+#| echo: false
 akt1_all2 |> count(YEAR, FISHING_TECH) |>
   pivot_wider(values_from = n, names_from =YEAR) |>
   flextable::flextable() |> 
@@ -677,7 +729,9 @@ akt1_all2 |> count(YEAR, FISHING_TECH) |>
   flextable::autofit() |>
   flextable::theme_zebra() |>
   flextable::set_caption( "Number of fishing tech by year")
+```
 
+```{r clean_capacity10}
 # fleet segment
 akt1_all2 <- akt1_all2 |> 
   group_by(ULKOINENTUNNUS, YEAR) |> 
@@ -2087,13 +2141,19 @@ E_domains <- table_E_mega |> ungroup() |> select(YEAR, DOMAIN_LANDINGS) |> disti
 table_F2 <- table_F |> left_join(E_domains |> mutate(DOMAIN_LANDINGS_E= DOMAIN_LANDINGS), 
                      by = c("YEAR", "DOMAIN_LANDINGS")) |>
             mutate(DOMAIN_CHECK = if_else(DOMAIN_LANDINGS == DOMAIN_LANDINGS_E, 1, 0))
+```
+
+```{r table_f2}
+#| echo: false
 
 table_F2 |> filter(is.na(DOMAIN_CHECK)) |> 
                 count(YEAR, DOMAIN_LANDINGS) |>
     flextable::flextable() |> flextable::autofit() |> 
   flextable::set_caption("DOMAIN_LANDINS, that are not reported in table E") |> flextable:: theme_zebra() |>
   flextable::colformat_num(j="YEAR", big.mark = "")
-      
+```
+
+```{r table_f3}
 # drop DOMAIN_LANDINGS, that are not in table E
 table_F3 <- table_F2 |> filter(!is.na(DOMAIN_CHECK))
 
@@ -2203,15 +2263,19 @@ table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
                             is.na(C_DISCARDS) & is.na(D_DISCARDS) ~ "NK",
                             .default = as.character(DOMAIN_DISCARDS)
 ))
+```
 
+```{r table_a_final2}
+#| echo: false
 # check all DOMAIN_DISCADS
 table_A2 |> filter(DOMAIN_DISCARDS == "NK") |> 
   count(YEAR, QUARTER) |>  flextable::flextable() |> flextable::autofit() |>
   flextable::colformat_num(j="YEAR", big.mark="") |>
   flextable::theme_zebra() |>
   flextable::set_caption("DISCARDS (NK) from tables C+D by year/quarter") 
+```
 
-
+```{r table_a_final3}
 #' ############################################
 # join with table E+F
 #' ############################################
@@ -2232,7 +2296,10 @@ E_count <- table_A2 |>
 F_count <- table_A2 |>
   filter(!is.na(F_TOTWGHTLANDG)) |>
   count(YEAR, DOMAIN_LANDINGS, name = "TOT_F")
+```
 
+```{r table_a_final4}
+#| echo: false
 full_join(
   E_count,
   F_count,
@@ -2255,22 +2322,27 @@ full_join(
     TOT_F = coalesce(TOT_F, 0L)
   ) |> 
   filter(TOT_E == 0) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("DOMAIN_LANDINGS that are in table F, but not in table E") |> flextable::colformat_num(j="YEAR", big.mark = "")
+```
 
-
+```{r table_a_final5}
 # discard records with no discards
 table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
                             is.na(E_TOTWGHTLANDG) & is.na(F_TOTWGHTLANDG) ~ "NK",
                             .default = as.character(DOMAIN_LANDINGS)
 ))
+```
 
+```{r table_a_final6}
+#| echo: false
 # check all DOMAIN_DISCADS
 table_A2 |> filter(DOMAIN_LANDINGS == "NK") |> 
   count(YEAR, QUARTER) |>  flextable::flextable() |> flextable::autofit() |>
   flextable::colformat_num(j="YEAR", big.mark="") |>
   flextable::theme_zebra() |>
   flextable::set_caption("LANDINGS (NK) from tables E+F by year/quarter") 
+```
 
-
+```{r table_a_final6}
 # Put the variables in the correct order:
 table_A <- table_A2 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 
@@ -2884,9 +2956,13 @@ j6b <- rbind(j6, inactive)
 
 # vessels missing in the capacity table, but in activity table
 missing_kap <- j6b |> filter(is.na(PAAKONETEHO) | is.na(VETOISUUS)) |> select(ULKOINENTUNNUS, YEAR)
+```
 
+```{r table_j2}
 missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing") |> flextable::theme_zebra() |> flextable::autofit()
+```
 
+```{r table_j3}
 missing_tag <- missing_kap |> pull(ULKOINENTUNNUS) |> unique()
 
 extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
@@ -2901,11 +2977,17 @@ extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
   AGE = YEAR -rakennusvuosi
 ) |> select(-RAKENNUSPVM, -rakennusvuosi) |> distinct()
 
+```
+
+```{r table_j4}
+#| echo: false
 extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |>
   flextable::theme_zebra() |> 
   flextable::set_caption("vessels not registered in capacity table") |>
   flextable::autofit()
+```
 
+```{r table_j5}
 # removing duplicates and checking there are none left
 extra_dup <- extra_kap |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
