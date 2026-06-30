@@ -1174,8 +1174,8 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -1280,8 +1280,8 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -1384,8 +1384,8 @@ regions).
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -2013,8 +2013,8 @@ regions).
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -2273,8 +2273,8 @@ knitr::include_graphics(file.path(path_out,"table_F_preview_rotated.png"))
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -2490,8 +2490,8 @@ Data to be provided for all effort, both that from métiers selected for biologi
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -2662,8 +2662,8 @@ Data to be provided for all landings, both those from métiers selected for biol
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -2804,8 +2804,8 @@ Data to be provided for all effort, both that from métiers selected for biologi
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -2889,8 +2889,8 @@ knitr::include_graphics(file.path(path_out,"table_I_preview_rotated.png"))
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
@@ -3339,8 +3339,8 @@ This table must be used to provide only discards data for which no biological da
 ```{r, results='asis', echo=FALSE}
 if (knitr::is_latex_output()) {
   cat("\\clearpage\n")
-} else if (knitr::is_word_output()) {
-  cat("\n\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
 }
 ```
 
