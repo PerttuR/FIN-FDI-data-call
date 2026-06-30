@@ -8,9 +8,9 @@ author:
 - Antti Sykkö
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document: default
   pdf_document:
     latex_engine: xelatex
+  word_document: default
 editor_options: 
   chunk_output_type: console
 ---
@@ -40,7 +40,16 @@ knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=TRUE, warning=FALSE, error=FALSE, message=FALSE)
+knitr::opts_chunk$set(echo = TRUE, 
+                      eval=TRUE, 
+                      warning=FALSE, 
+                      error=FALSE, 
+                      message=FALSE#,
+                      # control chunk width          
+                      # tidy = TRUE,          # requires install.packages("formatR")
+                      # tidy.opts = list(width.cutoff = 60)
+                      )
+
 rStudio=TRUE
 ```
 
