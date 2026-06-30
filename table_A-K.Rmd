@@ -2336,7 +2336,7 @@ Data to be provided for all effort, both that from métiers selected for biologi
 | 13. | EEZ_INDICATOR | According to the code list in Appendix 9; ‘NK’ can be use only when also the subregion is not known. |
 | 14. | GEO_INDICATOR | According to the code list in Appendix 10. |
 | 15. | SPECON_TECH | Specific conditions related to technical measures according to Appendix 11; ‘NK’ if not known or ‘NA’ if not applicable. 16. DEEP | ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the definition, should be indicated with ‘DEEP’). |
-| 17. | TOTSEADAYS | Days at sea8; if nominal fishing activity is not available use ‘NK’. |
+| 17. | TOTSEADAYS | Days at sea [1]; if nominal fishing activity is not available use ‘NK’. |
 | 18. | TOTKWDAYSATSEA | Fishing effort in kW-days, i.e. engine power in kW times days at sea; ‘NK’ if nominal effort is not available. |
 | 19. | TOTGTDAYSATSEA | Fishing effort in gross tonnage*days at sea; ‘NK’ if not available. |
 | 20. | TOTFISHDAYS | Fishing days; ‘NK’ if the number of fishing days is not available. |
@@ -2345,8 +2345,12 @@ Data to be provided for all effort, both that from métiers selected for biologi
 | 23. | HRSEA | Hours at sea; ‘NK’ if not available. |
 | 24. | KWHRSEA | kW hours at sea [kW*hours at sea]; ‘NK’ if not available. |
 | 25. | GTHRSEA | GT hours at sea [Gross tonnage*hours at sea]; ‘NK’ if not available. |
-| 26. | TOTVES | [integer] Number of vessels conducting activity as defined in columns 3 to 149; ‘NK’ if the number of vessels is not known. |
+| 26. | TOTVES | [integer] Number of vessels conducting activity as defined in columns 3 to 14 [2]; ‘NK’ if the number of vessels is not known. |
 | 27. | CONFIDENTIAL | [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise ‘N’; missing values not allowed. |
+
+[1] For recommended calculation method of days at sea and fishing days, please refer to the following report: Castro Ribeiro, C. et al. *Report of the 2nd Workshop on Transversal Variables*. Nicosia, Cyprus. 22-26 February 2016. A DCF ad-hoc workshop. 109pp.EUR 27897; doi 10.2788/042271.
+
+[2] It is realised and accepted that if vessels use more than 1 gear and/or fish in more than 1 sub-region in a quarter the totalacross categories will exceed the number of vessels in the fleet segment.
 
 \newline
 
@@ -2498,10 +2502,15 @@ Data to be provided for all landings, both those from métiers selected for biol
 | 14. | GEO_INDICATOR | According to the code list in Appendix 10. |
 | 15. | SPECON_TECH | Specific conditions related to technical measures according to Appendix 11; ‘NK’ if not known or ‘NA’ if not applicable. |
 | 16. | DEEP | ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the definition, should be indicated with ‘DEEP’). |
-| 17 | RECTANGLE_TYPE | Grid resolution. Allowed values | `05*05'`, `05*1'`, `1*1'`, `5*5'`, or `NA`. <br><br>• `05*05'` = 0.5° × 0.5° resolution (e.g. GFCM squares)<br>• `05*1'` = 0.5° latitude × 1.0° longitude (e.g. ICES rectangles)<br>• `1*1'` = 1.0° × 1.0° resolution (e.g. IOTC fisheries)<br>• `5*5'` = 5.0° × 5.0° resolution (e.g. ICCAT fisheries)<br>• `NA` = value provided in `C_SQUARE` field  |
+| 17. | RECTANGLE_TYPE | `05*05'`, `05*1'`, `1*1'`, `5*5'`, or `NA`. |
+|     |                | - `05*05'` if entries at `0.5*0.5` degree resolution (e.g. if related to GFCM squares) |
+|     |                | - `05*1'` if entries at 0.5 degree latitude by 1.0 degree longitude (e.g. if related to ICES rectangles); |
+|     |                | - `1*1'` if entries at `1.0*1.0` degree resolution (e.g. related to fisheries governed by the IOTC);|
+|     |                | - `5*5'` if entries at 5.0*5.0 degree resolution (e.g. related to fisheries governed by the ICCAT); |
+|     |                | - `NA` = value provided in `C_SQUARE` field . |
 | 18. | LATITUDE | Latitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE field provided, use ‘NA’. |
 | 19. | LONGITUDE | Longitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE field provided, use ‘NA’.
-| 20. | C_SQUARE | [string with the format | XXXX |XXX |X] C-square notation at 0.5*0.5 degree resolution; fill with ‘NA’ if all the 3 fields RECTANGLE_TYPE, LATITUDE and LONGITUDE are provided. |
+| 20. | C_SQUARE | [string with the format | XXXX |XXX |X] C-square notation at `0.5*0.5` degree resolution; fill with ‘NA’ if all the 3 fields RECTANGLE_TYPE, LATITUDE and LONGITUDE are provided. |
 | 21. | SPECIES | According to the FAO 3-alpha code list, see Appendix 12; missing values not allowed. |
 | 22. | TOTWGHTLANDG | Estimated landings in tonnes [precision to 3 digits after the decimal], including landings below MCRS (minimum conservation reference size); missing values not allowed. |
 | 23. | TOTVALLANDG | Total value of the landings in euro; ‘NK’ if not available. |
@@ -2630,9 +2639,14 @@ Data to be provided for all effort, both that from métiers selected for biologi
 | 14. | GEO_INDICATOR | According to the code list in Appendix 10. |
 | 15. | SPECON_TECH | Specific conditions related to technical measures according to Appendix 11; ‘NK’ if not known or ‘NA’ if not applicable. |
 | 16. | DEEP | ‘DEEP’ or ‘NA’ (i.e. the trips considered as deep fishing trips, see Appendix 14 for the definition, should be indicated with ‘DEEP’). |
-| 17. | RECTANGLE_TYPE | Grid resolution code. One of | `05*05'`, `05*1'`, `1*1'`, `5*5'`, or `NA`.<br><br>• `05*05'` | 0.5 × 0.5 degree resolution (e.g. GFCM squares)<br>• `05*1'` | 0.5 degree latitude by 1.0 degree longitude (e.g. ICES rectangles)<br>• `1*1'` | 1.0 × 1.0 degree resolution (e.g. fisheries governed by the IOTC)<br>• `5*5'` | 5.0 × 5.0 degree resolution (e.g. fisheries governed by the ICCAT)<br>• `NA` | value provided in the `C_SQUARE` field |
+| 17. | RECTANGLE_TYPE | One of the following values: `05*05'`, `05*1'`, `1*1'`, `5*5'`, or `NA`. |
+|     |                | - `05*05'` if entries at `0.5*0.5` degree resolution (e.g. if related to GFCM squares); |
+|     |                | - `05*1'` if entries at 0.5 degree latitude by 1.0 degree longitude (e.g. if related to ICES rectangles); |
+|     |                | - `1*1'` if entries at `1.0*1.0` degree resolution (e.g. related to fisheries governed by the IOTC); |
+|     |                | - `5*5'` if entries at `5.0*5.0` degree resolution (e.g. related to fisheries governed by the ICCAT); |
+|     |                | - `NA` if a value is provided in the C_SQUARE field. |
 | 18. | LATITUDE | Latitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE field provided, use ‘NA’. |
-| 19. | LONGITUDE | Longitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE field provided, use ‘NA’. 20. C_SQUARE | [string with the format | XXXX |XXX |X] C-square notation at 0.5*0.5 degree resolution; fill with ‘NA’ if all the 3 fields RECTANGLE_TYPE, LATITUDE and LONGITUDE are provided. |
+| 19. | LONGITUDE | Longitude in decimal degrees [precision to 0.25 degrees] (see Appendix 13); if C_SQUARE field provided, use ‘NA’. 20. C_SQUARE | [string with the format | XXXX |XXX |X] C-square notation at `0.5*0.5` degree resolution; fill with ‘NA’ if all the 3 fields RECTANGLE_TYPE, LATITUDE and LONGITUDE are provided. |
 | 21. | TOTFISHDAYS | Fishing days; missing values not allowed. |
 | 22. | CONFIDENTIAL | [1 character] If data are considered subject to confidentiality use ‘Y’, otherwise ‘N’; missing values not allowed. |
 
@@ -2704,8 +2718,7 @@ knitr::include_graphics("table_I_preview_rotated.png")
 | 4. | FISHING_TECH | According to the code list provided in Appendix 3; missing values not allowed. |
 | 5. | SUPRA_REGION | According to the code list in Appendix 9; missing values not allowed. |
 | 6. | GEO_INDICATOR | According to the code list in Appendix 10. |
-| 7. | PRINCIPAL_SUB_REGION | Sub-region where the vessel has its majority fishing activity during the year. Principal sub-region has to be calculated vessel by vessel (i.e. calculated at the vessel level)
-and, in order to define the principal sub-region of a vessel, the metric number of fishing days should be used. According to the code list in Appendix 9; ‘NK’ if not known. |
+| 7. | PRINCIPAL_SUB_REGION | Sub-region where the vessel has its majority fishing activity during the year. Principal sub-region has to be calculated vessel by vessel (i.e. calculated at the vessel level) and, in order to define the principal sub-region of a vessel, the metric number of fishing days should be used. According to the code list in Appendix 9; ‘NK’ if not known. |
 | 8. | TOTTRIPS | [integer] Number of fishing trips by the vessels in the fleet segment from a land location to a landing place, excluding non-fishing trips; ‘NK’ if not known. |
 | 9. | TOTKW | Fishing capacity in kW of the vessels in the fleet segment; if not available use ‘NK’. |
 | 10. | TOTGT | Fishing capacity in gross tonnage of the vessels in the fleet segment; if not available use ‘NK’. |
