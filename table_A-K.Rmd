@@ -710,9 +710,9 @@ saveRDS(akt1_all2, file = file.path(path_der,"table_A_prep.rds"))
 ## Create table A - full version
 
 ```{r table_a_full}
-#-------------------------------------------------------------------------------
-#                   2. TABLE A (Catch summary)                              ####                
-#-------------------------------------------------------------------------------
+#' ############################################
+#  2. TABLE A (Catch summary) ####                
+#' ############################################
 
 a <- akt1_all2 |> mutate(NEP_SUB_REGION = "NA") |> select(-RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -MERIPAIVAT, -PAAKONETEHO, -VETOISUUS, -KALASTUSAIKAHH, -FT_REF)
 
@@ -899,7 +899,7 @@ trip_selected <- trip %>% filter(!is.na(target_species_fk) & year >= 2018)
 trip_haul <- trip_selected %>% left_join(haul, by=c("id" = "trip_fk"))
 
 # join trip haul and metier to form SAMPLING_FRAME column:
-#-----
+
 trip_haul_metier <- trip_haul %>% left_join(metier, by=c("metier_fk" = "id"))
 
 species_gear_code <- trip_haul_metier %>% select(target_species_fk, level5)
@@ -1099,17 +1099,17 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 
 ```{r table_c}
 #| fig.cap: "Preview TABLE C"
-#-------------------------------------------------------------------------------
-#                       1. Import data for 2023 C table needs                    
-#-------------------------------------------------------------------------------
+#' ##########################################
+#  1. Import data for 2023 C table needs ####                
+#' ##########################################
 
 # import table A
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
-#-------------------------------------------------------------------------------
-#                   2. TABLE C (NAO OFR. Discards age data)                       
-#-------------------------------------------------------------------------------
+#' ############################################
+#  2. TABLE C (NAO OFR. Discards age data) ####                      
+#' ############################################
 
 table_C <- table_A |> 
   select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
@@ -1197,17 +1197,17 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 
 ```{r table_d}
 #| fig.cap: "Preview TABLE D"
-#-------------------------------------------------------------------------------
-#                       1. Import data for 2023 C table needs                    
-#-------------------------------------------------------------------------------
+#' ##########################################
+#  1. Import data for 2023 C table needs ####                 
+#' ##########################################
 
 # import table A
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
 
-#-------------------------------------------------------------------------------
-#                   2. TABLE C (NAO OFR. Discards length data)                       
-#-------------------------------------------------------------------------------
+#' ###############################################
+#  2. TABLE C (NAO OFR. Discards length data) ####                   
+#' ###############################################
 
 table_D <- table_A |> 
   select(COUNTRY, YEAR, DOMAIN_DISCARDS, NEP_SUB_REGION, SPECIES, TOTWGHTLANDG, DISCARDS) |> 
@@ -1419,9 +1419,9 @@ daff::render_diff(patch)
 
 ```{r E-table_a_ic}
 
-#-------------------------------------------------------------------------------
-#                       1. aggregate TABLE A for merging                       
-#-------------------------------------------------------------------------------
+#' #####################################
+#  1. aggregate TABLE A for merging ####                     
+#' #####################################
 
 # import IC data and table A
 # code for current run year
@@ -1438,9 +1438,9 @@ table_A <- table_A |> rename_all(tolower)
 #colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
 
 
-#-------------------------------------------------------------------------------
-#                       1.1 create DOMAIN landing to IC 2023 ZIP data data                       
-#-------------------------------------------------------------------------------
+#' #######################################################
+#  1.1 create DOMAIN landing to IC 2023 ZIP data data ####                   
+#' #######################################################
 
 # IC_2023$Country <- "FIN"
 # IC_2023$quarter <- IC_2023$Season
@@ -1470,9 +1470,9 @@ table_A <- table_A |> rename_all(tolower)
 #                          )
 #                   )
 
-#-------------------------------------------------------------------------------
-#                       1.1 create DOMAIN landing to IC data between 2013-2023                      
-#-------------------------------------------------------------------------------
+#' ###########################################################
+#  1.1 create DOMAIN landing to IC data between 2013-2023 ####                   
+#' ###########################################################
 
 IC_DB1 <- IC_DB |> filter (Year %in% years)
 IC_DB2 <- IC_DB1 |> filter (Species %in% c("HER","SPR"))
@@ -1549,8 +1549,9 @@ knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 
 agedata <- read.dbTable(schema="suomu",table="report_individual", where=paste0("vuosi >= 2013 AND vuosi <= ", run.year-1))
 
-#-------------------------------------------------------------------------------
+#' ############################################
 # choose commercial LANDINGS samples only, from years 2013-2022 and species
+#' ############################################
 
 agedata_cs <- agedata |> filter(name == "EU-tike(CS, kaupalliset näytteet)", fao %in% c("HER", "SPR"))
 
@@ -1560,13 +1561,11 @@ suomu <- agedata_cs |> filter(!is.na(age) & age != "99")
 # a lot of ages are missing
 suomu_missing_age <- agedata_cs |> filter(is.na(age) | age == "99")
 
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
+#' ############################################
 # make a key variable to match table A key (domain_discards or domain_landings)
-
 # first make individually all the parts that form the DOMAIN key
+#' ############################################
+
 country_code <- "FIN"
 quarter <- suomu$q
 subregion <- paste("27.3.d.", suomu$ices_osa_alue, sep = "")
@@ -1599,9 +1598,9 @@ suomu2 <- suomu |> select(vuosi, nayteno, paino, pituus, age, domain_landings)
 suomu2$pituus <- suomu2$pituus/10
 
 
-#-------------------------------------------------------------------------------
-#                   4. aggregate AGE DATA for merging with TABLE A     2024 alkaen:                
-#-------------------------------------------------------------------------------
+#' ###################################################
+#  4. aggregate AGE DATA for merging with TABLE A ####               
+#' ###################################################
 
 # aggregate data separately:
 suomu2_year_domain <- suomu2 |>
@@ -1633,9 +1632,9 @@ suomu2_e1 <- suomu2_year_domain |> select(country, year=vuosi, domain_landings, 
 
 ```{r table_e}
 #| fig.cap: "Preview TABLE E"
-#-------------------------------------------------------------------------------
-#                       3. Merge SAMPLED DATA with TABLE A                       
-#-------------------------------------------------------------------------------
+#' ######################################
+# 3. Merge SAMPLED DATA with TABLE A ####                   
+#' ######################################
 
 #e1 to lower
 e1 <- e1 |> rename_all(tolower)
@@ -1918,9 +1917,9 @@ regions).
 ### aggregate table A
 
 ```{r F-table_a}
-#-------------------------------------------------------------------------------
-#                       1. aggregate TABLE A for merging                       
-#-------------------------------------------------------------------------------
+#' ####################################
+# 1. aggregate TABLE A for merging ####                    
+#' ####################################
 
 table_A <- readRDS(file.path(path_der, "table_A_full.rds"))
 
@@ -1933,8 +1932,6 @@ table_A <- table_A |> select(COUNTRY,	YEAR, QUARTER, VESSEL_LENGTH,	FISHING_TECH
 table_A <- table_A |> rename_all(tolower)
 
 #colnames(table_A)    <- c("country", "year", "quarter", "vessel_length", "fishing_tech", "gear_type", "target_assemblage", "mesh_size_range", "metier", "domain_discards", "domain_landings", "supra_region", "sub_region", "eez_indicator", "geo_indicator", "specon_tech", "deep", "species", "totwghtlandg", "totvallandg", "discards", "confidential")
-
-#-------------------------------------------------------------------------------
 
 # sum totwghtlandg BY year, domain_landings and species from TABLE A
 table_A_sum <- table_A |> group_by(country, year, domain_landings, species) |> summarise(totwghtlandg = sum(as.numeric(as.character(totwghtlandg)))) |> filter(species == 'HER' | species == 'SPR')
@@ -1959,9 +1956,9 @@ knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 ```
 
 ```{r F-suomu-data}
-#-------------------------------------------------------------------------------
-#                       2. SAMPLED DATA for merging                       
-#-------------------------------------------------------------------------------
+#' ################################
+#  2. SAMPLED DATA for merging ####
+#' ################################
 
 ## CHANGES 2022: in tables C, D, E and F in 2022 the variable NO_SAMPLES was replaced with TOTAL_SAMPLED_TRIPS.
 
@@ -1971,21 +1968,19 @@ knitr::include_graphics(file.path(path_orig, "Suomu_cat.png"))
 lengthdata <- read.dbTable("suomu","report_lengthclassrecords")
 
 
-#-------------------------------------------------------------------------------
 # choose commercial LANDING samples only, from years 2013-2023 HUOM 2023 valittu kesäkuussa 2024 toimituksessa..
  
 suomu <- filter(lengthdata, projekti == "EU-tike(CS, kaupalliset näytteet)", vuosi %in% years, fao %in% c("HER", "SPR"))
 
 suomu$metier <- suomu$metiers_fk
 
-#-------------------------------------------------------------------------------
-
+#' ############################################
 # make a key variable to match table A key (domain_discards or domain_landings)
-
 # first make individually all the parts that form the key
 # make a key variable to match table A key (domain_discards or domain_landings)
-
 # first make individually all the parts that form the key
+#' ############################################
+
 country_code <- "FIN"
 quarter <- suomu$q
 subregion <- paste("27.3.d.", suomu$ices_osa_alue, sep = "")
@@ -2021,9 +2016,9 @@ suomu2 <- suomu |> select(vuosi, domain_landings, species, nayteno, pituusluokka
 
 ```{r table_f}
 #| fig.cap: "Preview TABLE F"
-#-----------------------------------------------------------------------------------
-#                       4. aggregate SAMPLED DATA for merging with TABLE A                       
-#-----------------------------------------------------------------------------------
+#' #######################################################
+#  4. aggregate SAMPLED DATA for merging with TABLE A ####
+#' #######################################################
 
 # aggregate data on different levels according to Annex D instructions from the Official Letter
 
@@ -2049,8 +2044,6 @@ landing5 <- merge(landing4, d6_7, by = c("vuosi", "domain_landings","species"))
 landing5$length_unit <- "mm"
 landing5$country = "FIN"
 
-#-------------------------------------------------------------------------------
-
 landing5$no_length <- "NK"
 landing5$weight_unit <-"g"
 landing5$nep_sub_region <-"NA"
@@ -2060,9 +2053,9 @@ landing5$nep_sub_region <-"NA"
 landing6 <- landing5 |> select(country, vuosi, domain_landings, nep_sub_region, TOTAL_SAMPLED_TRIPS, no_length_measurements, min_length, max_length, length_unit, pituusluokka, no_length, mean_weight_at_length, weight_unit) |> rename(year = vuosi, length = pituusluokka)
 
 
-#-------------------------------------------------------------------------------
-#                       5. Merge SAMPLED DATA with TABLE A                       
-#-------------------------------------------------------------------------------
+#' ####################################### 
+#  5. Merge SAMPLED DATA with TABLE A ####
+#' ####################################### 
 
 # 2022 data has NaN values -> delete
 table_A_sum <- table_A_sum
@@ -2358,9 +2351,9 @@ Data to be provided for all effort, both that from métiers selected for biologi
 
 ```{r table_g}
 #| fig.cap: "Preview TABLE G"
-#-------------------------------------------------------------------------------
-#                   3. TABLE G (Effort summary)                             ####
-#-------------------------------------------------------------------------------
+#' ################################
+#  3. TABLE G (Effort summary) ####
+#' ################################
 
 akt1_all2 <- readRDS(file.path(path_der, "table_A_prep.rds"))
 
@@ -2524,9 +2517,9 @@ Data to be provided for all landings, both those from métiers selected for biol
 
 ```{r table_H}
 #| fig.cap: "Preview TABLE H"
-#-------------------------------------------------------------------------------
-#                   4. TABLE H (Landings by rectangle)                      ####   
-#-------------------------------------------------------------------------------
+#' #######################################
+#  4. TABLE H (Landings by rectangle) ####   
+#' #######################################
 
 akt1_all2 <- readRDS(file.path(path_der, "table_A_prep.rds"))
 
@@ -2660,9 +2653,9 @@ Data to be provided for all effort, both that from métiers selected for biologi
 
 ```{r table_i}
 #| fig.cap: "Preview TABLE I"
-#`-------------------------------------------------------------------------------`
-#                   5. TABLE I (Effort by rectangle)                        ####
-#-------------------------------------------------------------------------------
+#' #####################################
+#  5. TABLE I (Effort by rectangle) ####
+#' #####################################
 
 akt1_all2 <- readRDS(file.path(path_der, "table_A_prep.rds"))
 
@@ -2739,9 +2732,9 @@ knitr::include_graphics("table_I_preview_rotated.png")
 
 ```{r table_j}
 #| fig.cap: "Preview TABLE J"
-#-------------------------------------------------------------------------------
-#                   6. TABLE J (Capacity and fleet segment effort)          ####               
-#-------------------------------------------------------------------------------
+#' ###################################################
+#  6. TABLE J (Capacity and fleet segment effort) ####               
+#' ###################################################
 
 akt1_all2 <- readRDS(file.path(path_der, "table_A_prep.rds"))
 
