@@ -65,6 +65,18 @@ conflicted::conflicts_prefer(
 
 ```
 
+```{r title image}
+#| fig.cap: "FIN-FDI"
+#| fig.align: "center"
+#| out.width: "75%"
+#| echo: false
+
+path_orig  <- here::here("orig") 
+
+knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
+
+```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, 
