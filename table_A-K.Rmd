@@ -508,6 +508,8 @@ akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning
 
 ```{r spatial5}
 #| echo: false
+#| eval: false
+
 akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> flextable::autofit() |> 
   flextable::theme_zebra() |>
   flextable::set_caption( "Mesh size to metier conversion AKT1")
@@ -734,6 +736,8 @@ akt1_all2 <- akt1_all2 |>
 
 ```{r clean_capacity9}
 #| echo: false
+#| eval: false
+
 akt1_all2 |> count(YEAR, FISHING_TECH) |>
   pivot_wider(values_from = n, names_from =YEAR) |>
   flextable::flextable() |> 
@@ -2157,6 +2161,7 @@ table_F2 <- table_F |> left_join(E_domains |> mutate(DOMAIN_LANDINGS_E= DOMAIN_L
 
 ```{r table_f2}
 #| echo: false
+#| eval: false
 
 table_F2 |> filter(is.na(DOMAIN_CHECK)) |> 
                 count(YEAR, DOMAIN_LANDINGS) |>
@@ -2259,6 +2264,11 @@ C_count <- table_A2 |>
 D_count <- table_A2 |>
   filter(!is.na(D_DISCARDS)) |>
   count(YEAR, DOMAIN_DISCARDS, name = "TOT_D")
+```
+
+```{r table_a_final2}
+#| echo: false
+#| eval: false
 
 full_join(
   C_count,
@@ -2269,7 +2279,9 @@ full_join(
     TOT_C = coalesce(TOT_C, 0L),
     TOT_D = coalesce(TOT_D, 0L)
   ) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("Remaining DOMAIN_DISCARDS after tagging tagging table C+D") |> flextable::theme_zebra() |> flextable::colformat_num(j="YEAR", big.mark = "")
+```
 
+```{r table_a_final3}
 # discard records with no discards
 table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
                             is.na(C_DISCARDS) & is.na(D_DISCARDS) ~ "NK",
@@ -2277,7 +2289,7 @@ table_A2 <- table_A2 |> mutate(DOMAIN_DISCARDS = case_when(
 ))
 ```
 
-```{r table_a_final2}
+```{r table_a_final4}
 #| echo: false
 # check all DOMAIN_DISCADS
 table_A2 |> filter(DOMAIN_DISCARDS == "NK") |> 
@@ -2287,7 +2299,7 @@ table_A2 |> filter(DOMAIN_DISCARDS == "NK") |>
   flextable::set_caption("DISCARDS (NK) from tables C+D by year/quarter") 
 ```
 
-```{r table_a_final3}
+```{r table_a_final5}
 #' ############################################
 # join with table E+F
 #' ############################################
@@ -2310,8 +2322,10 @@ F_count <- table_A2 |>
   count(YEAR, DOMAIN_LANDINGS, name = "TOT_F")
 ```
 
-```{r table_a_final4}
+```{r table_a_final6}
 #| echo: false
+#| eval: false
+
 full_join(
   E_count,
   F_count,
@@ -2336,7 +2350,7 @@ full_join(
   filter(TOT_E == 0) |> flextable::flextable() |> flextable::autofit() |> flextable::set_caption("DOMAIN_LANDINGS that are in table F, but not in table E") |> flextable::colformat_num(j="YEAR", big.mark = "")
 ```
 
-```{r table_a_final5}
+```{r table_a_final7}
 # discard records with no discards
 table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
                             is.na(E_TOTWGHTLANDG) & is.na(F_TOTWGHTLANDG) ~ "NK",
@@ -2344,7 +2358,7 @@ table_A2 <- table_A2 |> mutate(DOMAIN_LANDINGS = case_when(
 ))
 ```
 
-```{r table_a_final6}
+```{r table_a_final8}
 #| echo: false
 # check all DOMAIN_DISCADS
 table_A2 |> filter(DOMAIN_LANDINGS == "NK") |> 
@@ -2354,7 +2368,7 @@ table_A2 |> filter(DOMAIN_LANDINGS == "NK") |>
   flextable::set_caption("LANDINGS (NK) from tables E+F by year/quarter") 
 ```
 
-```{r table_a_final7}
+```{r table_a_final9}
 # Put the variables in the correct order:
 table_A <- table_A2 |> arrange(YEAR) |> select(COUNTRY, YEAR, QUARTER, VESSEL_LENGTH, FISHING_TECH, GEAR_TYPE, TARGET_ASSEMBLAGE, MESH_SIZE_RANGE, METIER, METIER_7, DOMAIN_DISCARDS, DOMAIN_LANDINGS, SUPRA_REGION, SUB_REGION, EEZ_INDICATOR, GEO_INDICATOR, NEP_SUB_REGION, SPECON_TECH, DEEP, SPECIES, TOTWGHTLANDG,TOTVALLANDG, DISCARDS, CONFIDENTIAL)
 
