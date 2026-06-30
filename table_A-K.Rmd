@@ -1133,7 +1133,7 @@ img <- magick::image_read(file.path(path_out,"table_B_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_B_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_B_preview_rotated.png"))
 
 knitr::include_graphics("table_B_preview_rotated.png")
 
@@ -1170,7 +1170,16 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 | 18. | NO_AGE | The number in thousands [precision to 3 digits after the decimal] at the specified age; if no age specific information is available use ‘NK’. |
 | 19. | MEAN_WEIGHT | The mean weight of fish in the discards at that age; if no age specific information is available use ‘NK’. |
 
-\newline
+
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
+
+
 
 ```{r table_c}
 #| fig.cap: "Preview TABLE C"
@@ -1234,7 +1243,7 @@ img <- magick::image_read(file.path(path_out,"table_C_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_C_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_C_preview_rotated.png"))
 ```
 
 ## Create table D
@@ -1267,6 +1276,14 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 | 18. | NO_LENGTH | The number in thousands [precision to 3 digits after the decimal] at the specified length. If length information is not available, use ‘NK’. | 
 | 19. | MEAN_WEIGHT_AT_LENGTH | The mean weight of fish; if no age specific information is available use ‘NK’. | 
 | 20. | WEIGHT_UNIT | The unit of measure used for the column MEAN_WEIGHT_AT_LENGTH [kg = kilogram, g = gram]; if weight information is not available, use ‘NK’. | 
+
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 
 
@@ -1330,9 +1347,9 @@ img <- magick::image_read(file.path(path_out,"table_D_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_D_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_D_preview_rotated.png"))
 
-knitr::include_graphics("table_D_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_D_preview_rotated.png"))
 ```
 
 
@@ -1364,7 +1381,13 @@ regions).
 | 17. | LENGTH_UNIT | The unit of measure used for the column MEAN_LENGTH [‘mm’=millimetre, ‘cm’=centimetre]; if length information is not available use ‘NK’. |
 
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 
 ### Get InterCATCH data
@@ -1956,9 +1979,9 @@ img <- magick::image_read(file.path(path_out,"table_E_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_E_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_E_preview_rotated.png"))
 
-knitr::include_graphics("table_E_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_E_preview_rotated.png"))
 ```
 
 
@@ -1987,7 +2010,13 @@ regions).
 | 14.| MEAN_WEIGHT_AT_LENGTH | The mean weight of fish; if no age specific information is available use ‘NK’. |
 | 15.| WEIGHT_UNIT | The unit of measure used for the column MEAN_WEIGHT_AT_LENGTH [kg = kilogram, g = gram]; if weight information is not available, use ‘NK’. |
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ### aggregate table A
 
@@ -2204,9 +2233,9 @@ img <- magick::image_read(file.path(path_out,"table_F_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_F_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_F_preview_rotated.png"))
 
-knitr::include_graphics("table_F_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_F_preview_rotated.png"))
 
 ```
 
@@ -2241,7 +2270,13 @@ knitr::include_graphics("table_F_preview_rotated.png")
 | 23. | DISCARDS | Estimated discards in tonnes [precision to 3 digits after the decimal]; ‘NK’ if not known. |
 | 24. | CONFIDENTIAL | [1 character] Accepted values: ‘A’ (all), ‘N’ (none), ‘W’ (weight), ‘V’ (value), ‘D’ (discards); missing values not allowed. When the value ‘W’ is used, values in the field TOTWGHTLANDG is considered confidential. When the value ‘D’ is used, values in the field DISCARDS are considered confidential. |
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ```{r table_a_final}
 #| fig.cap: "Preview TABLE A"
@@ -2403,9 +2438,9 @@ img <- magick::image_read(file.path(path_out,"table_A_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_A_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_A_preview_rotated.png"))
 
-knitr::include_graphics("table_A_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_A_preview_rotated.png"))
 
 ```
 
@@ -2452,7 +2487,13 @@ Data to be provided for all effort, both that from métiers selected for biologi
 
 [^2]: It is realised and accepted that if vessels use more than 1 gear and/or fish in more than 1 sub-region in a quarter the totalacross categories will exceed the number of vessels in the fleet segment.
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ```{r table_g}
 #| fig.cap: "Preview TABLE G"
@@ -2571,9 +2612,9 @@ img <- magick::image_read(file.path(path_out,"table_G_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_G_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_G_preview_rotated.png"))
 
-knitr::include_graphics("table_G_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_G_preview_rotated.png"))
 
 ```
 
@@ -2618,7 +2659,13 @@ Data to be provided for all landings, both those from métiers selected for biol
 
 [^3]: For vessels required to complete and submit a fishing logbook it is mandatory to complete geographical area of capture to ICES Division and statistical rectangle in FAO area 27 and to GFCM geographical sub-area and statistical rectangle in FAO area 37, Commission implementing regulation (EU) 2015/1962.
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ```{r table_H}
 #| fig.cap: "Preview TABLE H"
@@ -2711,9 +2758,9 @@ img <- magick::image_read(file.path(path_out,"table_H_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_H_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_H_preview_rotated.png"))
 
-knitr::include_graphics("table_H_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_H_preview_rotated.png"))
 ```
 
 
@@ -2754,7 +2801,13 @@ Data to be provided for all effort, both that from métiers selected for biologi
 
 [^4]: For vessels required to complete and submit a fishing logbook it is mandatory to complete geographical area of capture to ICES Division and statistical rectangle in FAO area 27 and to GFCM geographical sub-area and statistical rectangle in FAO area 37, Commission implementing regulation (EU) 2015/1962.
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ```{r table_i}
 #| fig.cap: "Preview TABLE I"
@@ -2804,9 +2857,9 @@ img <- magick::image_read(file.path(path_out,"table_I_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_I_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_I_preview_rotated.png"))
 
-knitr::include_graphics("table_I_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_I_preview_rotated.png"))
 ```
 
 
@@ -2833,7 +2886,13 @@ knitr::include_graphics("table_I_preview_rotated.png")
 
 [^5]: Fleet segment is a combination of fishing technique category and vessel length category
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ```{r table_j}
 #| fig.cap: "Preview TABLE J"
@@ -3250,9 +3309,9 @@ img <- magick::image_read(file.path(path_out,"table_J_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_J_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_J_preview_rotated.png"))
 
-knitr::include_graphics("table_J_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_J_preview_rotated.png"))
 ```
 
 
@@ -3277,7 +3336,13 @@ knitr::include_graphics("table_J_preview_rotated.png")
 Discard estimates should be provided at the domain level (DOMAIN_DISCARDS).
 This table must be used to provide only discards data for which no biological data are available (that is, for discards data that have not already been reported in tables C and D).
 
-
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\clearpage\n")
+} else if (knitr::is_word_output()) {
+  cat("\n\n")
+}
+```
 
 ```{r table_K}
 #| fig.cap: "Preview TABLE K"
@@ -3326,8 +3391,8 @@ img <- magick::image_read(file.path(path_out,"table_K_preview.png")) |>
 img_resized <- magick::image_resize(img, "x1800")  # ~good width for Word
 
 # save rotated
-magick::image_write(img_resized, "table_K_preview_rotated.png")
+magick::image_write(img_resized, file.path(path_out,"table_K_preview_rotated.png"))
 
-knitr::include_graphics("table_K_preview_rotated.png")
+knitr::include_graphics(file.path(path_out,"table_K_preview_rotated.png"))
 ```
 
