@@ -561,6 +561,8 @@ akt1_all <- rbind(akt1, sas)
 
 ```{r sas4}
 #| echo: false
+#| eval: false
+
 #just checking data types
 as.data.frame(sapply(akt1_all, class)) |> rownames_to_column() |> rename(format = 2) |> 
   flextable::flextable() |> 
@@ -615,6 +617,8 @@ akt1_all <- akt1_all |> mutate(
 
 ```{r sas6}
 #| echo: false
+#| eval: false
+
 akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> 
   flextable::autofit() |> 
   flextable::theme_zebra() |>
@@ -2991,11 +2995,11 @@ j6b <- rbind(j6, inactive)
 missing_kap <- j6b |> filter(is.na(PAAKONETEHO) | is.na(VETOISUUS)) |> select(ULKOINENTUNNUS, YEAR)
 ```
 
-```{r table_j2}
+```{r table_j8}
 missing_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |> flextable::set_caption("vessels not registered in capacity table or missing") |> flextable::theme_zebra() |> flextable::autofit()
 ```
 
-```{r table_j3}
+```{r table_j9}
 missing_tag <- missing_kap |> pull(ULKOINENTUNNUS) |> unique()
 
 extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
@@ -3012,7 +3016,7 @@ extra_kap <- kapasiteetti |> filter(ULKOINENTUNNUS %in% missing_tag) |> select(
 
 ```
 
-```{r table_j4}
+```{r table_j10}
 #| echo: false
 extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |>
   flextable::theme_zebra() |> 
@@ -3020,7 +3024,7 @@ extra_kap |> count(ULKOINENTUNNUS) |> flextable::flextable() |>
   flextable::autofit()
 ```
 
-```{r table_j5}
+```{r table_j11}
 # removing duplicates and checking there are none left
 extra_dup <- extra_kap |> 
   group_by(YEAR, ULKOINENTUNNUS) |> 
