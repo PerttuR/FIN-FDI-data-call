@@ -189,12 +189,32 @@ kapasiteetti <- read.dbTable(schema=paste(schemadate, "-dcprod", sep = ""),
                              table=tablename, dbname = "kake_siirto")
 ```
 
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\newline\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
+}
+```
+
+
 ```{r import_data2}
 #| echo: false
+
 kapasiteetti |> group_by(VUOSI, VLENGTH_FDI) |> summarise(vessels = n_distinct(ULKOINENTUNNUS), .groups = "drop_last") |>
   pivot_wider(names_from = VLENGTH_FDI, values_from = vessels) |> flextable::flextable() |>
   flextable::colformat_num(j = "VUOSI", big.mark = "") |> flextable::theme_zebra() |>
   flextable::set_caption( "Number of vessels by vessel length in KAPASITEETI") |> flextable::autofit()
+
+```
+
+
+```{r, results='asis', echo=FALSE}
+if (knitr::is_latex_output()) {
+  cat("\\newline\n")
+} else if (knitr::pandoc_to("docx")) {
+  cat("\\newline", sep="\n")
+}
 ```
 
 ## add discards
