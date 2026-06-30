@@ -8,9 +8,9 @@ author:
 - Antti Sykkö
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  word_document: default
   pdf_document:
     latex_engine: xelatex
-  word_document: default
 editor_options: 
   chunk_output_type: console
 ---
@@ -26,47 +26,7 @@ Updated: JUN 2021 by Perttu
          JUN 2026 by Joanne, Perttu and Petri
 ```
 
-```{r title image}
-#| fig.cap: "FIN-FDI"
-#| fig.align: "center"
-#| out.width: "75%"
-#| echo: false
-
-path_orig  <- here::here("orig") 
-
-knitr::include_graphics(file.path(path_orig, "Fin_cat_Fleet.png"))
-
-```
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, 
-                      eval=TRUE, 
-                      warning=FALSE, 
-                      error=FALSE, 
-                      message=FALSE#,
-                      # control chunk width          
-                      # tidy = TRUE,          # requires install.packages("formatR")
-                      # tidy.opts = list(width.cutoff = 60)
-                      )
-
-rStudio=TRUE
-```
-
-```{r environment, eval=rStudio}
-#| echo: false
-
-# only works in R Studio (--> Restart R)
-rm(list=ls())
-invisible(gc)
-#.rs.restartR()
-unlink(list.files("DATA-CACHE", full.names = TRUE))
-```
-
-# Prep
-## Load libraries and functions
-
-```{r libraries_source}
+```{r libraries_source, include=FALSE}
 #| echo: false
 
 ## TO DO
@@ -79,7 +39,7 @@ if (!require("pacman", quietly = TRUE)) {
 
 # check installation and load libraries
 # tidyverse includes: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats and lubridate
-pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, arsenal, daff)
+pacman::p_load(tidyverse, here, patchwork, RPostgres, openxlsx, arsenal, daff, knitr, formatR)
 
 # if installation is from github repo instead
 pacman::p_load_gh("lukefi-private/luketools")
@@ -104,6 +64,33 @@ conflicted::conflicts_prefer(
 
 
 ```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      eval=TRUE, 
+                      warning=FALSE, 
+                      error=FALSE, 
+                      message=FALSE,
+                      # control chunk width          
+                      tidy = TRUE,
+                      tidy.opts = list(width.cutoff = 60)
+                      )
+
+rStudio=TRUE
+```
+
+```{r environment, eval=rStudio}
+#| echo: false
+
+# only works in R Studio (--> Restart R)
+rm(list=ls())
+invisible(gc)
+#.rs.restartR()
+unlink(list.files("DATA-CACHE", full.names = TRUE))
+```
+
+# Prep
 
 ## Set paths
 
@@ -1174,7 +1161,7 @@ Table to be provided only for the Atlantic Ocean and other regions (not for the 
 | 18. | NO_AGE | The number in thousands [precision to 3 digits after the decimal] at the specified age; if no age specific information is available use ‘NK’. |
 | 19. | MEAN_WEIGHT | The mean weight of fish in the discards at that age; if no age specific information is available use ‘NK’. |
 
-
+   
 
 ```{r table_c}
 #| fig.cap: "Preview TABLE C"
