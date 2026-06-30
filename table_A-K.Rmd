@@ -8,9 +8,9 @@ author:
 - Antti Sykkö
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document: default
   pdf_document:
     latex_engine: xelatex
+  word_document: default
 editor_options: 
   chunk_output_type: console
 ---
