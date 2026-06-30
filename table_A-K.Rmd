@@ -501,9 +501,13 @@ akt1  <- akt1 |>
 
 ```{r spatial4}
 #| echo: false
-# akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
-# akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
+#| eval: false
+akt1 |> count(metier6_orig) |> flextable() |> set_caption("before cleaning")                    
+akt1 |> count(METIER) |> flextable() |> autofit() |> set_caption("after cleaning") 
+```
 
+```{r spatial5}
+#| echo: false
 akt1 |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |> flextable::autofit() |> 
   flextable::theme_zebra() |>
   flextable::set_caption( "Mesh size to metier conversion AKT1")
@@ -622,10 +626,14 @@ akt1_all |> count(MESH_SIZE_RANGE, FROM, TO, METIER) |> flextable::flextable() |
 metier <- akt1_all |> dplyr::select(METIER) |> distinct()
 metier_check <- metier |> left_join(valid_metiers, by = c("METIER" = "valid_metiers"), keep = T)
 missing <- metier_check |> filter(is.na(valid_metiers))
+```
 
+```{r sas8}
+#| echo: false
+#| eval: false
 # final test
-# missing |> flextable::flextable() |> flextable::theme_zebra() |>
-#  flextable::set_caption( "Metiers in AKT1_all that are not valid")
+missing |> flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::set_caption( "Metiers in AKT1_all that are not valid")
 
 ```
 
@@ -2810,15 +2818,26 @@ knitr::include_graphics("table_I_preview_rotated.png")
 
 akt1_all2 <- readRDS(file.path(path_der, "table_A_prep.rds"))
 
-# akt1_all2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> flextable::flextable() |> flextable::set_caption("Vessel lengths from capacity")
+```
 
-# akt1_all2 |> count(YEAR, LOMAKE, VESSEL_LENGTH) |> 
-#    pivot_wider(names_from = VESSEL_LENGTH, values_from = n,
-#                names_expand = TRUE,  names_sort = FALSE) |>
-#    flextable::flextable() |>
-#    flextable::colformat_num(j="YEAR", big.mark="") |>
-#    flextable::set_caption("Check akt1_all2 VESSEL_LENGTH classes by LOMAKE")
+```{r table_j2}
+#| echo: false
+#| eval: false
 
+akt1_all2  |> count(YEAR, VESSEL_LENGTH) |> pivot_wider(names_from = VESSEL_LENGTH, values_from=n) |> 
+  flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::colformat_num(j="YEAR", big.mark="") |>
+  flextable::set_caption("Vessel lengths from capacity")
+
+akt1_all2 |> count(YEAR, LOMAKE, VESSEL_LENGTH) |> 
+   pivot_wider(names_from = VESSEL_LENGTH, values_from = n,
+               names_expand = TRUE,  names_sort = FALSE) |>
+   flextable::flextable() |> flextable::theme_zebra() |>
+   flextable::colformat_num(j="YEAR", big.mark="") |>
+   flextable::set_caption("Check akt1_all2 VESSEL_LENGTH classes by LOMAKE")
+```
+
+```{r table_j3}
 # Select variables needed for J table from akt1 (DCPROD active vessels 2016 onwards):
 j <- akt1_all2 |> select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE, -LONGITUDE, -C_SQUARE, -KALASTUSAIKAHH, -FROM, -TO, -metier6_orig, -METIER5)
 
@@ -2826,19 +2845,26 @@ j <- akt1_all2 |> select(-contains("SVT"), -RECTANGLE,-RECTANGLE_TYPE, -LATITUDE
 # need to think about KALASTUSTAILMANALUSTA - currently not used !!!!!!!!!!
 j_monthly <- j |> filter(LOMAKE == "KKILMOITUS") |> filter(ULKOINENTUNNUS != "KALASTUSTAILMANALUSTA")
 j_not_monthly <- j |> filter(LOMAKE != "KKILMOITUS") |> filter(ULKOINENTUNNUS != "KALASTUSTAILMANALUSTA")
+```
 
-# j_monthly |> count(YEAR, VESSEL_LENGTH) |> 
-#   pivot_wider(names_from = VESSEL_LENGTH, values_from = n) |>
-#   flextable::flextable() |>
-#   flextable::colformat_num(j="YEAR", big.mark = "") |>
-#   flextable::set_caption("#Records in monthly journals before duplicate removal")
+```{r table_j4}
+#| echo: false
+#| eval: false
 
-# j_not_monthly |> count(YEAR, VESSEL_LENGTH) |> 
-#   pivot_wider(names_from = VESSEL_LENGTH, values_from = n) |>
-#   flextable::flextable() |>
-#   flextable::colformat_num(j="YEAR", big.mark = "") |>
-#   flextable::set_caption("#Records in logbooks and landing reports")
+j_monthly |> count(YEAR, VESSEL_LENGTH) |> 
+  pivot_wider(names_from = VESSEL_LENGTH, values_from = n) |>
+  flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::colformat_num(j="YEAR", big.mark = "") |>
+  flextable::set_caption("#Records in monthly journals before duplicate removal")
 
+j_not_monthly |> count(YEAR, VESSEL_LENGTH) |> 
+  pivot_wider(names_from = VESSEL_LENGTH, values_from = n) |>
+  flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::colformat_num(j="YEAR", big.mark = "") |>
+  flextable::set_caption("#Records in logbooks and landing reports")
+```
+
+```{r table_j5}
 # recalculate trips for KKILMOITUS
 j_monthly <- j_monthly |>
   group_by(YEAR, ULKOINENTUNNUS, AGE, KOKPITUUS, PAAKONETEHO, VETOISUUS, KK, SUB_REGION) |>
@@ -2848,14 +2874,21 @@ j_monthly <- j_monthly |>
   filter(rank_in_group == 1) |>
   arrange(ULKOINENTUNNUS, YEAR, KK) |>
   select(-rank_in_group)
+```
+
+```{r table_j6}
+#| echo: false
+#| eval: false
 
 # check numbers !!!!!
-# j_monthly |> count(YEAR, VESSEL_LENGTH) |> 
-#   pivot_wider(names_from = VESSEL_LENGTH, values_from = n) |>
-#   flextable::flextable() |>
-#   flextable::colformat_num(j="YEAR", big.mark = "") |>
-#   flextable::set_caption("#Records in monthly journals after duplicate removal")
+j_monthly |> count(YEAR, VESSEL_LENGTH) |> 
+  pivot_wider(names_from = VESSEL_LENGTH, values_from = n) |>
+  flextable::flextable() |> flextable::theme_zebra() |>
+  flextable::colformat_num(j="YEAR", big.mark = "") |>
+  flextable::set_caption("#Records in monthly journals after duplicate removal")
+```
 
+```{r table_j7}
 # KKILMOITUS: summarise annual seasdays and fishing days
 j_monthly <- j_monthly |> mutate(FT_REF = "REF_KKILMOITUS")
 
